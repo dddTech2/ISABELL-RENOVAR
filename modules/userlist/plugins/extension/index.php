@@ -132,33 +132,51 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
         // Si se le asignó una extensión válida
         if (!empty($ext_agente) && $ext_agente != "") {
             
-            // Leemos las credenciales de base de datos nativas de Issabel
-            $amp_conf = parse_ini_file('/etc/amportal.conf');
-            $dsnCC = "mysql://".$amp_conf['AMPDBUSER'].":".$amp_conf['AMPDBPASS']."@".$amp_conf['AMPDBHOST']."/call_center";
+            // Usamos el método nativo de Issabel para conectar a call_center
+            $dsnCC = generarDSNSistema('asteriskuser', 'call_center');
+            if (!$dsnCC) {
+                $dsnCC = "mysql://asterisk:asterisk@localhost/call_center";
+            }
             $pDB_cc = new paloDB($dsnCC);
-
-            // Validamos si el agente ya existe para no duplicarlo
-            $check = $pDB_cc->getFirstRowQuery("SELECT id FROM agent WHERE number = '$ext_agente'", true);
             
-            if(!is_array($check) || count($check) == 0) {
-                // Obtenemos el nombre del formulario
-                $nombre_agente = isset($_POST['description']) ? $_POST['description'] : 'Agente '.$ext_agente; 
-                if(empty($nombre_agente)) $nombre_agente = $_POST['name'];
-                
-                $pass_agente = "1234"; // Por defecto
-                $eccp = sha1(uniqid(rand(), true)); // Hash aleatorio seguro para la app ECCP interna
-
-                // Insertamos el agente como PJSIP (estándar de Issabel 5)
-                $sql = "INSERT INTO agent (type, number, name, password, estatus, eccp_password) 
-                        VALUES ('PJSIP', '$ext_agente', '$nombre_agente', '$pass_agente', 'A', '$eccp')";
-                
-                $pDB_cc->genQuery($sql);
+            if (!empty($pDB_cc->errMsg)) {
+                // Log de error si no conecta
+                error_log("USERLIST-PLUGIN: Error conectando a call_center: " . $pDB_cc->errMsg);
             } else {
-                 // Si el agente existe, lo actualizamos (nombre) por si acaso cambiaron la descripción
-                 $nombre_agente = isset($_POST['description']) ? $_POST['description'] : 'Agente '.$ext_agente; 
-                 if(empty($nombre_agente)) $nombre_agente = $_POST['name'];
-                 $sql = "UPDATE agent SET name = '$nombre_agente' WHERE number = '$ext_agente'";
-                 $pDB_cc->genQuery($sql);
+                // Escapamos valores para seguridad SQL
+                $ext_safe = $pDB_cc->dbc->quoteSmart($ext_agente);
+                
+                // Validamos si el agente ya existe para no duplicarlo
+                $check = $pDB_cc->getFirstRowQuery("SELECT id FROM agent WHERE number = $ext_safe", true);
+                
+                // Obtenemos el nombre del formulario
+                $nombre_agente = isset($_POST['description']) && !empty($_POST['description']) 
+                    ? $_POST['description'] 
+                    : (isset($_POST['name']) ? $_POST['name'] : 'Agente '.$ext_agente);
+                $nombre_safe = $pDB_cc->dbc->quoteSmart($nombre_agente);
+                
+                if(!is_array($check) || count($check) == 0) {
+                    $pass_agente = "1234";
+                    $eccp = sha1(uniqid(rand(), true));
+
+                    // Insertamos el agente como PJSIP (estándar de Issabel 5)
+                    $sql = "INSERT INTO agent (type, number, name, password, estatus, eccp_password) 
+                            VALUES ('PJSIP', $ext_safe, $nombre_safe, '$pass_agente', 'A', '$eccp')";
+                    
+                    $result = $pDB_cc->genQuery($sql);
+                    if (!$result) {
+                        error_log("USERLIST-PLUGIN: Error INSERT agente: " . $pDB_cc->errMsg . " | SQL: " . $sql);
+                    } else {
+                        error_log("USERLIST-PLUGIN: Agente PJSIP creado exitosamente: $ext_agente");
+                    }
+                } else {
+                    // Si el agente existe, lo actualizamos (nombre)
+                    $sql = "UPDATE agent SET name = $nombre_safe WHERE number = $ext_safe";
+                    $result = $pDB_cc->genQuery($sql);
+                    if (!$result) {
+                        error_log("USERLIST-PLUGIN: Error UPDATE agente: " . $pDB_cc->errMsg);
+                    }
+                }
             }
         }
         // --- FIN AUTO-CREAR AGENTE CALL CENTER ---
