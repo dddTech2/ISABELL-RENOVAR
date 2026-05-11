@@ -83,9 +83,8 @@ function _moduleContent(&$smarty, $module_name)
         }
     }
 
-    // Agent login is now supported on Asterisk 12+ via app_agent_pool
-    // No longer need to force callback-only mode
-    $onlyCallback=0;
+    // WebPhone integration: force callback-only mode (simplified login)
+    $onlyCallback=1;
     $smarty->assign('ONLY_CALLBACK', $onlyCallback);
 
     _debug("module entry: ".
@@ -277,6 +276,31 @@ function manejarLogin_HTML($module_name, &$smarty, $sDirLocalPlantillas)
         'NO_AGENTS'         =>  $bNoHayAgentes,
     ));
 
+    // Obtener el password del agente callback del usuario actual
+    $sCallbackPassword = '';
+    $sCallbackExtension = '';
+    $pACL = new paloACL($arrConf['issabel_dsn']['acl']);
+    $idUser = $pACL->getIdUser($_SESSION['issabel_user']);
+    if ($idUser !== FALSE) {
+        $tupla = $pACL->getUsers($idUser);
+        if (is_array($tupla) && count($tupla) > 0) {
+            $sExtension = $tupla[0][3];
+            // Buscar el password del agente callback en call_center.agent
+            $pDB_cc = new paloDB("mysql://asterisk:asterisk@localhost/call_center");
+            $sExtensionSafe = $pDB_cc->conn->quote($sExtension);
+            $resultPass = $pDB_cc->getFirstRowQuery(
+                "SELECT password FROM agent WHERE number = $sExtensionSafe AND estatus = 'A'",
+                TRUE
+            );
+            if (is_array($resultPass) && count($resultPass) > 0) {
+                $sCallbackPassword = $resultPass['password'];
+            }
+            // Construir la clave de extension callback (PJSIP/extnum)
+            $sCallbackExtension = 'PJSIP/' . $sExtension;
+        }
+    }
+    $smarty->assign('CALLBACK_PASSWORD', $sCallbackPassword);
+
     // Restaurar el estado de espera en caso de que se refresque la página
     if (!is_null($_SESSION['callcenter']['agente']) &&
         !is_null($_SESSION['callcenter']['extension'])) {
@@ -289,29 +313,14 @@ function manejarLogin_HTML($module_name, &$smarty, $sDirLocalPlantillas)
             'REANUDAR_VERIFICACION'     =>  1,
         ));
     } else {
-    	/* Si el usuario Issabel logoneado coincide con el número de agente de
-         * la lista, se coloca este agente como opción por omisión para login.
-         */
-        if (isset($listaAgentes['Agent/'.$_SESSION['issabel_user']]))
-            $smarty->assign('ID_AGENT', 'Agent/'.$_SESSION['issabel_user']);
-
-        /* Si el usuario Issabel logoneado tiene una extensión y aparece en la
-         * lista, se sugiere esta extension como la extensión a usar para
-         * marcar. */
-        $pACL = new paloACL($arrConf['issabel_dsn']['acl']);
-        $idUser = $pACL->getIdUser($_SESSION['issabel_user']);
-        if ($idUser !== FALSE) {
-        	$tupla = $pACL->getUsers($idUser);
-            if (is_array($tupla) && count($tupla) > 0) {
-                $sExtension = $tupla[0][3];
-                if (isset($listaExtensiones[$sExtension]))
-                    $smarty->assign('ID_EXTENSION', $sExtension);
-
-                foreach (array_keys($listaExtensionesCallback) as $k) {
-                	$regs = NULL;
-                    if (preg_match('|^(\w+)/(\d+)$|', $k, $regs) && $regs[2] == $sExtension)
-                        $smarty->assign('ID_EXTENSION_CALLBACK', $k);
-                }
+        // Auto-seleccionar la extension callback del usuario actual
+        if (!empty($sCallbackExtension) && isset($listaExtensionesCallback[$sCallbackExtension])) {
+            $smarty->assign('ID_EXTENSION_CALLBACK', $sCallbackExtension);
+        } elseif (isset($sExtension) && !empty($sExtension)) {
+            foreach (array_keys($listaExtensionesCallback) as $k) {
+                $regs = NULL;
+                if (preg_match('|^(\w+)/(\d+)$|', $k, $regs) && $regs[2] == $sExtension)
+                    $smarty->assign('ID_EXTENSION_CALLBACK', $k);
             }
         }
     }

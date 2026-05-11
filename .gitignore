@@ -12,3 +12,6 @@ fop2/
 
 # Ignorar archivos de sistema o de log si los hay
 *.log
+
+# Ignorar documentos de planificación y PRDs
+/docs/

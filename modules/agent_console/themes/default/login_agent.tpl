@@ -66,50 +66,33 @@
             <div align="center" id="login_msg_error" style="color: #ff0000;"></div>
           </td>
         </tr>
+        {* Fila visible: Extension callback dropdown *}
         <tr>
           <td width="40%">
-              <div align="right" id="label_agent_user">{$USERNAME}:</div>
-              <div align="right" id="label_extension_callback">{$CALLBACK_EXTENSION}:</div>
+              <div align="right">{$CALLBACK_EXTENSION}:</div>
           </td>
           <td width="60%">
-                <select align="center" id="input_agent_user" name="input_agent_user">
-                    {html_options options=$LISTA_AGENTES selected=$ID_AGENT}
-                </select>
                 <select align="center" id="input_extension_callback" name="input_extension_callback">
                     {html_options options=$LISTA_EXTENSIONES_CALLBACK selected=$ID_EXTENSION_CALLBACK}
                 </select>
           </td>
         </tr>
-        <tr>
-          <td width="40%">
-              <div align="right" id="label_extension">{$EXTENSION}:</div>
-              <div align="right" id="label_password_callback">{$PASSWORD}:</div>
-          </td>
-          <td width="60%">
-                <select align="center" name="input_extension" id="input_extension">
+        {* Campos ocultos: agent, extension, password, callback flag *}
+        <tr style="display:none;">
+          <td colspan="2">
+                <select id="input_agent_user" name="input_agent_user">
+                    {html_options options=$LISTA_AGENTES selected=$ID_AGENT}
+                </select>
+                <select name="input_extension" id="input_extension">
                     {html_options options=$LISTA_EXTENSIONES selected=$ID_EXTENSION}
                 </select>
-		<input type="password" name="input_password_callback" id="input_password_callback">
+                <input type="password" name="input_agent_password" id="input_agent_password" value="">
           </td>
         </tr>
-        <tr id="row_agent_password">
-          <td width="40%">
-              <div align="right" id="label_agent_password">{$PASSWORD}:</div>
-          </td>
-          <td width="60%">
-                <input type="password" name="input_agent_password" id="input_agent_password">
-          </td>
-        </tr>
-<!-- Begin: CallbackLogin checkbox -->
-	<tr id='callbackcheck'>
-          <td width="40%">
-              <div align="center">{$CALLBACK_LOGIN}:</div>
-          </td>
-          <td width="60%">               
-	      <input type="checkbox" name="input_callback" id="input_callback">
-          </td>
-        </tr>
-<!-- End: CallbackLogin checkbox -->
+        {* Hidden fields for callback mode auto-login *}
+        <input type="hidden" name="input_password_callback" id="input_password_callback" value="{$CALLBACK_PASSWORD}">
+        <input type="hidden" name="input_callback" id="input_callback" value="checked">
+        <input type=hidden name=onlycallback id=onlycallback value="1">
         <tr>
           <td colspan="2" align="center">
             <input type="button" id="submit_agent_login" name="submit_agent_login" value="{$LABEL_SUBMIT}" class="button" />
@@ -119,8 +102,6 @@
     </td>
   </tr>
 </table>
-
-<input type=hidden name=onlycallback id=onlycallback value="{$ONLY_CALLBACK}">
 
 </form>
 

@@ -114,32 +114,10 @@ $(document).ready(function() {
     $('#issabel-callcenter-info-message').hide();
     $('#issabel-callcenter-agendar-llamada-error-message').hide();
 
-    if($('#onlycallback').val()==0) {
-        $('#label_extension_callback').hide();
-        $('#input_extension_callback').hide();
-        $('#label_password_callback').hide();
-        $('#input_password_callback').hide();
-        // Show agent password field for Agent login mode
-        $('#row_agent_password').show();
-    } else {
-        $('#input_callback').prop('checked', true);
-
-	$('#input_extension').hide();
-	$('#input_agent_user').hide();
-	$('#label_extension').hide();
-	$('#label_agent_user').hide();
-	$('#callbackcheck').hide();
-	// Hide agent password field for callback mode
-	$('#row_agent_password').hide();
-    }
-
-    // Allow Enter key to submit login from password fields
-    $('#input_agent_password, #input_password_callback').keypress(function(e) {
-        if (e.which == 13) {
-            e.preventDefault();
-            do_login();
-        }
-    });
+    // Callback-only mode: always force callback login
+    // Callback checkbox is hidden and force-checked, password is auto-filled from DB
+    $('#input_callback').prop('checked', true);
+    $('#onlycallback').val('1');
 
     // Prevent form submission on Enter in transfer field, trigger transfer instead
     $('#transfer_extension').keypress(function(e) {
@@ -278,35 +256,7 @@ $(document).ready(function() {
     	$('#schedule_date').show();
     });
 
-    $('#input_callback').click(function() {
-		var $this = $(this);
-		// $this will contain a reference to the checkbox
-		if ($this.is(':checked')) {
-		    $('#input_extension').hide();
-		    $('#input_agent_user').hide();
-		    $('#label_extension').hide();
-		    $('#label_agent_user').hide();
-		    $('#row_agent_password').hide();
-
-		    $('#label_extension_callback').show();
-		    $('#input_extension_callback').show();
-		    $('#label_password_callback').show();
-		    $('#input_password_callback').show();
-
-		} else {
-		    $('#input_extension').show();
-		    $('#input_agent_user').show();
-		    $('#label_extension').show();
-		    $('#label_agent_user').show();
-		    $('#row_agent_password').show();
-
-		    $('#label_extension_callback').hide();
-		    $('#input_extension_callback').hide();
-		    $('#label_password_callback').hide();
-		    $('#input_password_callback').hide();
-		}
     });
-});
 
 $(window).unload(function() {
 	if (evtSource != null) {
@@ -547,7 +497,7 @@ function do_login()
         ext_callback: 	$('#input_extension_callback').val(),
         pass_callback: 	$('#input_password_callback').val(),
         pass_agent:	$('#input_agent_password').val(),
-        callback:	$('#input_callback').is(':checked')
+        callback:	'true'
 	},
 	function(respuesta) {
 		verificar_error_session(respuesta);
