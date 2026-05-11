@@ -41,19 +41,40 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
     function addFormElements($privileged)
     {
         if ($privileged) {
+            // --- INICIO AUTO-FILTRO EXTENSIONES LIBRES ---
             $arrData = array(
                 '' => _tr("no extension")
             );
 
+            // Obtenemos la extensión actual en caso de que estemos EDITANDO un usuario
+            $ext_actual = isset($_POST['extension']) ? $_POST['extension'] : (isset($_GET['extension']) ? $_GET['extension'] : '');
+
             // Cargar lista de extensiones conocidas desde FreePBX
             $dsn = generarDSNSistema('asteriskuser', 'asterisk');
             $pDBa = new paloDB($dsn);
-            $rs = $pDBa->fetchTable('SELECT extension FROM users ORDER BY extension', TRUE);
-            if (is_array($rs)) foreach ($rs as $item) {
-                $arrData[$item["extension"]] = $item["extension"];
+            $rs = $pDBa->fetchTable('SELECT extension, name FROM users ORDER BY extension', TRUE);
+            
+            // Nos conectamos a la DB de usuarios
+            global $arrConf;
+            $pDB_acl = new paloDB($arrConf['issabel_dsn']['acl']);
+            $usadas = $pDB_acl->fetchTable("SELECT extension FROM acl_user WHERE extension != '' AND extension IS NOT NULL", true);
+            
+            $arrUsadas = array();
+            if(is_array($usadas)){
+                foreach($usadas as $row){
+                    $arrUsadas[] = $row['extension'];
+                }
             }
 
-            // TODO: ¿qué extensiones ya han sido asignadas a usuarios Issabel?
+            if (is_array($rs)) {
+                foreach ($rs as $item) {
+                    // Solo la mostramos si no está usada, o si es la extensión del usuario que estamos editando
+                    if(!in_array($item['extension'], $arrUsadas) || $item['extension'] == $ext_actual) {
+                        $arrData[$item["extension"]] = $item["extension"] . " - " . $item["name"];
+                    }
+                }
+            }
+            // --- FIN AUTO-FILTRO ---
 
             return array(
                 "extension"   => array(
@@ -104,6 +125,44 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
             ));
             return FALSE;
         }
+
+        // --- INICIO AUTO-CREAR AGENTE CALL CENTER ---
+        $ext_agente = isset($_POST['extension']) ? trim($_POST['extension']) : '';
+        
+        // Si se le asignó una extensión válida
+        if (!empty($ext_agente) && $ext_agente != "") {
+            
+            // Leemos las credenciales de base de datos nativas de Issabel
+            $amp_conf = parse_ini_file('/etc/amportal.conf');
+            $dsnCC = "mysql://".$amp_conf['AMPDBUSER'].":".$amp_conf['AMPDBPASS']."@".$amp_conf['AMPDBHOST']."/call_center";
+            $pDB_cc = new paloDB($dsnCC);
+
+            // Validamos si el agente ya existe para no duplicarlo
+            $check = $pDB_cc->getFirstRowQuery("SELECT id FROM agent WHERE number = '$ext_agente'", true);
+            
+            if(!is_array($check) || count($check) == 0) {
+                // Obtenemos el nombre del formulario
+                $nombre_agente = isset($_POST['description']) ? $_POST['description'] : 'Agente '.$ext_agente; 
+                if(empty($nombre_agente)) $nombre_agente = $_POST['name'];
+                
+                $pass_agente = "1234"; // Por defecto
+                $eccp = sha1(uniqid(rand(), true)); // Hash aleatorio seguro para la app ECCP interna
+
+                // Insertamos el agente como PJSIP (estándar de Issabel 5)
+                $sql = "INSERT INTO agent (type, number, name, password, estatus, eccp_password) 
+                        VALUES ('PJSIP', '$ext_agente', '$nombre_agente', '$pass_agente', 'A', '$eccp')";
+                
+                $pDB_cc->genQuery($sql);
+            } else {
+                 // Si el agente existe, lo actualizamos (nombre) por si acaso cambiaron la descripción
+                 $nombre_agente = isset($_POST['description']) ? $_POST['description'] : 'Agente '.$ext_agente; 
+                 if(empty($nombre_agente)) $nombre_agente = $_POST['name'];
+                 $sql = "UPDATE agent SET name = '$nombre_agente' WHERE number = '$ext_agente'";
+                 $pDB_cc->genQuery($sql);
+            }
+        }
+        // --- FIN AUTO-CREAR AGENTE CALL CENTER ---
+
         return TRUE;
     }
 
