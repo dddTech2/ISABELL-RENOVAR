@@ -145,17 +145,20 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
                 file_put_contents($debug_file, date('Y-m-d H:i:s') . " - Error conectando a call_center: " . $pDB_cc->errMsg . "\n", FILE_APPEND);
             } else {
                 file_put_contents($debug_file, date('Y-m-d H:i:s') . " - Conectado OK a call_center. DSN: $dsnCC\n", FILE_APPEND);
-                // Escapamos valores para seguridad SQL
-                $ext_safe = $pDB_cc->dbc->quoteSmart($ext_agente);
+                
+                // Escapamos valores - la propiedad es conn (PDO), no dbc
+                $ext_safe = $pDB_cc->conn->quote($ext_agente);
+                file_put_contents($debug_file, date('Y-m-d H:i:s') . " - ext_safe: $ext_safe\n", FILE_APPEND);
                 
                 // Validamos si el agente ya existe para no duplicarlo
                 $check = $pDB_cc->getFirstRowQuery("SELECT id FROM agent WHERE number = $ext_safe", true);
+                file_put_contents($debug_file, date('Y-m-d H:i:s') . " - check result: " . print_r($check, true) . "\n", FILE_APPEND);
                 
                 // Obtenemos el nombre del formulario
                 $nombre_agente = isset($_POST['description']) && !empty($_POST['description']) 
                     ? $_POST['description'] 
                     : (isset($_POST['name']) ? $_POST['name'] : 'Agente '.$ext_agente);
-                $nombre_safe = $pDB_cc->dbc->quoteSmart($nombre_agente);
+                $nombre_safe = $pDB_cc->conn->quote($nombre_agente);
                 
                 if(!is_array($check) || count($check) == 0) {
                     $pass_agente = "1234";
