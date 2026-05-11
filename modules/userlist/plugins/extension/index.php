@@ -116,6 +116,9 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
 
     function runPostCreateUser($smarty, $username, $id_user)
     {
+        // LOG TEMPORAL PARA DEBUG
+        error_log("USERLIST-PLUGIN: Ejecutando runPostCreateUser para usuario '$username'. POST data: " . json_encode($_POST));
+
         $r = $this->_pACL->setUserExtension($username,
             (trim($_POST['extension']) == '') ? NULL : trim($_POST['extension']));
         if (!$r) {
