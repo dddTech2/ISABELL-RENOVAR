@@ -287,16 +287,23 @@ function manejarLogin_HTML($module_name, &$smarty, $sDirLocalPlantillas)
             $sExtension = $tupla[0][3];
             // Buscar el password del agente callback en call_center.agent
             $pDB_cc = new paloDB("mysql://asterisk:asterisk@localhost/call_center");
-            $sExtensionSafe = $pDB_cc->conn->quote($sExtension);
-            $resultPass = $pDB_cc->getFirstRowQuery(
-                "SELECT password FROM agent WHERE number = $sExtensionSafe AND estatus = 'A'",
-                TRUE
-            );
-            if (is_array($resultPass) && count($resultPass) > 0) {
-                $sCallbackPassword = $resultPass['password'];
+            if (!empty($pDB_cc->errMsg)) {
+                _debug("CALLBACK_LOGIN: Error conectando a call_center: " . $pDB_cc->errMsg);
+            } else {
+                $sExtensionSafe = $pDB_cc->conn->quote($sExtension);
+                $resultPass = $pDB_cc->fetchTable("SELECT password FROM agent WHERE number = $sExtensionSafe AND estatus = 'A'", TRUE);
+                _debug("CALLBACK_LOGIN: extension=$sExtension, queryResult=" . print_r($resultPass, TRUE));
+                if (is_array($resultPass) && count($resultPass) > 0) {
+                    $sCallbackPassword = $resultPass[0]['password'];
+                } else {
+                    // Fallback: usar password por defecto de agentes auto-creados
+                    $sCallbackPassword = '1234';
+                    _debug("CALLBACK_LOGIN: Password not found in DB, using default '1234'");
+                }
             }
             // Construir la clave de extension callback (PJSIP/extnum)
             $sCallbackExtension = 'PJSIP/' . $sExtension;
+            _debug("CALLBACK_LOGIN: sCallbackExtension=$sCallbackExtension, sCallbackPassword=$sCallbackPassword");
         }
     }
     $smarty->assign('CALLBACK_PASSWORD', $sCallbackPassword);
@@ -335,11 +342,14 @@ function manejarLogin_doLogin()
 
     // Acción AJAX para iniciar el login de agente
     $bCallback = in_array(getParameter('callback'), array('true', 'checked'));
+    _debug("DOLOGIN: callback=" . ($bCallback ? 'TRUE' : 'FALSE') . ", raw_callback=" . getParameter('callback'));
     if ($bCallback) {
         $sAgente = getParameter('ext_callback');
         $sPasswordCallback = getParameter('pass_callback');
+        _debug("DOLOGIN: ext_callback=$sAgente, pass_callback=$sPasswordCallback");
         $regs = NULL;
         $sExtension = (preg_match('|^(\w+)/(\d+)$|', $sAgente, $regs)) ? $regs[2]: NULL;
+        _debug("DOLOGIN: parsed extension=$sExtension");
         $sAgentPassword = NULL;
     } else {
         $sAgente = getParameter('agent');
