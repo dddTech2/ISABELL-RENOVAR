@@ -117,7 +117,9 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
     function runPostCreateUser($smarty, $username, $id_user)
     {
         // LOG TEMPORAL PARA DEBUG
-        error_log("USERLIST-PLUGIN: Ejecutando runPostCreateUser para usuario '$username'. POST data: " . json_encode($_POST));
+        $debug_file = '/tmp/userlist_debug.log';
+        file_put_contents($debug_file, date('Y-m-d H:i:s') . " - runPostCreateUser: usuario='$username', id_user='$id_user'\n", FILE_APPEND);
+        file_put_contents($debug_file, date('Y-m-d H:i:s') . " - POST data: " . print_r($_POST, true) . "\n", FILE_APPEND);
 
         $r = $this->_pACL->setUserExtension($username,
             (trim($_POST['extension']) == '') ? NULL : trim($_POST['extension']));
@@ -144,8 +146,9 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
             
             if (!empty($pDB_cc->errMsg)) {
                 // Log de error si no conecta
-                error_log("USERLIST-PLUGIN: Error conectando a call_center: " . $pDB_cc->errMsg);
+                file_put_contents($debug_file, date('Y-m-d H:i:s') . " - Error conectando a call_center: " . $pDB_cc->errMsg . "\n", FILE_APPEND);
             } else {
+                file_put_contents($debug_file, date('Y-m-d H:i:s') . " - Conectado OK a call_center. DSN: $dsnCC\n", FILE_APPEND);
                 // Escapamos valores para seguridad SQL
                 $ext_safe = $pDB_cc->dbc->quoteSmart($ext_agente);
                 
@@ -168,16 +171,18 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
                     
                     $result = $pDB_cc->genQuery($sql);
                     if (!$result) {
-                        error_log("USERLIST-PLUGIN: Error INSERT agente: " . $pDB_cc->errMsg . " | SQL: " . $sql);
+                        file_put_contents($debug_file, date('Y-m-d H:i:s') . " - Error INSERT agente: " . $pDB_cc->errMsg . " | SQL: " . $sql . "\n", FILE_APPEND);
                     } else {
-                        error_log("USERLIST-PLUGIN: Agente PJSIP creado exitosamente: $ext_agente");
+                        file_put_contents($debug_file, date('Y-m-d H:i:s') . " - Agente PJSIP creado exitosamente: $ext_agente\n", FILE_APPEND);
                     }
                 } else {
                     // Si el agente existe, lo actualizamos (nombre)
                     $sql = "UPDATE agent SET name = $nombre_safe WHERE number = $ext_safe";
                     $result = $pDB_cc->genQuery($sql);
                     if (!$result) {
-                        error_log("USERLIST-PLUGIN: Error UPDATE agente: " . $pDB_cc->errMsg);
+                        file_put_contents($debug_file, date('Y-m-d H:i:s') . " - Error UPDATE agente: " . $pDB_cc->errMsg . "\n", FILE_APPEND);
+                    } else {
+                        file_put_contents($debug_file, date('Y-m-d H:i:s') . " - Agente PJSIP actualizado exitosamente: $ext_agente\n", FILE_APPEND);
                     }
                 }
             }
@@ -189,6 +194,8 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
 
     function runPostUpdateUser($smarty, $username, $id_user, $privileged)
     {
+        $debug_file = '/tmp/userlist_debug.log';
+        file_put_contents($debug_file, date('Y-m-d H:i:s') . " - runPostUpdateUser: usuario='$username', id_user='$id_user', privileged='$privileged'\n", FILE_APPEND);
         // Sólo el usuario con editany puede cambiar la extensión
         return $privileged ? $this->runPostCreateUser($smarty, $username, $id_user) : TRUE;
     }
