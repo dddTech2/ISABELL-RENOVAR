@@ -1,0 +1,14 @@
+# Ignorar caché de plantillas Smarty (MUY IMPORTANTE)
+templates_c/*
+
+# Ignorar otras carpetas de caché y variables
+cache/*
+var/*
+captures/*
+
+# Ignorar módulos de terceros o carpetas independientes que ya tengan su propio repo
+# (Por ejemplo, en tu imagen se ve Browser-Phone que parece un proyecto aparte)
+fop2/
+
+# Ignorar archivos de sistema o de log si los hay
+*.log

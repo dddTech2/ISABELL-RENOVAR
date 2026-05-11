@@ -1,0 +1,514 @@
+# This file is part of IssabelPBX.
+#
+#    IssabelPBX is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    IssabelPBX is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with IssabelPBX.  If not, see <http://www.gnu.org/licenses/>.
+#
+#  Copyright 2023 Issabel Foundation
+#
+
+msgid ""
+msgstr ""
+"Project-Id-Version: IssabelPBX - Spanish translation\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: es_ES\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "10 Minutes"
+msgstr "10 minutos"
+
+msgid "<b>.</b> = wildcard, matches one or more characters<br>"
+msgstr "<b>.</b> = comodín, coincide con uno o más caracteres<br>"
+
+msgid "<b>N</b> = matches any digit from 2-9<br>"
+msgstr "<b>N</b> = coincide con cualquier dígito del 2 al 9<br>"
+
+msgid "<b>X</b> = matches any digit from 0-9<br>"
+msgstr "<b>X</b> = coincide con cualquier dígito del 0 al 9<br>"
+
+msgid "<b>Z</b> = matches any digit from 1-9<br>"
+msgstr "<b>Z</b> = coincide con cualquier dígito del 1 al 9<br>"
+
+msgid ""
+"<b>[1237-9]</b> = matches any digit or letter in the brackets<br>(in this "
+"example, 1,2,3,7,8,9)<br>"
+msgstr "<b>[1237-9]</b> = coincide con cualquier dígito o letra entre corchetes<br>(en este ejemplo, 1,2,3,7,8,9)<br>"
+
+msgid ""
+"<b>_!2XXN, _562., _.0075</b> = Search for any match <b>except</b> for these "
+"numbers"
+msgstr "<b>_!2XXN, _562., _.0075</b> = Buscar cualquier coincidencia <b>excepto</b> para estos números"
+
+msgid "<b>_2XXN, _562., _.0075</b> = search for any match of these numbers<br>"
+msgstr "<b>_2XXN, _562., _.0075</b> = buscar cualquier coincidencia de estos números<br>"
+
+msgid "<br>Asterisk pattern matching<br>"
+msgstr "<br>coincidencia de patrones de Asterisk<br>"
+
+msgid "AMA"
+msgstr ""
+
+msgid "AMA Flag"
+msgstr ""
+
+msgid "ANI"
+msgstr ""
+
+msgid "Account"
+msgstr "Cuenta"
+
+msgid "Account Code"
+msgstr "Código de cuenta"
+
+msgid "Account Information"
+msgstr "Información de cuenta"
+
+#: install.php:50
+msgid "Added field did to cdr"
+msgstr ""
+
+#: install.php:66
+msgid "Added field recordingfile to cdr"
+msgstr ""
+
+#: install.php:43
+msgid "Adding did field to cdr"
+msgstr ""
+
+#: install.php:59
+msgid "Adding recordingfile field to cdr"
+msgstr ""
+
+msgid "All Dispositions"
+msgstr "Todas las disposiciones"
+
+msgid "And"
+msgstr "y"
+
+msgid "Answered"
+msgstr "Atendidas"
+
+msgid "App"
+msgstr "Apl."
+
+msgid "Application"
+msgstr ""
+
+msgid "April"
+msgstr ""
+
+msgid "August"
+msgstr ""
+
+msgid "Average Call Time"
+msgstr "Promedio duración de llamada"
+
+msgid "Begins With"
+msgstr "Empieza con"
+
+msgid "Between"
+msgstr "Entre"
+
+msgid "Billing Duration"
+msgstr ""
+
+msgid "Busy"
+msgstr "Ocupadas"
+
+#: cdr.i18n.php:16
+msgid "CDR Report Module"
+msgstr "Módulo de Reportes CDR"
+
+msgid "CDR Reports"
+msgstr "Reportes CDR"
+
+msgid "CDR search"
+msgstr "Búsqueda CDR"
+
+msgid "CNAM"
+msgstr ""
+
+msgid "CNUM"
+msgstr ""
+
+msgid "CSV file"
+msgstr "Archivo CSV"
+
+#: cdr.i18n.php:8
+msgid "Call Data Record report tools for viewing reports of your calls"
+msgstr ""
+
+msgid "Call Date"
+msgstr "Fecha"
+
+msgid "Call Detail Record - Call Graph by"
+msgstr "Registro detallado de llamadas - Gráfica de llamadas por"
+
+msgid "Call Detail Record - Concurrent Calls by"
+msgstr "Registro detallado de llamadas - Llamadas concurrentes por"
+
+msgid "Call Detail Record Search"
+msgstr "Búsqueda de registros de llamada"
+
+msgid "Call Event Log - Search Returned"
+msgstr ""
+
+msgid "Call Graph"
+msgstr "Gráfica"
+
+msgid "Caller ID Name"
+msgstr ""
+
+msgid "Caller ID Number"
+msgstr ""
+
+msgid "CallerID"
+msgstr ""
+
+msgid "CallerID Name"
+msgstr "Nombre CallerID"
+
+msgid "CallerID Number"
+msgstr "Nro CallerID"
+
+msgid "Calls"
+msgstr "llamadas"
+
+msgid "Channel"
+msgstr ""
+
+#: install.php:39
+msgid "Checking if field did is present in cdr table.."
+msgstr ""
+
+#: install.php:55
+msgid "Checking if field recordingfile is present in cdr table.."
+msgstr ""
+
+msgid "Concurrent Calls"
+msgstr ""
+
+msgid "Contains"
+msgstr "Contiene"
+
+msgid "DID"
+msgstr ""
+
+msgid "Date/Time"
+msgstr "Fecha/Hora"
+
+msgid "Day"
+msgstr "Día"
+
+msgid "Day of week"
+msgstr "Día de semana"
+
+msgid "December"
+msgstr ""
+
+msgid "Destination"
+msgstr "Destino"
+
+msgid "Destination Caller ID Name"
+msgstr "Nombre CallerID destino"
+
+msgid "Destination CallerID Name"
+msgstr "Nombre CallerID destino"
+
+msgid "Destination Context"
+msgstr ""
+
+msgid "Destination Number"
+msgstr ""
+
+msgid "Dialplan context"
+msgstr ""
+
+msgid "Dialplan exten"
+msgstr ""
+
+msgid "Disposition"
+msgstr "Disposición"
+
+msgid "Duration"
+msgstr "Duración"
+
+#: cdr.i18n.php:14
+msgid "Enable CEL Reporting"
+msgstr "Habilitar Reportes CEL"
+
+msgid "Ends With"
+msgstr "Termina con"
+
+msgid "Event"
+msgstr "Evento"
+
+msgid "Event Extra"
+msgstr "Evento Extra"
+
+msgid "EventExtra"
+msgstr "EventoExtra"
+
+msgid "Events"
+msgstr ""
+
+msgid "Exactly"
+msgstr "Exacto"
+
+msgid "Extra options"
+msgstr "Opciones extra"
+
+msgid "Failed"
+msgstr "Fallidas"
+
+msgid "February"
+msgstr ""
+
+msgid "From"
+msgstr ""
+
+msgid "Go to the CDR Graph"
+msgstr "Ir al gráfico CDR"
+
+msgid "Go to the top of the CDR table"
+msgstr "Ir al inicio de la tabla CDR"
+
+msgid "Group By"
+msgstr "Agrupar por"
+
+msgid "Hour"
+msgstr "Hora"
+
+msgid "Hour of day"
+msgstr "Hora del día"
+
+msgid "January"
+msgstr ""
+
+msgid "July"
+msgstr ""
+
+msgid "June"
+msgstr ""
+
+msgid "March"
+msgstr ""
+
+msgid "Max Calls"
+msgstr "Llamadas máximas"
+
+msgid "May"
+msgstr ""
+
+msgid "Minute"
+msgstr ""
+
+msgid "Month"
+msgstr ""
+
+msgid "Newest First"
+msgstr "Más nuevo primero"
+
+msgid "No Answer"
+msgstr "No Atendidas"
+
+msgid "Not"
+msgstr "No"
+
+msgid "November"
+msgstr ""
+
+#: install.php:134
+msgid "OK"
+msgstr ""
+
+msgid "October"
+msgstr ""
+
+msgid "Oldest First"
+msgstr "Más antiguo primero"
+
+msgid "Order By"
+msgstr "Ordenar por"
+
+msgid "Outbound Caller ID Name"
+msgstr ""
+
+msgid "Outbound Caller ID Number"
+msgstr ""
+
+msgid "Outbound CallerID"
+msgstr "CallerID saliente"
+
+msgid "Outbound CallerID Number"
+msgstr "Nro CallerID saliente"
+
+msgid "Recording"
+msgstr "Grabación"
+
+msgid "Related Call Detail Records"
+msgstr "Registros detallados de llamadas relacionados"
+
+msgid "Report type"
+msgstr "Tipo de reporte"
+
+msgid "Reports"
+msgstr ""
+
+msgid "Result limit"
+msgstr "Limite de resultados"
+
+msgid "Search"
+msgstr "Buscar"
+
+msgid "Search conditions"
+msgstr "Condiciones de búsqueda"
+
+msgid "Search for a DID."
+msgstr "Buscar por un DID."
+
+msgid "Search for accountcode."
+msgstr "Buscar por código de cuenta"
+
+msgid ""
+"Search for calls based on CallerID Number. You can enter multiple numbers "
+"separated by a comma. This field support Asterisk regular expression. "
+"Example<br>"
+msgstr "Busque llamadas según el número de identificación de llamadas. Puede ingresar varios números separados por una coma. Este campo admite la expresión regular de Asterisk. Ejemplo<br>"
+
+msgid ""
+"Search for calls based on outbound CID used. You can enter multiple numbers "
+"separated by a comma. This field support Asterisk regular expression. "
+"Example<br>"
+msgstr "Busque llamadas según el número de identificación de llamadas saliente. Puede ingresar varios números separados por una coma. Este campo admite la expresión regular de Asterisk. Ejemplo"
+
+msgid ""
+"Search for calls that matches either ANSWERED, BUSY, FAILED or NO ANSWER."
+msgstr "Buscar llamadas por su disposición, ya sea atendida, ocupado, fallida o no atendida."
+
+msgid "Search for calls that matches the call length specified."
+msgstr "Buscar llamadas por su duración."
+
+msgid ""
+"Search for destination calls. You can enter multiple sources separated by a "
+"comma. This field support Asterisk regular expression. Example<br>"
+msgstr "Busque llamadas según el número de destino. Puede ingresar varios números separados por una coma. Este campo admite la expresión regular de Asterisk. Ejemplo"
+
+msgid "Search for userfield data (if enabled)."
+msgstr "Buscar por campo de usuario (si estuviera habilitado)."
+
+msgid "Seconds"
+msgstr "segundos"
+
+msgid "Select CallerID Name to search for."
+msgstr "Seleccione el nombre de CallerID a buscar."
+
+msgid "Select Destination Caller Name to search for."
+msgstr "Seleccione el nombre de CallerID de destino a buscar."
+
+msgid ""
+"Select time span for your report. You can select Date, Month, Year, Hour and "
+"Minute to narrow your search"
+msgstr "Seleccione el período de tiempo para su informe. Puede seleccionar Fecha, Mes, Año, Hora y Minuto para acotar su búsqueda"
+
+msgid "September"
+msgstr ""
+
+#: cdr.i18n.php:18
+msgid ""
+"Setting this true will enable the CDR module to drill down on CEL data for "
+"each CDR. Although the CDR module will assure there is a CEL table "
+"available, the reporting functionality in Asterisk and associated ODBC "
+"database and CEL configuration must be done outside of IssabelPBX either by the "
+"user or at the Distro level."
+msgstr "Establecer esto en verdadero permitirá que el módulo CDR profundice en los datos CEL para cada CDR. Aunque el módulo CDR asegurará que haya una tabla CEL disponible, la funcionalidad de informes en Asterisk y la base de datos ODBC asociada y la configuración CEL deben realizarse fuera de IssabelPBX ya sea por el usuario o en el nivel de distribución."
+
+msgid "System"
+msgstr ""
+
+msgid "Tech info"
+msgstr ""
+
+msgid "Telephone Number"
+msgstr ""
+
+#: install.php:44
+msgid "This might take a while......"
+msgstr ""
+
+msgid "Time"
+msgstr "Hora"
+
+msgid "To"
+msgstr ""
+
+msgid "Total Calls"
+msgstr "Total de llamadas"
+
+msgid "Total Duration"
+msgstr "Duración total"
+
+#: install.php:63
+msgid "Unable to add recordingfile field to cdr table"
+msgstr ""
+
+msgid "UniqueID"
+msgstr ""
+
+msgid "User Field"
+msgstr "Campo de usuario"
+
+msgid "UserDefType"
+msgstr "TipoDefUsuario"
+
+msgid "Userfield"
+msgstr "Campo de usuario"
+
+msgid "Week ( Sun-Sat )"
+msgstr ""
+
+msgid "channel"
+msgstr "Canal"
+
+msgid "context"
+msgstr "Contexto"
+
+#: install.php:52
+msgid "did field already present."
+msgstr ""
+
+msgid "exten"
+msgstr "Extensión"
+
+#: install.php:69
+msgid "recordingfile field already present."
+msgstr ""
+
+msgid "Apply"
+msgstr "Aplicar"
+
+msgid "Sort direction"
+msgstr "Dirección de orden"
+
+msgid "Group by"
+msgstr "Agrupar por"
+
+msgid "Call Event Log - Search returned %s events"
+msgstr "Registro de eventos de llamada - La búsqueda arrojó %s eventos"
+
+msgid "Call Detail Record - Search returned %s calls"
+msgstr "Registro detallado de llamadas - La búsqueda arrojó %s llamadas"
+
+msgid "Search for calls based on CallerID Number. You can enter multiple numbers separated by a comma. This field support Asterisk regular expression. Example<br><b>_2XXN, _562., _.0075</b> = search for any match of these numbers<br><b>_!2XXN, _562., _.0075</b> = Search for any match <b>except</b> for these numbers<br>Asterisk pattern matching<br><b>X</b> = matches any digit from 0-9<br><b>Z</b> = matches any digit from 1-9<br><b>N</b> = matches any digit from 2-9<br><b>[1237-9]</b> = matches any digit or letter in the brackets<br>(in this example, 1,2,3,7,8,9)<br><b>.</b> = wildcard, matches one or more characters<br>"
+msgstr "hola"

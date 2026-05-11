@@ -1,0 +1,205 @@
+{
+    "Argentina": {
+        "tollfreelength":      "11",
+        "locallength":         "8",
+        "nationallength":      "11",
+        "tollfreeprefix":      "0800",
+        "internationalprefix": "00",
+        "options_emergency": [
+            {"value": "911"},
+            {"value": "100"},
+            {"value": "101"},
+            {"value": "103"},
+            {"value": "105"},
+            {"value": "106"},
+            {"value": "107"}
+        ],
+        "options_tollfree": [
+            {"value": "0800"},
+            {"value": "0810"}
+        ],
+        "options_nationalprefix": [
+            {"value": "011"},
+            {"value": "02"},
+            {"value": "03"}
+        ],
+        "options_mobileprefix": [
+            {"value": "15"}
+        ]
+    },
+    "Canada": {
+        "tollfreelength":      "10",
+        "locallength":         "7",
+        "nationallength":      "11",
+        "tollfreeprefix":      "800",
+        "internationalprefix": "1",
+        "options_emergency": [
+            {"value": "911"}
+        ],
+        "options_tollfree": [
+            {"value": "800"}
+        ],
+        "options_nationalprefix": [
+            {"value": "1"}
+        ],
+        "options_mobileprefix": [
+            {"value": "204"},
+            {"value": "226"},
+            {"value": "236"},
+            {"value": "249"},
+            {"value": "250"},
+            {"value": "263"},
+            {"value": "289"},
+            {"value": "306"},
+            {"value": "343"},
+            {"value": "354"},
+            {"value": "365"},
+            {"value": "367"},
+            {"value": "368"},
+            {"value": "403"},
+            {"value": "416"},
+            {"value": "418"},
+            {"value": "428"},
+            {"value": "431"},
+            {"value": "437"},
+            {"value": "438"},
+            {"value": "450"},
+            {"value": "468"},
+            {"value": "474"},
+            {"value": "506"},
+            {"value": "514"},
+            {"value": "519"},
+            {"value": "548"},
+            {"value": "579"},
+            {"value": "581"},
+            {"value": "584"},
+            {"value": "587"},
+            {"value": "604"},
+            {"value": "613"},
+            {"value": "639"},
+            {"value": "647"},
+            {"value": "672"},
+            {"value": "683"},
+            {"value": "705"},
+            {"value": "709"},
+            {"value": "742"},
+            {"value": "753"},
+            {"value": "778"},
+            {"value": "780"},
+            {"value": "782"},
+            {"value": "807"},
+            {"value": "819"},
+            {"value": "825"},
+            {"value": "867"},
+            {"value": "873"},
+            {"value": "879"},
+            {"value": "902"},
+            {"value": "905"}
+        ]
+    },
+    "United States": {
+        "tollfreelength":      "11",
+        "locallength":         "7",
+        "nationallength":      "9",
+        "internationalprefix": "011",
+        "options_emergency": [
+            {"value": "911"}
+        ],
+        "options_tollfree": [
+            {"value": "1800"},
+            {"value": "1833"},
+            {"value": "1844"},
+            {"value": "1855"},
+            {"value": "1866"},
+            {"value": "1877"},
+            {"value": "1888"}
+        ],
+        "options_nationalprefix": [
+            {"value": "1"}
+        ],
+        "options_mobileprefix": [
+            {"value": ""}
+        ]
+    },
+    "Colombia": {
+        "tollfreelength":      "11",
+        "locallength":         "7",
+        "nationallength":      "9",
+        "internationalprefix": "00",
+        "options_emergency": [
+            {"value": "123"},
+            {"value": "112"},
+            {"value": "119"},
+            {"value": "132"}
+        ],
+        "options_tollfree": [
+            {"value": "01800"}
+        ],
+        "options_nationalprefix": [
+            {"value": "05"},
+            {"value": "07"},
+            {"value": "09"},
+            {"value": "0456"},
+            {"value": "0444"},
+            {"value": "0414"}
+        ],
+        "options_mobileprefix": [
+            {"value": "03"}
+        ]
+    },
+    "Ukraine": {
+        "tollfreelength":      "10",
+        "locallength":         "7",
+        "nationallength":      "10",
+        "tollfreeprefix":      "38",
+        "internationalprefix": "044",
+        "options_emergency": [
+            {"value": "112"},
+            {"value": "911"}
+
+        ],
+        "options_tollfree": [
+            {"value": "0800"}
+        ],
+        "options_nationalprefix": [
+            {"value": "38"}
+        ],
+        "options_mobileprefix": [
+            {"value": "063"},
+            {"value": "073"},
+            {"value": "093"},
+            {"value": "067"},
+            {"value": "068"},
+            {"value": "096"},
+            {"value": "097"},
+            {"value": "098"},
+            {"value": "050"},
+            {"value": "066"},
+            {"value": "095"},
+            {"value": "099"}
+        ]
+    },
+    "Mexico":  {
+        "tollfreelength":      "11",
+        "locallength":         "7",
+        "nationallength":      "9",
+        "internationalprefix": "02",
+        "options_emergency": [
+            {"value": "060"},
+            {"value": "065"},
+            {"value": "066"},
+            {"value": "080"},
+            {"value": "911"}
+        ],
+        "options_tollfree": [
+            {"value": "01800"}
+        ],
+        "options_nationalprefix": [
+            {"value": "01"}
+        ],
+        "options_mobileprefix": [
+            {"value": "044"},
+            {"value": "045"}
+        ]
+    }
+}

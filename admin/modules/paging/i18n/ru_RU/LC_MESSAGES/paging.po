@@ -1,0 +1,157 @@
+# FIRST AUTHOR <ceo@postmet.com>, 2008.
+#
+# fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.3\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-09-23 09:52+0000\n"
+"PO-Revision-Date: 2008-12-06 16:38+0100\n"
+"Last-Translator: Alexander Kozyrev <ceo@postmet.com>\n"
+"Language-Team: Russian <faq@postmet.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Page Group: "
+msgstr "Группа страниц:"
+
+msgid "Exclude"
+msgstr "Исключить"
+
+msgid "Include"
+msgstr "Включить"
+
+msgid "Default Group Inclusion"
+msgstr "Включение группы по умолчанию"
+
+msgid "Default Page Group"
+msgstr "Группа страниц по умолчанию"
+
+msgid "You can include or exclude this extension/device from being part of the default page group when creating or editing."
+msgstr "Вы можете включить или исключить это расширение/устройство из группы страниц по умолчанию при создании или редактировании."
+
+msgid "Intercom prefix"
+msgstr "Префикс интеркома"
+
+msgid "User Intercom Allow"
+msgstr "Разрешить интерком пользователю"
+
+msgid "User Intercom Disallow"
+msgstr "Запретить интерком пользователю"
+
+msgid "Disabled"
+msgstr "Отключено"
+
+msgid ""
+"This module is for specific phones that are capable of Paging or Intercom. "
+"This section is for configuring group paging, intercom is configured through "
+"<strong>Feature Codes</strong>. Intercom must be enabled on a handset before "
+"it will allow incoming calls. It is possible to restrict incoming intercom "
+"calls to specific extensions only, or to allow intercom calls from all "
+"extensions but explicitly deny from specific extensions.<br /><br />This "
+"module should work with Aastra, Grandstream, Linksys/Sipura, Mitel, Polycom, "
+"SNOM , and possibly other SIP phones (not ATAs). Any phone that is always "
+"set to auto-answer should also work (such as the console extension if "
+"configured)."
+msgstr "Этот модуль предназначен для конкретных телефонов, способных работать в режиме пейджинга или интеркома. Этот раздел предназначен для настройки групповой пейджинговой связи, а интерком настраивается с помощью <strong>Feature Codes</strong>. Интерком должен быть включен на трубке, прежде чем она разрешит входящие вызовы. Можно ограничить входящие вызовы по внутренней связи только определенными добавочными номерами или разрешить вызовы по внутренней связи со всех добавочных номеров, но явно запретить вызовы с определенных добавочных номеров. Данный модуль должен работать с телефонами Aastra, Grandstream, Linksys/Sipura, Mitel, Polycom, SNOM и, возможно, с другими SIP-телефонами (не ATA). Любой телефон, который всегда настроен на автоответчик, также должен работать (например, если настроено расширение консоли)."
+
+msgid ""
+"Example usage:<br /><table><tr><td><strong>%snnn</strong>:</td><td>Intercom "
+"extension nnn</td></tr><tr><td><strong>%s</strong>:</td><td>Enable all "
+"extensions to intercom you (except those explicitly denied)</td></"
+"tr><tr><td><strong>%snnn</strong>:</td><td>Explicitly allow extension nnn to "
+"intercom you (even if others are disabled)</td></tr><tr><td><strong>%s</"
+"strong>:</td><td>Disable all extensions from intercom you (except those "
+"explicitly allowed)</td></tr><tr><td><strong>%snnn</strong>:</"
+"td><td>Explicitly deny extension nnn to intercom you (even if generally "
+"enabled)</td></tr></table>"
+msgstr "Пример использования:<br /><table><tr><td><strong>%snnn</strong>:</td><td>Дополнительный номер внутренней связи nnn</td></tr><tr><td> <strong>%s</strong>:</td><td>Включить все расширения для внутренней связи с вами (кроме явно запрещенных)</td></tr><tr><td><strong>%snnn</ strong>:</td><td>Явно разрешить расширению nnn осуществлять внутреннюю связь с вами (даже если другие отключены)</td></tr><tr><td><strong>%s</strong>:</ td><td>Отключите все расширения от вашего интеркома (кроме явно разрешенных)</td></tr><tr><td><strong>%snnn</strong>:</td><td>Явно запретить расширение nnn для внутренней связи (даже если оно обычно включено)</td></tr></table>"
+
+msgid "Intercom mode is currently disabled, it can be enabled in the Feature Codes Panel."
+msgstr "Режим интеркома в настоящее время отключен, его можно включить в панели Feature Codes."
+
+msgid "Delete Group %s"
+msgstr "Удалить группу %s"
+
+msgid "Conflicting Extensions"
+msgstr "Конфликтующие расширения"
+
+msgid "Modify Paging Group"
+msgstr "Изменить группу страниц"
+
+msgid "Add Paging Group"
+msgstr "Добавить группу страниц"
+
+msgid "Paging Extension"
+msgstr "Расширение страниц"
+
+msgid "The number users will dial to page this group"
+msgstr "Номер, который пользователи набирают для страницы этой группы"
+
+msgid "Group Description"
+msgstr "Описание группы"
+
+msgid "Provide a descriptive title for this Page Group."
+msgstr "Предоставьте описательный заголовок для этой группы страниц."
+
+msgid "Device List:"
+msgstr "Список устройств:"
+
+msgid "Select Device(s) to page. This is the phone that should be paged. In most installations, this is the same as the Extension. If you are configured to use \"Users & Devices\" this is the actual Device and not the User.  Use Ctrl key to select multiple.."
+msgstr "Выберите устройство (а), чтобы страница. Это телефон, который должен быть страницей. В большинстве установок это то же самое, что и расширение. Если вы настроены на использование \"Пользователи и устройства\", это фактическое устройство, а не пользователь. Используйте клавишу Ctrl для выбора нескольких .."
+
+msgid "Force if busy"
+msgstr "Принудительно, если занято"
+
+msgid "If yes, will not check if the device is in use before paging it. This means conversations can be interrupted by a page (depending on how the device handles it). This is useful for \"emergency\" paging groups. Setting to 'Whisper' will attempt to use the ChanSpy capability on SIP channels, resulting in the page being sent to the device's ear piece but not heard by the remote party. If ChanSpy is not supported on the device or otherwise fails, no page will get through. It probably does not make too much sense to choose duplex if using Whisper mode." 
+msgstr "Если да, то не будет проверять, используется ли устройство, прежде чем страница его. Это означает, что разговоры могут быть прерваны страницей (в зависимости от того, как устройство с ним обращается). Это полезно для \"аварийных\" групп пейджинга. Установка в режим \"Шепот\" будет пытаться использовать возможность ChanSpy на каналах SIP, что приведет к отправке страницы в наушник устройства, но не будет слышно удаленной стороне. Если ChanSpy не поддерживается на устройстве или по другим причинам не работает, страница не будет проходить. Вероятно, не имеет смысла выбирать дуплекс, если используется режим Whisper."
+
+msgid "The Whisper mode is new and considered experimental."
+msgstr "Режим шепота является новым и считается экспериментальным."
+
+msgid "No"
+msgstr "Нет"
+
+msgid "Yes"
+msgstr "Да"
+
+msgid "Whisper"
+msgstr "Шептать"
+
+msgid "Duplex"
+msgstr "Дуплекс"
+
+msgid "Paging is typically one way for announcements only. Checking this will make the paging duplex, allowing all phones in the paging group to be able to talk and be heard by all. This makes it like an \"instant conference\""
+msgstr "Пейджинг обычно является одним из способов только для объявлений. Если вы установите этот флажок, пейджинг станет дуплексным, что позволит всем телефонам в группе пейджинга разговаривать и быть услышанными всеми. Это похоже на «мгновенную конференцию»."
+
+msgid "Each PBX system can have a single Default Page Group. If specified, extensions can be automatically added (or removed) from this group in the Extensions (or Devices) tab.<br />Making this group the default will uncheck the option from the current default group if specified."
+msgstr "Каждая система PBX может иметь единственную группу страниц по умолчанию. Если указано, расширения могут быть автоматически добавлены (или удалены) из этой группы во вкладке Расширения (или Устройства).<br />Сделав эту группу по умолчанию, вы снимете флажок с текущей группы по умолчанию, если он указан."
+
+msgid "Submit Changes"
+msgstr "Отправить изменения"
+
+msgid "Please enter a valid Paging Extension"
+msgstr "Введите действительное расширение страницы"
+
+msgid "Please select at least one extension"
+msgstr "Пожалуйста, выберите хотя бы одно расширение"
+
+msgid " [DEFAULT]"
+msgstr " [ПО УМОЛЧАНИЮ]"
+
+
+msgid "Page Group"
+msgstr "Группа страниц"
+
+msgid "Paging and Intercom"
+msgstr "Пейджинг и интерком"
+
+msgid "Applications"
+msgstr "Приложения"
+
+msgid "Allows creation of paging groups to make announcements using the speaker built into most SIP phones. \tAlso creates an Intercom feature code that can be used as a prefix to talk directly to one person, as well as optional feature codes to block/allow intercom calls to all users as well as blocking specific users or only allowing specific users."
+msgstr "Позволяет создавать группы пейджинга для объявлений с использованием динамика, встроенного в большинство SIP-телефонов. \tТакже создает код функции интеркома, который можно использовать в качестве префикса для разговора напрямую с одним человеком, а также дополнительные коды функций для блокировки / разрешения вызовов интеркома для всех пользователей, а также блокировки определенных пользователей или разрешения только определенных пользователей."
+
+
+

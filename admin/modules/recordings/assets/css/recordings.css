@@ -1,0 +1,9 @@
+td.action { width: 2em; }
+@media screen and (max-width: 600px) {
+    #tabs>ul {
+        width:100% !important;
+        max-width:100% !important;
+    }
+}
+
+div.content { max-width:1000px; }

@@ -1,0 +1,77 @@
+<?php
+/* vim: set expandtab tabstop=4 softtabstop=4 shiftwidth=4:
+  Codificación: UTF-8
+  +----------------------------------------------------------------------+
+  | Issabel version 5.0.0                                                |
+  | http://www.issabel.org                                               |
+  +----------------------------------------------------------------------+
+  | Copyright (c) 2023 Issabel Foundation                                |
+  +----------------------------------------------------------------------+
+  | The contents of this file are subject to the General Public License  |
+  | (GPL) Version 2 (the "License"); you may not use this file except in |
+  | compliance with the License. You may obtain a copy of the License at |
+  | http://www.opensource.org/licenses/gpl-license.php                   |
+  |                                                                      |
+  | Software distributed under the License is distributed on an "AS IS"  |
+  | basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See  |
+  | the License for the specific language governing rights and           |
+  | limitations under the License.                                       |
+  +----------------------------------------------------------------------+
+  | The Initial Developer is Issabel Foundation                          |
+  +----------------------------------------------------------------------+
+ */
+
+$module_name=basename(getcwd());
+$documentRoot = $_SERVER["DOCUMENT_ROOT"];
+include_once "$documentRoot/libs/paloSantoDB.class.php";
+include_once "$documentRoot/libs/paloSantoACL.class.php";
+include_once "$documentRoot/modules/$module_name/configs/default.conf.php";
+session_name("issabelSession");
+session_start();
+$issabel_user = (isset($_SESSION["issabel_user"]))?$_SESSION["issabel_user"]:null;
+$pDB = new paloDB("sqlite3:////var/www/db/acl.db");
+$pACL = new paloACL($pDB);
+$isUserAuth = $pACL->isUserAuthorized($issabel_user,"access",$module_name);
+unset($_SESSION);
+session_commit();
+if(!$isUserAuth) { die('Unauthorized'); }
+
+$backup_dir = $arrConfModule['dir'];
+
+echo "<html><head></head><body>";
+
+if (isset($_REQUEST['filename'])){
+    $filename = escapeshellcmd($_REQUEST['filename']);
+    $filename = $backup_dir."/".$filename;
+    if(is_file($filename)) { 
+        echo "<div style='font-family: \"Lucida Console\", Monaco, monospace'>";
+        $padSize = ini_get('output_buffering');
+        $dahdi = "";
+        $cmd   = "/usr/bin/issabel-helper migration $dahdi $filename";
+        $cmd .= " 2>&1 || echo \"err_flag\"";
+
+        $file = popen($cmd,"r");
+        while(!feof($file)) {
+            $line = fgets($file);
+            if($line == "err_flag\n") {
+                echo "Error!\n";
+                $error = true;
+                break;
+        }
+        if(preg_match("/^Error/i",$line)) {
+            $line='<span style="color:red;">'.$line.'</span>';
+        }
+        echo str_pad("$line<br>", $padSize);
+            ob_flush();
+            @ flush();
+        }
+        pclose($file);
+ 
+        echo "</div>";
+        echo "<script>window.parent.document.getElementById('loader').style.display='none';window.parent.document.getElementById('check').style.display='block';parent.clearInterval(parent.pepe);</script>";
+
+    } else {
+        echo "$filename is not a file";
+    }
+}
+echo "</body></html>";

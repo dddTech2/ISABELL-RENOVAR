@@ -1,0 +1,159 @@
+# Russian IssabelPBX ver. translation
+# Copyright (c) 2006-2008 PostMet Corporation
+# This file is distributed under the same license as the IssabelPBX package.
+# Alexander Kozyrev <ceo@postmet.com>, Sergey Nikolayev <sergey@postmet.com>, 2006-2008.
+#
+# fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.3\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-09-23 09:52+0000\n"
+"PO-Revision-Date: 2008-09-28 16:38+0100\n"
+"Last-Translator: Alexander Kozyrev <ceo@postmet.com>\n"
+"Language-Team: Russian <faq@postmet.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Asterisk Info"
+msgstr "информация Asterisk"
+
+msgid "Reports"
+msgstr "Отчеты"
+
+msgid "Provides a snapshot of the current Asterisk configuration"
+msgstr "Предоставляет моментальный снимок текущей конфигурации Asterisk"
+
+msgid "Summary"
+msgstr "Сводка"
+
+msgid "Registries"
+msgstr "Регистры"
+
+msgid "Channels"
+msgstr "Каналы"
+
+msgid "Peers"
+msgstr "Пиры"
+
+msgid "Sip Info"
+msgstr "SIP-информация"
+
+msgid "IAX Info"
+msgstr "Информация IAX"
+
+msgid "Conferences"
+msgstr "Конференции"
+
+msgid "Queues"
+msgstr "Очереди"
+
+msgid "Subscriptions"
+msgstr "Подписки"
+
+msgid "Full Report"
+msgstr "Полный отчет"
+
+msgid "Uptime"
+msgstr "Время работы"
+
+msgid "Active Channel(s)"
+msgstr "Активные каналы"
+
+msgid "Sip Channel(s)"
+msgstr "SIP-каналы"
+
+msgid "IAX2 Channel(s)"
+msgstr "IAX-каналы"
+
+msgid "IAX2 Peers"
+msgstr "IAX-пиры"
+
+msgid "Sip Registry"
+msgstr "SIP-регистр"
+
+msgid "Sip Peers"
+msgstr "SIP-пиры"
+
+msgid "IAX2 Registry"
+msgstr "IAX-регистр"
+
+msgid "Subscribe/Notify"
+msgstr "Подписка/Уведомление"
+
+msgid "DAHDi driver info"
+msgstr "Информация о драйвере DAHDi"
+
+msgid "Zaptel driver info"
+msgstr "Информация о драйвере Zaptel"
+
+msgid "MeetMe Conference Info"
+msgstr "Информация о конференции MeetMe"
+
+msgid "Conference Bridge Info"
+msgstr "Информация о конференции"
+
+msgid "Queues Info"
+msgstr "Информация об очередях"
+
+msgid "Voicemail Users"
+msgstr "Пользователи голосовой почты"
+
+msgid "Google Talk Channels"
+msgstr "Каналы Google Talk"
+
+msgid "Jabber Connections"
+msgstr "Соединения Jabber"
+
+msgid "Asterisk (Ver. "
+msgstr "Asterisk (Версия "
+
+msgid "ASTERISK MANAGER ERROR"
+msgstr "ОШИБКА МЕНЕДЖЕРА ASTERISK"
+
+msgid ""
+"The module was unable to connect to the Asterisk manager.<br>Make sure "
+"Asterisk is running and your manager.conf settings are proper.<br><br>"
+msgstr "Модулю не удалось подключиться к менеджеру Asterisk. Убедитесь, что Asterisk запущен и настройки manager.conf верны. "
+
+msgid "Refresh"
+msgstr "Обновить"
+
+msgid "Uptime: "
+msgstr "Время работы: "
+
+msgid "Active SIP Channel(s): "
+msgstr "Активный канал(ы) SIP:"
+
+msgid "Active IAX2 Channel(s): "
+msgstr "Активный канал(ы) IAX2:"
+
+msgid "Sip Registry: "
+msgstr "Регистр SIP: "
+
+msgid "IAX2 Registry: "
+msgstr "Регистр IAX2: "
+
+msgid "Sip Peers: "
+msgstr "SIP-пиры: "
+
+msgid "IAX2 Peers: "
+msgstr "IAX-пиры: "
+
+msgid "Online: "
+msgstr "Онлайн: "
+
+msgid "Online-Unmonitored: "
+msgstr "Онлайн-ненаблюдаемый: "
+
+msgid "Offline: "
+msgstr "Оффлайн: "
+
+msgid "Offline-Unmonitored: "
+msgstr "Оффлайн-ненаблюдаемый: "
+
+msgid "Unmonitored: "
+msgstr "Ненаблюдаемый: "
+
+

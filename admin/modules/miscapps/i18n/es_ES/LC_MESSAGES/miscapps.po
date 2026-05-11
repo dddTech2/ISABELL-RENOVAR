@@ -1,0 +1,104 @@
+# This file is part of IssabelPBX.
+#
+#    IssabelPBX is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    IssabelPBX is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with IssabelPBX.  If not, see <http://www.gnu.org/licenses/>.
+#
+#  Copyright 2023 Issabel Foundation
+#
+
+msgid ""
+msgstr ""
+"Project-Id-Version: IssabelPBX - Spanish translation\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: es_ES\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "Misc Application: %s"
+msgstr "Aplicación: %s"
+
+msgid "Misc Applications"
+msgstr "Aplicaciones varias"
+
+msgid "Applications"
+msgstr ""
+
+msgid ""
+"Adds the ability to create feature codes that can go to any IssabelPBX "
+"destination (such as an IVR or queue)"
+msgstr ""
+
+msgid "Add Misc Application"
+msgstr "Añadir aplicación"
+
+msgid "Edit Misc Application"
+msgstr "Modificar aplicación"
+
+msgid ""
+"Misc Applications are for adding feature codes that you can dial from "
+"internal phones that go to various destinations available in IssabelPBX. This "
+"is in contrast to the <strong>Misc Destinations</strong> module, which is "
+"for creating destinations that can be used by other IssabelPBX modules to dial "
+"internal numbers or feature codes."
+msgstr ""
+"Las aplicaciones varias pueden utilizarse para añadir códigos de "
+"función que pueden ser llamadas desde teléfonos internos que van a "
+"varios destinos disponibles en IssabelPBX, en contraposición del módulo "
+"<strong>Destinos varios</strong> que permite crear destinos que pueden ser "
+"usados por otros módulos de IssabelPBX para llamar a números internos o códigos "
+"de función."
+
+msgid "Conflicting Extensions"
+msgstr "Extensiones en conflicto"
+
+msgid "Description"
+msgstr "Descripción"
+
+msgid "The name of this application"
+msgstr "El nombre de esta aplicación"
+
+msgid "Feature Code"
+msgstr "Código de función"
+
+msgid ""
+"The feature code/extension users can dial to access this application. This "
+"can also be modified on the Feature Codes page."
+msgstr ""
+"El código de función o extensión que los usuarios deben marcar para "
+"acceder a esta aplicación. Este valor también puede ser modificado desde la "
+"sección de \"Códigos de función\"."
+
+msgid "Feature Status"
+msgstr "Estado de función"
+
+msgid "If this code is enabled or not."
+msgstr "Indica si este código está habilitado o no."
+
+msgid "Enabled"
+msgstr "Habilitado"
+
+msgid "Disabled"
+msgstr "Deshabilitado"
+
+msgid "Destination"
+msgstr "Destino"
+
+msgid "Submit Changes"
+msgstr "Enviar cambios"
+
+msgid "Delete"
+msgstr "Eliminar"
+
+msgid "Invalid description specified"
+msgstr "La descripción especificada no es válida"

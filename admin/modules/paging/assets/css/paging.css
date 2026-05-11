@@ -1,0 +1,27 @@
+.paging-hr{
+	width: 50%;
+ 	margin-left: 0;
+}
+
+.device_list {
+	min-height: 300px;
+    max-height: 600px;
+	width: 300px;
+    overflow:scroll;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+    margin-bottom: 1em;
+}
+
+.device_list > div {
+	margin: 5px;
+	display: inline-block;
+	text-align: left;
+    font-size: .8em;
+    overflow:hidden;
+}
+
+.overview {
+    max-width: calc(100% - 350px) !important;
+    min-width: 500px;
+}
+

@@ -1,0 +1,147 @@
+# This file is part of IssabelPBX.
+#
+#    IssabelPBX is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    IssabelPBX is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with IssabelPBX.  If not, see <http://www.gnu.org/licenses/>.
+#
+#  Copyright 2023 Issabel Foundation
+#
+
+msgid ""
+msgstr ""
+"Project-Id-Version: IssabelPBX - Spanish translation\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: es_ES\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "Error writing the manager additional file."
+msgstr "Error al escribir el archivo adicional del gestor."
+
+msgid "This manager already exists"
+msgstr "Este gestor ya existe"
+
+msgid "Choose Manager"
+msgstr "Seleccione gestor"
+
+msgid "Choose the user that PHPAGI will use to connect the Asterisk API."
+msgstr ""
+"Seleccione el usuario que PHPAGI usará para conectarse a la API de Asterisk."
+
+msgid "Increasing read field size if needed.."
+msgstr ""
+
+msgid "error encountered, not altered"
+msgstr ""
+
+msgid "ok"
+msgstr ""
+
+msgid "Increasing write field size if needed.."
+msgstr ""
+
+msgid "Asterisk API"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Add Manager"
+msgstr "Añadir gestor"
+
+msgid "Manager"
+msgstr "Gestor"
+
+msgid "deleted"
+msgstr "eliminado"
+
+msgid "Delete Manager"
+msgstr "Eliminar gestor"
+
+msgid "Edit Manager"
+msgstr "Modificar gestor"
+
+msgid "Manager name"
+msgstr "Nombre del gestor"
+
+msgid "Name of the manager without space."
+msgstr "Nombre del gestor, sin espacios."
+
+msgid "Manager secret"
+msgstr "Contraseña del gestor"
+
+msgid "Password for the manager."
+msgstr "Contraseña para el gestor."
+
+msgid "Deny"
+msgstr "Denegar"
+
+msgid ""
+"If you want to deny many hosts or networks, use & char as separator.<br/><br/"
+">Example: 192.168.1.0/255.255.255.0&10.0.0.0/255.0.0.0"
+msgstr ""
+"Si desea denegar varios equipos o redes, use el símbol '&' como separador."
+"<br/><br/>Por ejemplo: 192.168.1.0/255.255.255.0&10.0.0.0/255.0.0.0."
+
+msgid "Permit"
+msgstr "Permitir"
+
+msgid ""
+"If you want to permit many hosts or networks, use & char as separator. Look "
+"at deny example."
+msgstr ""
+"Si desea permitir varios equipos o redes, use el símbolo '&' como separador. "
+"Revise el ejemplo del campo 'Denegar'."
+
+msgid "Rights"
+msgstr "Permisos"
+
+msgid "Read"
+msgstr "Lectura"
+
+msgid "Write"
+msgstr "Escritura"
+
+msgid "Check Asterisk documentation."
+msgstr "Revise la documentación de Asterisk."
+
+msgid "Check All/None."
+msgstr "Marcar todos/ninguno."
+
+msgid "Submit Changes"
+msgstr "Enviar cambios"
+
+msgid "The manager name cannot be empty or may not have any space in it."
+msgstr "El nombre del gestor no puede estar vacío ni contener espacios."
+
+msgid "The manager secret cannot be empty."
+msgstr "La contraseña del gestor no puede estar vacía."
+
+msgid "The manager deny is not well formatted."
+msgstr "El campo 'Denegar' no tiene el formato correcto."
+
+msgid "The manager permit is not well formatted."
+msgstr "El campo 'Permitir' no tiene el formato correcto."
+
+msgid "The manager read field is not well formatted."
+msgstr "El campo 'Lectura' no tiene el formato correcto."
+
+msgid "The manager write field is not well formatted."
+msgstr "El campo 'Escritura' no tiene el formato correcto."
+
+msgid "Asterisk Manager Users"
+msgstr "Usuarios Asterisk Manager"
+
+#~ msgid "The manager read and write properties cannot be empty."
+#~ msgstr ""
+#~ "Los permisos del gestor de lectura y escritura no pueden estar vacíos."

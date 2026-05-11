@@ -1,0 +1,26 @@
+<module>
+	<rawname>cdr</rawname>
+	<repo>standard</repo>
+	<description>Call Data Record report tools for viewing reports of your calls</description>
+	<name>CDR Reports</name>
+	<version>2.12.0.0</version>
+	<publisher>Issabel Foundation</publisher>
+	<license>GPLv3+</license>
+	<licenselink>http://www.gnu.org/licenses/gpl-3.0.txt</licenselink>
+	<category>Reports</category>
+	<menuitems>
+		<cdr>CDR Reports</cdr>
+	</menuitems>
+    <changelog>
+        *2.12.0.0* Newer GUI, standarize module components
+		*2.11.0.12* Initial Issabel Foundation release
+	</changelog>
+	<depends>
+		<module>core ge 2.6.0</module>
+	</depends>
+	<supported>
+		<version>2.12</version>
+	</supported>
+    <location>release/2.12/cdr-2.12.0.0.tgz</location>
+        <md5sum>0</md5sum>
+</module>

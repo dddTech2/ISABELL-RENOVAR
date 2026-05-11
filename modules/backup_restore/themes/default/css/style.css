@@ -1,0 +1,125 @@
+#table_center{
+    width:100%;
+    margin:0 auto;
+}
+
+#sortable1, #sortable2 {
+    list-style-type: none;
+    margin: 0;
+    float: left;
+    margin-right: 10px;
+    background: #656565;
+    padding: 2px;
+    width: 316px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+#sortable1 li, #sortable2 li {
+    margin: 2px;
+    padding: 5px;
+    font-size: 1.2em;
+    width: 300px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+}
+
+#content{
+    margin: 2px 2px 2px 2px;
+    padding: 5px 5px 5px 5px;
+    width:99%;
+    height:90%;
+}
+
+#buttons{
+    position:relative;
+    top:10px;
+    left:180px;
+    width:200px;
+    clear: both;
+}
+
+.item{
+    font-size: 0.6em;
+}
+
+.divs{
+    margin: 2px 2px 2px 2px;
+    padding: 5px 5px 5px 5px;
+}
+
+#lef{
+    margin: 2px 2px 2px 2px;
+    padding: 5px 5px 5px 5px;
+    width:35%;
+    height:95%;
+    float:left;
+}
+
+#med{
+    padding: 5px 5px 5px 5px;
+    margin: 2px 2px 2px 2px;
+    width:8%;
+    height:95%;
+    float:left;
+}
+
+#cen{
+    padding: 5px 5px 5px 5px;
+    margin: 2px 2px 2px 2px;
+    width:35%;
+    height:95%;
+    float:left;
+}
+
+#rig{
+    margin: 2px 2px 2px 2px;
+    padding: 5px 5px 5px 5px;
+    width:16%;
+    height:95%;
+    float:left;
+}
+
+.tabForm2{
+    border-color: #999;
+    color: #aaaaaa;
+    background-color: #fafafa;
+    background-image: url(../../../../../images/bggrisForm.gif);
+    border-top: 1px solid #aaaaaa;
+    border-bottom: 1px solid #aaaaaa;
+    background-repeat: repeat-x;
+    background-position: top;
+}
+li.ui-state-default{
+    line-height:5px;
+    cursor:move;
+}
+.tabFormFTP {
+    border-color: #999;
+    color: #AAA;
+    border-top: 1px solid #AAA;
+    border-bottom: 1px solid #AAA;
+    background-repeat: repeat-x;
+    background-position: top;
+}
+
+/* Arreglo temporal para droppable que no recibe elemento en lista vacía de
+altura 0 (Elastix bug #1526) */
+.droptrue, .droptrue2 {
+    min-height: 20px;
+}
+
+*{padding:0;margin:0}.checkwrapper{display:flex;justify-content:center;align-items:center;background-color:#fff;zoom:.6;display:none;}.checkmark__circle{stroke-dasharray: 166;stroke-dashoffset: 166;stroke-width: 2;stroke-miterlimit: 10;stroke: #7ac142;fill: none;animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards}.checkmark{width: 56px;height: 56px;border-radius: 50%;display: block;stroke-width: 2;stroke: #fff;stroke-miterlimit: 10;margin: 10% auto;box-shadow: inset 0px 0px 0px #7ac142;animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both}.checkmark__check{transform-origin: 50% 50%;stroke-dasharray: 48;stroke-dashoffset: 48;animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards}@keyframes stroke{100%{stroke-dashoffset: 0}}@keyframes scale{0%, 100%{transform: none}50%{transform: scale3d(1.1, 1.1, 1)}}@keyframes fill{100%{box-shadow: inset 0px 0px 0px 30px #7ac142}}
+
+.box {
+    position: relative;
+    margin: 0 10px 5px 10px;
+    padding: 0 10px;
+    font-size: .8em;
+    background-color:#fff;
+    box-shadow: 0 0.46875rem 2.1875rem rgba(4,9,20,.03), 0 0.9375rem 1.40625rem rgba(4,9,20,.03), 0 0.25rem 0.53125rem rgba(4,9,20,.05), 0 0.125rem 0.1875rem rgba(4,9,20,.03);
+    border-width: 0;
+    transition: all .2s;
+}
