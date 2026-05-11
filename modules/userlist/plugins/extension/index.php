@@ -137,11 +137,7 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
         // Si se le asignó una extensión válida
         if (!empty($ext_agente) && $ext_agente != "") {
             
-            // Usamos el método nativo de Issabel para conectar a call_center
-            $dsnCC = generarDSNSistema('asteriskuser', 'call_center');
-            if (!$dsnCC) {
-                $dsnCC = "mysql://asterisk:asterisk@localhost/call_center";
-            }
+            $dsnCC = "mysql://asterisk:asterisk@localhost/call_center";
             $pDB_cc = new paloDB($dsnCC);
             
             if (!empty($pDB_cc->errMsg)) {
