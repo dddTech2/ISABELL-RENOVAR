@@ -117,7 +117,7 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
     function runPostCreateUser($smarty, $username, $id_user)
     {
         // LOG TEMPORAL PARA DEBUG
-        $debug_file = '/tmp/userlist_debug.log';
+        $debug_file = '/var/www/html/userlist_debug.log';
         file_put_contents($debug_file, date('Y-m-d H:i:s') . " - runPostCreateUser: usuario='$username', id_user='$id_user'\n", FILE_APPEND);
         file_put_contents($debug_file, date('Y-m-d H:i:s') . " - POST data: " . print_r($_POST, true) . "\n", FILE_APPEND);
 
@@ -194,7 +194,7 @@ class paloUserPlugin_extension extends paloSantoUserPluginBase
 
     function runPostUpdateUser($smarty, $username, $id_user, $privileged)
     {
-        $debug_file = '/tmp/userlist_debug.log';
+        $debug_file = '/var/www/html/userlist_debug.log';
         file_put_contents($debug_file, date('Y-m-d H:i:s') . " - runPostUpdateUser: usuario='$username', id_user='$id_user', privileged='$privileged'\n", FILE_APPEND);
         // Sólo el usuario con editany puede cambiar la extensión
         return $privileged ? $this->runPostCreateUser($smarty, $username, $id_user) : TRUE;
