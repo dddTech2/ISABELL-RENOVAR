@@ -30,11 +30,21 @@
     {/if}
 {/foreach}
 
+{* WebPhone includes *}
+<link rel="stylesheet" href="modules/agent_console/themes/default/js/webphone/webphone.css" />
+<script type="text/javascript" src="modules/agent_console/themes/default/js/webphone/sip-0.20.0.min.js"></script>
+<script type="text/javascript" src="modules/agent_console/themes/default/js/webphone/sip-phone.js"></script>
+
 {if $NO_EXTENSIONS}
 <p><h4 align="center">{$LABEL_NOEXTENSIONS}</h4></p>
 {elseif $NO_AGENTS}
 <p><h4 align="center">{$LABEL_NOAGENTS}</h4></p>
 {else}
+{* Wrapper flex para login + webphone *}
+<div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 20px; padding: 20px 0;">
+
+{* Columna izquierda: formulario de login *}
+<div>
 <form method="POST"  action="index.php?menu={$MODULE_NAME}" onsubmit="do_login(); return false;">
 
 <p>&nbsp;</p>
@@ -105,6 +115,28 @@
 </table>
 
 </form>
+</div>
+
+{* Columna derecha: WebPhone *}
+<div id="new-webphone-wrapper" style="width: 280px; flex-shrink: 0;">
+    <div class="webphone-panel">
+        <div class="webphone-header">WebPhone</div>
+        <div id="webphone-status" class="webphone-status webphone-unregistered">
+            <span class="status-indicator"></span>
+            <span class="status-text">Conectando...</span>
+        </div>
+        <div class="webphone-number-row">
+            <input type="text" id="webphone-number" placeholder="Numero a marcar" />
+        </div>
+        <div class="webphone-buttons">
+            <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
+            <button id="webphone-btn-hangup" class="webphone-btn webphone-btn-hangup" style="display:none;">Colgar</button>
+            <button id="webphone-btn-answer" class="webphone-btn webphone-btn-answer" style="display:none;">Contestar</button>
+        </div>
+    </div>
+</div>
+
+</div>{* fin wrapper flex *}
 
 {if $REANUDAR_VERIFICACION}
 <script type="text/javascript">
@@ -112,3 +144,73 @@ do_checklogin();
 </script>
 {/if}
 {/if}
+
+{literal}
+<script type="text/javascript">
+// WebPhone Initialization
+var webPhoneConfig = {
+    extension: '{/literal}{$WEBPHONE_EXTENSION}{literal}',
+    password: '{/literal}{$WEBPHONE_PASSWORD}{literal}',
+    domain: window.location.hostname,
+    wssServer: window.location.hostname,
+    wssPort: '8089',
+    wssPath: '/ws'
+};
+
+$(document).ready(function() {
+    console.log('[WebPhone] Initializing for extension: ' + webPhoneConfig.extension);
+    
+    if (!webPhoneConfig.extension) {
+        console.warn('[WebPhone] No extension configured');
+        $('#webphone-status .status-text').text('Sin extension');
+        return;
+    }
+    
+    if (!webPhoneConfig.password) {
+        console.warn('[WebPhone] No password configured');
+        $('#webphone-status .status-text').text('Sin contraseña');
+        // Still try to init - user will see the error
+    }
+    
+    WebPhone.init(webPhoneConfig, {
+        onRegistered: function() {
+            console.log('[WebPhone] Registered successfully');
+        },
+        onUnregistered: function() {
+            console.log('[WebPhone] Unregistered');
+        },
+        onError: function(error) {
+            console.error('[WebPhone] Error:', error);
+        },
+        onCallStateChange: function(state) {
+            console.log('[WebPhone] Call state:', state);
+        }
+    });
+
+    // Bind UI events
+    $('#webphone-btn-call').on('click', function() {
+        var number = $('#webphone-number').val().trim();
+        if (number) {
+            WebPhone.call(number);
+        }
+    });
+
+    $('#webphone-btn-hangup').on('click', function() {
+        WebPhone.hangup();
+    });
+
+    $('#webphone-btn-answer').on('click', function() {
+        WebPhone.answer();
+    });
+
+    $('#webphone-number').on('keypress', function(e) {
+        if (e.which === 13) {
+            var number = $(this).val().trim();
+            if (number) {
+                WebPhone.call(number);
+            }
+        }
+    });
+});
+</script>
+{/literal}

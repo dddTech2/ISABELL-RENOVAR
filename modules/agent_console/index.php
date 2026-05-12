@@ -53,12 +53,38 @@ function _moduleContent(&$smarty, $module_name)
     $pdbACL1 = new paloDB($dsn1);
     $base_dir = "/var/www/html";
 
-    $resultado = $pdbACL1->fetchTable("SELECT data from sip WHERE id = '$extension' AND keyword = 'transport'");
-    $isWebphone = !empty($resultado) && isset($resultado[0]) ? $resultado[0] : '';
+// =========================================================================
+// Aux function to get SIP/PJSIP secret
+function _getSipPassword($extension) {
+    if (empty($extension)) return '';
     
-    // Always enable webRTC for agent console now
-    $webRTC = true;
-    $smarty->assign('webRTC', $webRTC);
+    $sipPassword = '';
+    $dsnAsterisk = generarDSNSistema('asteriskuser', 'asterisk');
+    $dbAsterisk = new paloDB($dsnAsterisk);
+    
+    // Try PJSIP first (id is usually extension-auth or just extension)
+    $extSafe = $dbAsterisk->conn->quote($extension);
+    $extAuthSafe = $dbAsterisk->conn->quote($extension . '-auth');
+    
+    $queryPjsip = "SELECT password FROM ps_auths WHERE id = $extSafe OR id = $extAuthSafe";
+    $result = $dbAsterisk->fetchTable($queryPjsip, TRUE);
+    _debug("WEBPHONE: PJSIP query: $queryPjsip, result: " . print_r($result, true));
+    
+    if (is_array($result) && count($result) > 0) {
+        $sipPassword = $result[0]['password'];
+    } else {
+        // Fallback to SIP
+        $querySip = "SELECT data FROM sip WHERE id = $extSafe AND keyword = 'secret'";
+        $result = $dbAsterisk->fetchTable($querySip, TRUE);
+        _debug("WEBPHONE: SIP query: $querySip, result: " . print_r($result, true));
+        if (is_array($result) && count($result) > 0) {
+            $sipPassword = $result[0]['data'];
+        }
+    }
+    _debug("WEBPHONE: Final password found for $extension: " . ($sipPassword ? "YES" : "NO"));
+    return $sipPassword;
+}
+// =========================================================================
 
 
 
@@ -268,20 +294,21 @@ function manejarLogin_HTML($module_name, &$smarty, $sDirLocalPlantillas)
     // Obtener el password del agente callback del usuario actual
     $sCallbackPassword = '';
     $sCallbackExtension = '';
+    $sipExtension = '';
     $pACL = new paloACL($arrConf['issabel_dsn']['acl']);
     $idUser = $pACL->getIdUser($_SESSION['issabel_user']);
     if ($idUser !== FALSE) {
         $tupla = $pACL->getUsers($idUser);
         if (is_array($tupla) && count($tupla) > 0) {
-            $sExtension = $tupla[0][3];
+            $sipExtension = $tupla[0][3];
             // Buscar el password del agente callback en call_center.agent
             $pDB_cc = new paloDB("mysql://asterisk:asterisk@localhost/call_center");
             if (!empty($pDB_cc->errMsg)) {
                 _debug("CALLBACK_LOGIN: Error conectando a call_center: " . $pDB_cc->errMsg);
             } else {
-                $sExtensionSafe = $pDB_cc->conn->quote($sExtension);
+                $sExtensionSafe = $pDB_cc->conn->quote($sipExtension);
                 $resultPass = $pDB_cc->fetchTable("SELECT password FROM agent WHERE number = $sExtensionSafe AND estatus = 'A'", TRUE);
-                _debug("CALLBACK_LOGIN: extension=$sExtension, queryResult=" . print_r($resultPass, TRUE));
+                _debug("CALLBACK_LOGIN: extension=$sipExtension, queryResult=" . print_r($resultPass, TRUE));
                 if (is_array($resultPass) && count($resultPass) > 0) {
                     $sCallbackPassword = $resultPass[0]['password'];
                 } else {
@@ -291,11 +318,15 @@ function manejarLogin_HTML($module_name, &$smarty, $sDirLocalPlantillas)
                 }
             }
             // Construir la clave de extension callback (PJSIP/extnum)
-            $sCallbackExtension = 'PJSIP/' . $sExtension;
+            $sCallbackExtension = 'PJSIP/' . $sipExtension;
             _debug("CALLBACK_LOGIN: sCallbackExtension=$sCallbackExtension, sCallbackPassword=$sCallbackPassword");
         }
     }
+    
+    // Inyectar config del WebPhone también en la pantalla de login
     $smarty->assign('CALLBACK_PASSWORD', $sCallbackPassword);
+    $smarty->assign('WEBPHONE_EXTENSION', $sipExtension);
+    $smarty->assign('WEBPHONE_PASSWORD', _getSipPassword($sipExtension));
 
     // Restaurar el estado de espera en caso de que se refresque la página
     if (!is_null($_SESSION['callcenter']['agente']) &&
@@ -312,10 +343,10 @@ function manejarLogin_HTML($module_name, &$smarty, $sDirLocalPlantillas)
         // Auto-seleccionar la extension callback del usuario actual
         if (!empty($sCallbackExtension) && isset($listaExtensionesCallback[$sCallbackExtension])) {
             $smarty->assign('ID_EXTENSION_CALLBACK', $sCallbackExtension);
-        } elseif (isset($sExtension) && !empty($sExtension)) {
+        } elseif (!empty($sipExtension)) {
             foreach (array_keys($listaExtensionesCallback) as $k) {
                 $regs = NULL;
-                if (preg_match('|^(\w+)/(\d+)$|', $k, $regs) && $regs[2] == $sExtension)
+                if (preg_match('|^(\w+)/(\d+)$|', $k, $regs) && $regs[2] == $sipExtension)
                     $smarty->assign('ID_EXTENSION_CALLBACK', $k);
             }
         }
@@ -695,46 +726,8 @@ function manejarSesionActiva_HTML($module_name, &$smarty, $sDirLocalPlantillas, 
     }
 
     // Fetch SIP/PJSIP password for WebPhone
-    $sipPassword = '';
     $sipExtension = isset($_SESSION['callcenter']['extension']) ? $_SESSION['callcenter']['extension'] : '';
-    $dsnAsterisk = generarDSNSistema('asteriskuser', 'asterisk');
-    $dbAsterisk = new paloDB($dsnAsterisk);
-    
-    // Fetch SIP/PJSIP password for WebPhone
-    $sipPassword = '';
-    $sipExtension = isset($_SESSION['callcenter']['extension']) ? $_SESSION['callcenter']['extension'] : '';
-    $dsnAsterisk = generarDSNSistema('asteriskuser', 'asterisk');
-    $dbAsterisk = new paloDB($dsnAsterisk);
-    
-    if (!empty($sipExtension)) {
-        // Try PJSIP first (id is usually extension-auth or just extension)
-        $extSafe = $dbAsterisk->conn->quote($sipExtension);
-        $extAuthSafe = $dbAsterisk->conn->quote($sipExtension . '-auth');
-        
-        $queryPjsip = "SELECT password FROM ps_auths WHERE id = $extSafe OR id = $extAuthSafe";
-        $result = $dbAsterisk->fetchTable($queryPjsip, TRUE);
-        _debug("WEBPHONE: PJSIP query: $queryPjsip");
-        _debug("WEBPHONE: PJSIP result: " . print_r($result, true));
-        
-        if (is_array($result) && count($result) > 0) {
-            $sipPassword = $result[0]['password'];
-        } else {
-            // Fallback to SIP
-            $querySip = "SELECT data FROM sip WHERE id = $extSafe AND keyword = 'secret'";
-            $result = $dbAsterisk->fetchTable($querySip, TRUE);
-            _debug("WEBPHONE: SIP query: $querySip");
-            _debug("WEBPHONE: SIP result: " . print_r($result, true));
-            if (is_array($result) && count($result) > 0) {
-                $sipPassword = $result[0]['data'];
-            }
-        }
-        _debug("WEBPHONE: Final password found: " . ($sipPassword ? "YES" : "NO"));
-        
-        // If still empty, it might be the default "1234" from our auto-creation if they didn't create it in Asterisk yet
-        // But Asterisk won't authenticate with it unless it's created there.
-    } else {
-        _debug("WEBPHONE: extension is empty in session");
-    }
+    $sipPassword = _getSipPassword($sipExtension);
 
     $smarty->assign(array(
         // Shift filter labels
