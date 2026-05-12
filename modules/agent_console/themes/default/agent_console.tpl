@@ -123,7 +123,7 @@
     		</div>{* issabel-callcenter-contenido *}
             
             {* WebPhone Panel - right side *}
-            <div class="right-container" id="webphone-container">
+            <div id="new-webphone-wrapper" style="width: 280px; margin-left: 10px; flex-shrink: 0;">
                 <div class="webphone-panel">
                     <div class="webphone-header">WebPhone</div>
                     <div id="webphone-status" class="webphone-status webphone-unregistered">
@@ -131,7 +131,7 @@
                         <span class="status-text">Conectando...</span>
                     </div>
                     <div class="webphone-number-row">
-                        <input type="text" id="webphone-number" placeholder="Numero a marcar" />
+                        <input type="text" id="webphone-number" placeholder="Número a marcar" />
                     </div>
                     <div class="webphone-buttons">
                         <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
@@ -282,11 +282,22 @@ var webPhoneConfig = {
 };
 
 $(document).ready(function() {
-    // Initialize WebPhone if extension is configured
-    if (webPhoneConfig.extension && webPhoneConfig.password) {
-        console.log('[WebPhone] Initializing for extension: ' + webPhoneConfig.extension);
-        
-        WebPhone.init(webPhoneConfig, {
+    // Initialize WebPhone
+    console.log('[WebPhone] Initializing for extension: ' + webPhoneConfig.extension);
+    
+    if (!webPhoneConfig.extension) {
+        console.warn('[WebPhone] No extension configured');
+        $('#webphone-status .status-text').text('Error: Sin extensión');
+        return;
+    }
+    
+    if (!webPhoneConfig.password) {
+        console.warn('[WebPhone] No password configured (SIP/PJSIP secret not found)');
+        $('#webphone-status .status-text').text('Error: Sin contraseña');
+        // We will still try to init, it might fail with 403, but at least user sees the UI
+    }
+    
+    WebPhone.init(webPhoneConfig, {
             onRegistered: function() {
                 console.log('[WebPhone] Registered successfully');
             },
@@ -325,10 +336,6 @@ $(document).ready(function() {
                 }
             }
         });
-    } else {
-        console.warn('[WebPhone] No extension or password configured');
-        $('#webphone-status .status-text').text('Sin configurar');
-    }
 });
 </script>
 {/literal}

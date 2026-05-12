@@ -3,20 +3,17 @@
  */
 
 /* Layout adjustments for webphone */
-#issabel-callcenter-wrap {
-    display: flex;
-    flex-wrap: wrap;
-}
-
 #issabel-callcenter-contenido {
     width: calc(100% - 300px) !important;
-    flex: 1;
 }
 
-#webphone-container {
+#new-webphone-wrapper {
+    position: absolute;
+    right: 10px;
+    bottom: 0;
+    height: 380pt;
     width: 280px;
-    flex-shrink: 0;
-    margin-left: 10px;
+    z-index: 10;
 }
 
 /* Responsive: stack on smaller screens */
@@ -25,9 +22,11 @@
         width: 100% !important;
     }
     
-    #webphone-container {
+    #new-webphone-wrapper {
+        position: relative;
         width: 100%;
-        margin-left: 0;
+        height: auto;
+        right: 0;
         margin-top: 10px;
     }
 }

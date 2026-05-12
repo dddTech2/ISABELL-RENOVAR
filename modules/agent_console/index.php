@@ -55,21 +55,10 @@ function _moduleContent(&$smarty, $module_name)
 
     $resultado = $pdbACL1->fetchTable("SELECT data from sip WHERE id = '$extension' AND keyword = 'transport'");
     $isWebphone = !empty($resultado) && isset($resultado[0]) ? $resultado[0] : '';
-    $webPhoneFolder = "$base_dir/modules/webphone";
-    $existeWebPhoneFolder = is_dir($webPhoneFolder);
-    //print_r($webPhoneFolder);
-    //print_r($isWebphone[0]);
-        if ($existeWebPhoneFolder) {
-            //$smarty->assign('webRTCFolder', $webPhoneFolder);
-            if (strpos($isWebphone[0], "wss") !== false || strpos($isWebphone[0], "ws") !== false) {
-                $webRTC = true;
-                $smarty->assign('webRTC', $webRTC);
-                $webphonePassword = $pdbACL1->fetchTable("SELECT data from sip WHERE id = '$extension' AND keyword = 'secret'; ")[0];
-                $webphoneName = $pdbACL1->fetchTable("SELECT name from users WHERE extension = '$extension';")[0];
-
-
-        }
-    }
+    
+    // Always enable webRTC for agent console now
+    $webRTC = true;
+    $smarty->assign('webRTC', $webRTC);
 
 
 
@@ -711,19 +700,40 @@ function manejarSesionActiva_HTML($module_name, &$smarty, $sDirLocalPlantillas, 
     $dsnAsterisk = generarDSNSistema('asteriskuser', 'asterisk');
     $dbAsterisk = new paloDB($dsnAsterisk);
     
+    // Fetch SIP/PJSIP password for WebPhone
+    $sipPassword = '';
+    $sipExtension = isset($_SESSION['callcenter']['extension']) ? $_SESSION['callcenter']['extension'] : '';
+    $dsnAsterisk = generarDSNSistema('asteriskuser', 'asterisk');
+    $dbAsterisk = new paloDB($dsnAsterisk);
+    
     if (!empty($sipExtension)) {
-        // Try PJSIP first
+        // Try PJSIP first (id is usually extension-auth or just extension)
         $extSafe = $dbAsterisk->conn->quote($sipExtension);
-        $result = $dbAsterisk->fetchTable("SELECT password FROM ps_auths WHERE id = $extSafe", TRUE);
+        $extAuthSafe = $dbAsterisk->conn->quote($sipExtension . '-auth');
+        
+        $queryPjsip = "SELECT password FROM ps_auths WHERE id = $extSafe OR id = $extAuthSafe";
+        $result = $dbAsterisk->fetchTable($queryPjsip, TRUE);
+        _debug("WEBPHONE: PJSIP query: $queryPjsip");
+        _debug("WEBPHONE: PJSIP result: " . print_r($result, true));
+        
         if (is_array($result) && count($result) > 0) {
             $sipPassword = $result[0]['password'];
         } else {
             // Fallback to SIP
-            $result = $dbAsterisk->fetchTable("SELECT data FROM sip WHERE id = $extSafe AND keyword = 'secret'", TRUE);
+            $querySip = "SELECT data FROM sip WHERE id = $extSafe AND keyword = 'secret'";
+            $result = $dbAsterisk->fetchTable($querySip, TRUE);
+            _debug("WEBPHONE: SIP query: $querySip");
+            _debug("WEBPHONE: SIP result: " . print_r($result, true));
             if (is_array($result) && count($result) > 0) {
                 $sipPassword = $result[0]['data'];
             }
         }
+        _debug("WEBPHONE: Final password found: " . ($sipPassword ? "YES" : "NO"));
+        
+        // If still empty, it might be the default "1234" from our auto-creation if they didn't create it in Asterisk yet
+        // But Asterisk won't authenticate with it unless it's created there.
+    } else {
+        _debug("WEBPHONE: extension is empty in session");
     }
 
     $smarty->assign(array(
