@@ -30,6 +30,11 @@
     {/if}
 {/foreach}
 
+{* WebPhone includes *}
+<link rel="stylesheet" href="modules/agent_console/themes/default/js/webphone/webphone.css" />
+<script type="text/javascript" src="modules/agent_console/themes/default/js/webphone/sip-0.20.0.min.js"></script>
+<script type="text/javascript" src="modules/agent_console/themes/default/js/webphone/sip-phone.js"></script>
+
 {* Este DIV se usa para mostrar los mensajes de éxito *}
 <div
     id="issabel-callcenter-info-message"
@@ -117,18 +122,24 @@
                 </div>
     		</div>{* issabel-callcenter-contenido *}
             
-            {if $webRTC}
-                    <div class="webPhoneContainer" id="webPhoneContainer">    
-                        {include file="/var/www/html/modules/webphone/webRTC_CC/webRTC.php"}
+            {* WebPhone Panel - right side *}
+            <div class="right-container" id="webphone-container">
+                <div class="webphone-panel">
+                    <div class="webphone-header">WebPhone</div>
+                    <div id="webphone-status" class="webphone-status webphone-unregistered">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">Conectando...</span>
                     </div>
-                <div class="right-container">
-                    <li class="webPhonePanel">
-                        <div class="webPhonePosition" id="webPhonePosition">
-                            <dt>Web Phone</dt>
-                        </div>
-                    </li>
+                    <div class="webphone-number-row">
+                        <input type="text" id="webphone-number" placeholder="Numero a marcar" />
+                    </div>
+                    <div class="webphone-buttons">
+                        <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
+                        <button id="webphone-btn-hangup" class="webphone-btn webphone-btn-hangup" style="display:none;">Colgar</button>
+                        <button id="webphone-btn-answer" class="webphone-btn webphone-btn-answer" style="display:none;">Contestar</button>
+                    </div>
                 </div>
-            {/if}
+            </div>
 
 
 	</div>
@@ -260,11 +271,64 @@ $(document).ready(function() {
 {literal}
 });
 
-    var container = $('#webPhoneContainer');
-    var positionDiv = $('#webPhonePosition');
+// WebPhone Initialization
+var webPhoneConfig = {
+    extension: '{/literal}{$WEBPHONE_EXTENSION}{literal}',
+    password: '{/literal}{$WEBPHONE_PASSWORD}{literal}',
+    domain: window.location.hostname,
+    wssServer: window.location.hostname,
+    wssPort: '8089',
+    wssPath: '/ws'
+};
 
-    if (container.is(':hidden')) {
-        container.appendTo(positionDiv).show();
+$(document).ready(function() {
+    // Initialize WebPhone if extension is configured
+    if (webPhoneConfig.extension && webPhoneConfig.password) {
+        console.log('[WebPhone] Initializing for extension: ' + webPhoneConfig.extension);
+        
+        WebPhone.init(webPhoneConfig, {
+            onRegistered: function() {
+                console.log('[WebPhone] Registered successfully');
+            },
+            onUnregistered: function() {
+                console.log('[WebPhone] Unregistered');
+            },
+            onError: function(error) {
+                console.error('[WebPhone] Error:', error);
+            },
+            onCallStateChange: function(state) {
+                console.log('[WebPhone] Call state:', state);
+            }
+        });
+
+        // Bind UI events
+        $('#webphone-btn-call').on('click', function() {
+            var number = $('#webphone-number').val().trim();
+            if (number) {
+                WebPhone.call(number);
+            }
+        });
+
+        $('#webphone-btn-hangup').on('click', function() {
+            WebPhone.hangup();
+        });
+
+        $('#webphone-btn-answer').on('click', function() {
+            WebPhone.answer();
+        });
+
+        $('#webphone-number').on('keypress', function(e) {
+            if (e.which === 13) {
+                var number = $(this).val().trim();
+                if (number) {
+                    WebPhone.call(number);
+                }
+            }
+        });
+    } else {
+        console.warn('[WebPhone] No extension or password configured');
+        $('#webphone-status .status-text').text('Sin configurar');
     }
+});
 </script>
 {/literal}

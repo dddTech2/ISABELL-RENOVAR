@@ -1,0 +1,186 @@
+/**
+ * WebPhone Panel Styles
+ */
+
+/* Layout adjustments for webphone */
+#issabel-callcenter-wrap {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#issabel-callcenter-contenido {
+    width: calc(100% - 300px) !important;
+    flex: 1;
+}
+
+#webphone-container {
+    width: 280px;
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+/* Responsive: stack on smaller screens */
+@media only screen and (max-width: 1200px) {
+    #issabel-callcenter-contenido {
+        width: 100% !important;
+    }
+    
+    #webphone-container {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 10px;
+    }
+}
+
+.webphone-panel {
+    width: 100%;
+    max-width: 280px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+
+.webphone-header {
+    font-weight: bold;
+    font-size: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.webphone-status {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.webphone-status .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.webphone-registered {
+    background: #dff0d8;
+    color: #3c763d;
+}
+
+.webphone-registered .status-indicator {
+    background: #5cb85c;
+}
+
+.webphone-unregistered {
+    background: #f2dede;
+    color: #a94442;
+}
+
+.webphone-unregistered .status-indicator {
+    background: #d9534f;
+}
+
+.webphone-ringing {
+    animation: ringing-pulse 0.5s infinite;
+}
+
+@keyframes ringing-pulse {
+    0% { background-color: #fcf8e3; }
+    50% { background-color: #f0ad4e; }
+    100% { background-color: #fcf8e3; }
+}
+
+.webphone-number-row {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.webphone-number-row input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.webphone-number-row input:focus {
+    outline: none;
+    border-color: #4a90d9;
+}
+
+.webphone-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.webphone-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.webphone-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.webphone-btn-call {
+    background: #5cb85c;
+    color: white;
+}
+
+.webphone-btn-call:hover:not(:disabled) {
+    background: #4cae4c;
+}
+
+.webphone-btn-hangup {
+    background: #d9534f;
+    color: white;
+}
+
+.webphone-btn-hangup:hover:not(:disabled) {
+    background: #c9302c;
+}
+
+.webphone-btn-answer {
+    background: #5bc0de;
+    color: white;
+}
+
+.webphone-btn-answer:hover:not(:disabled) {
+    background: #46b8da;
+}
+
+.webphone-call-info {
+    margin-top: 10px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    display: none;
+}
+
+.webphone-call-info.active {
+    display: block;
+}
+
+.webphone-call-info .caller-id {
+    font-weight: bold;
+    color: #333;
+}
+
+.webphone-call-info .call-duration {
+    color: #666;
+    font-size: 11px;
+}
