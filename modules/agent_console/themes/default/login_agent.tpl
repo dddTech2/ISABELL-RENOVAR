@@ -40,16 +40,33 @@
 {elseif $NO_AGENTS}
 <p><h4 align="center">{$LABEL_NOAGENTS}</h4></p>
 {else}
-{* Wrapper flex para login + webphone *}
-<div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 20px; padding: 20px 0;">
+{* Wrapper flex para webphone + login *}
+<div style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 30px; margin-top: 40px; margin-bottom: 40px;">
 
-{* Columna izquierda: formulario de login *}
+{* Columna izquierda: WebPhone *}
+<div id="new-webphone-wrapper" style="width: 280px; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 4px;">
+    <div class="webphone-panel" style="margin: 0; border: none;">
+        <div class="webphone-header">WebPhone</div>
+        <div id="webphone-status" class="webphone-status webphone-unregistered">
+            <span class="status-indicator"></span>
+            <span class="status-text">Conectando...</span>
+        </div>
+        <div class="webphone-number-row">
+            <input type="text" id="webphone-number" placeholder="Número a marcar" />
+        </div>
+        <div class="webphone-buttons">
+            <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
+            <button id="webphone-btn-hangup" class="webphone-btn webphone-btn-hangup" style="display:none;">Colgar</button>
+            <button id="webphone-btn-answer" class="webphone-btn webphone-btn-answer" style="display:none;">Contestar</button>
+            <button id="webphone-btn-reconnect" class="webphone-btn webphone-btn-reconnect" style="display:none;">Reconectar</button>
+        </div>
+    </div>
+</div>
+
+{* Columna derecha: formulario de login *}
 <div>
 <form method="POST"  action="index.php?menu={$MODULE_NAME}" onsubmit="do_login(); return false;">
-
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<table width="400" border="0" cellspacing="0" cellpadding="0" align="center">
+<table width="400" border="0" cellspacing="0" cellpadding="0" align="center" style="box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
   <tr>
     <td width="498"  class="menudescription">
       <table width="100%" border="0" cellspacing="0" cellpadding="4" align="center">
@@ -115,26 +132,6 @@
 </table>
 
 </form>
-</div>
-
-{* Columna derecha: WebPhone *}
-<div id="new-webphone-wrapper" style="width: 280px; flex-shrink: 0;">
-    <div class="webphone-panel">
-        <div class="webphone-header">WebPhone</div>
-        <div id="webphone-status" class="webphone-status webphone-unregistered">
-            <span class="status-indicator"></span>
-            <span class="status-text">Conectando...</span>
-        </div>
-        <div class="webphone-number-row">
-            <input type="text" id="webphone-number" placeholder="Numero a marcar" />
-        </div>
-                    <div class="webphone-buttons">
-                        <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
-                        <button id="webphone-btn-hangup" class="webphone-btn webphone-btn-hangup" style="display:none;">Colgar</button>
-                        <button id="webphone-btn-answer" class="webphone-btn webphone-btn-answer" style="display:none;">Contestar</button>
-                        <button id="webphone-btn-reconnect" class="webphone-btn webphone-btn-reconnect" style="display:none;">Reconectar</button>
-                    </div>
-    </div>
 </div>
 
 </div>{* fin wrapper flex *}

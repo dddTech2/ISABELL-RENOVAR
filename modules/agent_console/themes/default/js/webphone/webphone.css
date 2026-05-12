@@ -2,12 +2,12 @@
  * WebPhone Panel Styles
  */
 
-/* Layout adjustments for webphone */
-#issabel-callcenter-contenido {
+/* Layout adjustments for webphone in console only */
+#issabel-callcenter-area-principal #issabel-callcenter-contenido {
     width: calc(100% - 300px) !important;
 }
 
-#new-webphone-wrapper {
+#issabel-callcenter-area-principal #new-webphone-wrapper {
     position: absolute;
     right: 10px;
     bottom: 0;
@@ -18,11 +18,11 @@
 
 /* Responsive: stack on smaller screens */
 @media only screen and (max-width: 1200px) {
-    #issabel-callcenter-contenido {
+    #issabel-callcenter-area-principal #issabel-callcenter-contenido {
         width: 100% !important;
     }
     
-    #new-webphone-wrapper {
+    #issabel-callcenter-area-principal #new-webphone-wrapper {
         position: relative;
         width: 100%;
         height: auto;
