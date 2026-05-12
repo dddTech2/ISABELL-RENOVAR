@@ -705,6 +705,27 @@ function manejarSesionActiva_HTML($module_name, &$smarty, $sDirLocalPlantillas, 
         $sShiftHoursOptions .= '<option value="'.$sHourVal.'">'.$sHourVal.':00</option>';
     }
 
+    // Fetch SIP/PJSIP password for WebPhone
+    $sipPassword = '';
+    $sipExtension = isset($_SESSION['callcenter']['extension']) ? $_SESSION['callcenter']['extension'] : '';
+    $dsnAsterisk = generarDSNSistema('asteriskuser', 'asterisk');
+    $dbAsterisk = new paloDB($dsnAsterisk);
+    
+    if (!empty($sipExtension)) {
+        // Try PJSIP first
+        $extSafe = $dbAsterisk->conn->quote($sipExtension);
+        $result = $dbAsterisk->fetchTable("SELECT password FROM ps_auths WHERE id = $extSafe", TRUE);
+        if (is_array($result) && count($result) > 0) {
+            $sipPassword = $result[0]['password'];
+        } else {
+            // Fallback to SIP
+            $result = $dbAsterisk->fetchTable("SELECT data FROM sip WHERE id = $extSafe AND keyword = 'secret'", TRUE);
+            if (is_array($result) && count($result) > 0) {
+                $sipPassword = $result[0]['data'];
+            }
+        }
+    }
+
     $smarty->assign(array(
         // Shift filter labels
         'LBL_SHIFT_FROM'                =>  _tr('From'),
@@ -752,8 +773,8 @@ function manejarSesionActiva_HTML($module_name, &$smarty, $sDirLocalPlantillas, 
         'BTN_HOLD'                      =>  $estado['onhold'] ? _tr('End Hold') : _tr('Hold'),
         'BTN_GUARDAR_FORMULARIOS'       =>  _tr('Save data'),
         'IS_AGENT_TYPE'                 =>  (strpos($_SESSION['callcenter']['agente'], 'Agent/') === 0),
-        'WEBPHONE_EXTENSION'            =>  $extension,
-        'WEBPHONE_PASSWORD'             =>  is_array($webphonePassword) && count($webphonePassword) > 0 ? $webphonePassword[0] : '',
+        'WEBPHONE_EXTENSION'            =>  $sipExtension,
+        'WEBPHONE_PASSWORD'             =>  $sipPassword,
     ));
     $estadoInicial = array(
         'onhold'            =>  $estado['onhold'],
