@@ -158,19 +158,26 @@ var webPhoneConfig = {
 };
 
 $(document).ready(function() {
-    console.log('[WebPhone] Initializing for extension: ' + webPhoneConfig.extension);
+    console.log('[WebPhone] Config:', {
+        extension: webPhoneConfig.extension,
+        passwordLength: webPhoneConfig.password ? webPhoneConfig.password.length : 0,
+        domain: webPhoneConfig.domain,
+        wssServer: webPhoneConfig.wssServer
+    });
     
     if (!webPhoneConfig.extension) {
         console.warn('[WebPhone] No extension configured');
-        $('#webphone-status .status-text').text('Sin extension');
+        $('#webphone-status .status-text').text('Error: Sin extension');
         return;
     }
     
     if (!webPhoneConfig.password) {
         console.warn('[WebPhone] No password configured');
-        $('#webphone-status .status-text').text('Sin contraseña');
-        // Still try to init - user will see the error
+        $('#webphone-status .status-text').text('Error: Sin contraseña');
+        return;
     }
+    
+    $('#webphone-status .status-text').text('Registrando...');
     
     WebPhone.init(webPhoneConfig, {
         onRegistered: function() {

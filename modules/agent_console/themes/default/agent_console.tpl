@@ -282,8 +282,12 @@ var webPhoneConfig = {
 };
 
 $(document).ready(function() {
-    // Initialize WebPhone
-    console.log('[WebPhone] Initializing for extension: ' + webPhoneConfig.extension);
+    console.log('[WebPhone] Config:', {
+        extension: webPhoneConfig.extension,
+        passwordLength: webPhoneConfig.password ? webPhoneConfig.password.length : 0,
+        domain: webPhoneConfig.domain,
+        wssServer: webPhoneConfig.wssServer
+    });
     
     if (!webPhoneConfig.extension) {
         console.warn('[WebPhone] No extension configured');
@@ -294,8 +298,10 @@ $(document).ready(function() {
     if (!webPhoneConfig.password) {
         console.warn('[WebPhone] No password configured (SIP/PJSIP secret not found)');
         $('#webphone-status .status-text').text('Error: Sin contraseña');
-        // We will still try to init, it might fail with 403, but at least user sees the UI
+        return;
     }
+    
+    $('#webphone-status .status-text').text('Registrando...');
     
     WebPhone.init(webPhoneConfig, {
             onRegistered: function() {

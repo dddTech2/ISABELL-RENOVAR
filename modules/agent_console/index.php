@@ -62,26 +62,43 @@ function _getSipPassword($extension) {
     $dsnAsterisk = generarDSNSistema('asteriskuser', 'asterisk');
     $dbAsterisk = new paloDB($dsnAsterisk);
     
-    // Try PJSIP first (id is usually extension-auth or just extension)
     $extSafe = $dbAsterisk->conn->quote($extension);
-    $extAuthSafe = $dbAsterisk->conn->quote($extension . '-auth');
     
-    $queryPjsip = "SELECT password FROM ps_auths WHERE id = $extSafe OR id = $extAuthSafe";
+    // Try PJSIP: id can be just the extension number
+    $queryPjsip = "SELECT password FROM ps_auths WHERE id = $extSafe";
     $result = $dbAsterisk->fetchTable($queryPjsip, TRUE);
-    _debug("WEBPHONE: PJSIP query: $queryPjsip, result: " . print_r($result, true));
+    _debug("WEBPHONE: PJSIP query: $queryPjsip");
+    _debug("WEBPHONE: PJSIP result count: " . (is_array($result) ? count($result) : 'N/A'));
     
     if (is_array($result) && count($result) > 0) {
         $sipPassword = $result[0]['password'];
+        _debug("WEBPHONE: PJSIP password FOUND");
     } else {
-        // Fallback to SIP
-        $querySip = "SELECT data FROM sip WHERE id = $extSafe AND keyword = 'secret'";
-        $result = $dbAsterisk->fetchTable($querySip, TRUE);
-        _debug("WEBPHONE: SIP query: $querySip, result: " . print_r($result, true));
+        // Try with -auth suffix
+        $extAuthSafe = $dbAsterisk->conn->quote($extension . '-auth');
+        $queryPjsip2 = "SELECT password FROM ps_auths WHERE id = $extAuthSafe";
+        $result = $dbAsterisk->fetchTable($queryPjsip2, TRUE);
+        _debug("WEBPHONE: PJSIP auth query: $queryPjsip2");
+        
         if (is_array($result) && count($result) > 0) {
-            $sipPassword = $result[0]['data'];
+            $sipPassword = $result[0]['password'];
+            _debug("WEBPHONE: PJSIP-auth password FOUND");
+        } else {
+            // Fallback to chan_sip
+            $querySip = "SELECT data FROM sip WHERE id = $extSafe AND keyword = 'secret'";
+            $result = $dbAsterisk->fetchTable($querySip, TRUE);
+            _debug("WEBPHONE: SIP query: $querySip");
+            
+            if (is_array($result) && count($result) > 0) {
+                $sipPassword = $result[0]['data'];
+                _debug("WEBPHONE: chan_sip password FOUND");
+            } else {
+                _debug("WEBPHONE: No password found in any table for $extension");
+            }
         }
     }
-    _debug("WEBPHONE: Final password found for $extension: " . ($sipPassword ? "YES" : "NO"));
+    
+    _debug("WEBPHONE: Final password length for $extension: " . strlen($sipPassword));
     return $sipPassword;
 }
 // =========================================================================
