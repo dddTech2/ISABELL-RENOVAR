@@ -123,7 +123,7 @@
     		</div>{* issabel-callcenter-contenido *}
             
             {* WebPhone Panel - right side *}
-            <div id="new-webphone-wrapper" style="width: 280px; margin-left: 10px; flex-shrink: 0;">
+            <div id="new-webphone-wrapper">
                 <div class="webphone-panel">
                     <div class="webphone-header">WebPhone</div>
                     <div id="webphone-status" class="webphone-status webphone-unregistered">

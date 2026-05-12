@@ -5,6 +5,8 @@
 /* Layout adjustments for webphone in console only */
 #issabel-callcenter-area-principal #issabel-callcenter-contenido {
     width: calc(100% - 300px) !important;
+    right: auto !important;
+    left: 0 !important;
 }
 
 #issabel-callcenter-area-principal #issabel-callcenter-contenido .left-container {
@@ -47,6 +49,7 @@
     padding: 10px;
     font-family: Arial, sans-serif;
     font-size: 12px;
+    box-sizing: border-box;
 }
 
 .webphone-header {
