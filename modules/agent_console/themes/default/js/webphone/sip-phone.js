@@ -1,12 +1,15 @@
 /**
  * WebPhone Panel for Issabel Agent Console
  * Simplified SIP.js wrapper for basic call functionality
+ * SECURITY: Stops on auth failure to prevent fail2ban blocks
  */
 
 var WebPhone = (function() {
     var userAgent = null;
     var registerer = null;
     var currentSession = null;
+    var registerAttempts = 0;
+    var maxRegisterAttempts = 1;
     var config = {
         extension: '',
         password: '',
@@ -21,7 +24,8 @@ var WebPhone = (function() {
     };
     var state = {
         registered: false,
-        callState: 'idle' // idle, calling, ringing, connected
+        callState: 'idle', // idle, calling, ringing, connected
+        authFailed: false
     };
     var callbacks = {
         onRegistered: null,
@@ -47,13 +51,24 @@ var WebPhone = (function() {
         var $callBtn = $('#webphone-btn-call');
         var $hangupBtn = $('#webphone-btn-hangup');
         var $answerBtn = $('#webphone-btn-answer');
+        var $reconnectBtn = $('#webphone-btn-reconnect');
 
-        if (state.registered) {
-            $status.removeClass('webphone-unregistered').addClass('webphone-registered');
+        if (state.authFailed) {
+            $status.removeClass('webphone-registered webphone-unregistered').addClass('webphone-auth-failed');
+            $status.find('.status-text').text('Error de autenticacion');
+        } else if (state.registered) {
+            $status.removeClass('webphone-unregistered webphone-auth-failed').addClass('webphone-registered');
             $status.find('.status-text').text('Registrado');
         } else {
-            $status.removeClass('webphone-registered').addClass('webphone-unregistered');
+            $status.removeClass('webphone-registered webphone-auth-failed').addClass('webphone-unregistered');
             $status.find('.status-text').text('No registrado');
+        }
+
+        // Show reconnect button only on auth failure
+        if (state.authFailed) {
+            $reconnectBtn.show();
+        } else {
+            $reconnectBtn.hide();
         }
 
         switch(state.callState) {
@@ -87,6 +102,8 @@ var WebPhone = (function() {
     function init(cfg, cbs) {
         config = Object.assign(config, cfg);
         callbacks = Object.assign(callbacks, cbs);
+        registerAttempts = 0;
+        state.authFailed = false;
 
         log('Initializing WebPhone for extension: ' + config.extension);
 
@@ -102,18 +119,19 @@ var WebPhone = (function() {
     }
 
     function createAudioElements() {
-        // Create remote audio element for incoming audio
-        audioElements.remote = document.createElement('audio');
-        audioElements.remote.id = 'webphone-remote-audio';
-        audioElements.remote.autoplay = true;
-        document.body.appendChild(audioElements.remote);
-
-        // Local audio (for muting detection, not typically played)
-        audioElements.local = document.createElement('audio');
-        audioElements.local.id = 'webphone-local-audio';
-        audioElements.local.muted = true;
-        audioElements.local.autoplay = true;
-        document.body.appendChild(audioElements.local);
+        if (!audioElements.remote) {
+            audioElements.remote = document.createElement('audio');
+            audioElements.remote.id = 'webphone-remote-audio';
+            audioElements.remote.autoplay = true;
+            document.body.appendChild(audioElements.remote);
+        }
+        if (!audioElements.local) {
+            audioElements.local = document.createElement('audio');
+            audioElements.local.id = 'webphone-local-audio';
+            audioElements.local.muted = true;
+            audioElements.local.autoplay = true;
+            document.body.appendChild(audioElements.local);
+        }
     }
 
     function createUserAgent() {
@@ -123,7 +141,7 @@ var WebPhone = (function() {
         var uri = SIP.UserAgent.makeURI('sip:' + config.extension + '@' + config.domain);
         if (!uri) {
             log('ERROR: Failed to create URI');
-            if (callbacks.onError) callbacks.onError('Failed to create SIP URI');
+            showError('Failed to create SIP URI');
             return;
         }
 
@@ -132,7 +150,9 @@ var WebPhone = (function() {
             transportOptions: {
                 server: wsServer,
                 traceSip: false,
-                connectionTimeout: 10
+                connectionTimeout: 5,
+                reconnectionAttempts: 0,
+                reconnectionTimeout: 0
             },
             sessionDescriptionHandlerFactoryOptions: {
                 peerConnectionConfiguration: {
@@ -145,7 +165,7 @@ var WebPhone = (function() {
             authorizationPassword: config.password,
             hackIpInContact: true,
             userAgentString: 'Issabel WebPhone 1.0 (SIP.js 0.20.0)',
-            autoStart: true,
+            autoStart: false,
             autoStop: true,
             register: false,
             noAnswerTimeout: 60,
@@ -162,22 +182,39 @@ var WebPhone = (function() {
 
             userAgent.transport.onConnect = function() {
                 log('WebSocket connected');
-                register();
+                if (!state.authFailed) {
+                    register();
+                }
             };
 
             userAgent.transport.onDisconnect = function(error) {
                 log('WebSocket disconnected: ' + (error ? error : 'normal'));
-                state.registered = false;
-                updateUI();
-                if (callbacks.onUnregistered) callbacks.onUnregistered();
+                if (!state.authFailed) {
+                    state.registered = false;
+                    updateUI();
+                    if (callbacks.onUnregistered) callbacks.onUnregistered();
+                }
             };
 
             userAgent.start();
 
         } catch (e) {
             log('ERROR creating UserAgent: ' + e.message);
-            if (callbacks.onError) callbacks.onError(e.message);
+            showError(e.message);
         }
+    }
+
+    function showError(msg) {
+        state.authFailed = true;
+        state.registered = false;
+        updateUI();
+        log('ERROR: ' + msg);
+        if (callbacks.onError) callbacks.onError(msg);
+        
+        // Update status text with error
+        var $status = $('#webphone-status');
+        $status.removeClass('webphone-registered webphone-unregistered').addClass('webphone-auth-failed');
+        $status.find('.status-text').text('Error: ' + msg);
     }
 
     function register() {
@@ -186,7 +223,20 @@ var WebPhone = (function() {
             return;
         }
 
-        log('Registering...');
+        if (state.authFailed) {
+            log('Already failed auth, not retrying');
+            return;
+        }
+
+        registerAttempts++;
+        if (registerAttempts > maxRegisterAttempts) {
+            log('Max register attempts reached (' + maxRegisterAttempts + '), stopping');
+            showError('Maximos intentos alcanzados');
+            disconnect();
+            return;
+        }
+
+        log('Registering... (attempt ' + registerAttempts + '/' + maxRegisterAttempts + ')');
 
         var registererOptions = {
             registrar: SIP.UserAgent.makeURI('sip:' + config.domain),
@@ -215,10 +265,38 @@ var WebPhone = (function() {
             }
         });
 
-        registerer.register().catch(function(e) {
-            log('Registration failed: ' + e.message || e);
-            if (callbacks.onError) callbacks.onError('Registration failed');
-        });
+        registerer.register()
+            .then(function() {
+                log('Registration request sent successfully');
+            })
+            .catch(function(e) {
+                var errorMsg = e.message || String(e);
+                var statusCode = extractStatusCode(e);
+                log('Registration failed: ' + errorMsg + ' (status: ' + statusCode + ')');
+                
+                if (statusCode === 401 || statusCode === 403) {
+                    // Authentication failure - STOP to prevent fail2ban
+                    log('AUTH FAILURE: Stopping all retry attempts to prevent fail2ban block');
+                    showError('Contraseña incorrecta');
+                    disconnect();
+                } else {
+                    showError('Registro fallo: ' + statusCode);
+                }
+            });
+    }
+
+    function extractStatusCode(e) {
+        // Try to extract SIP status code from error object
+        if (e && typeof e === 'object') {
+            if (e.message && typeof e.message === 'string') {
+                var match = e.message.match(/(\d{3})/);
+                if (match) return parseInt(match[1], 10);
+            }
+            if (e.response && e.response.statusCode) {
+                return e.response.statusCode;
+            }
+        }
+        return 0;
     }
 
     function handleIncomingCall(session) {
@@ -240,7 +318,6 @@ var WebPhone = (function() {
             }
         });
 
-        // Play ringtone (using system notification or audio)
         playRingtone(true);
     }
 
@@ -266,7 +343,7 @@ var WebPhone = (function() {
             playRingtone(false);
             attachMedia();
         }).catch(function(e) {
-            log('Failed to answer: ' + e.message || e);
+            log('Failed to answer: ' + (e.message || e));
             updateCallState('idle');
         });
     }
@@ -281,11 +358,11 @@ var WebPhone = (function() {
 
         if (currentSession.state === SIP.SessionState.Initial) {
             currentSession.cancel().catch(function(e) {
-                log('Cancel failed: ' + e.message || e);
+                log('Cancel failed: ' + (e.message || e));
             });
         } else {
             currentSession.bye().catch(function(e) {
-                log('Bye failed: ' + e.message || e);
+                log('Bye failed: ' + (e.message || e));
             });
         }
 
@@ -343,7 +420,7 @@ var WebPhone = (function() {
         currentSession.invite().then(function() {
             log('INVITE sent');
         }).catch(function(e) {
-            log('INVITE failed: ' + e.message || e);
+            log('INVITE failed: ' + (e.message || e));
             updateCallState('idle');
             currentSession = null;
         });
@@ -375,8 +452,6 @@ var WebPhone = (function() {
     }
 
     function playRingtone(play) {
-        // Simple ringtone using Web Audio API or HTML5 audio
-        // For now, we'll just use a visual indicator
         if (play) {
             $('#webphone-status').addClass('webphone-ringing');
         } else {
@@ -393,18 +468,36 @@ var WebPhone = (function() {
 
         if (registerer) {
             registerer.unregister().catch(function(e) {
-                log('Unregister failed: ' + e.message || e);
+                log('Unregister failed: ' + (e.message || e));
             });
         }
 
         if (userAgent) {
             userAgent.stop().catch(function(e) {
-                log('Stop failed: ' + e.message || e);
+                log('Stop failed: ' + (e.message || e));
             });
         }
 
         state.registered = false;
         updateUI();
+    }
+
+    function reconnect() {
+        log('Reconnecting...');
+        registerAttempts = 0;
+        state.authFailed = false;
+        state.registered = false;
+        updateUI();
+        
+        if (userAgent) {
+            userAgent.stop().then(function() {
+                createUserAgent();
+            }).catch(function() {
+                createUserAgent();
+            });
+        } else {
+            createUserAgent();
+        }
     }
 
     // Public API
@@ -414,6 +507,7 @@ var WebPhone = (function() {
         answer: answer,
         hangup: hangup,
         disconnect: disconnect,
+        reconnect: reconnect,
         isRegistered: function() { return state.registered; },
         getState: function() { return state; }
     };

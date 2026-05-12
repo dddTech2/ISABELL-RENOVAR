@@ -128,11 +128,12 @@
         <div class="webphone-number-row">
             <input type="text" id="webphone-number" placeholder="Numero a marcar" />
         </div>
-        <div class="webphone-buttons">
-            <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
-            <button id="webphone-btn-hangup" class="webphone-btn webphone-btn-hangup" style="display:none;">Colgar</button>
-            <button id="webphone-btn-answer" class="webphone-btn webphone-btn-answer" style="display:none;">Contestar</button>
-        </div>
+                    <div class="webphone-buttons">
+                        <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
+                        <button id="webphone-btn-hangup" class="webphone-btn webphone-btn-hangup" style="display:none;">Colgar</button>
+                        <button id="webphone-btn-answer" class="webphone-btn webphone-btn-answer" style="display:none;">Contestar</button>
+                        <button id="webphone-btn-reconnect" class="webphone-btn webphone-btn-reconnect" style="display:none;">Reconectar</button>
+                    </div>
     </div>
 </div>
 
@@ -208,6 +209,10 @@ $(document).ready(function() {
 
     $('#webphone-btn-answer').on('click', function() {
         WebPhone.answer();
+    });
+
+    $('#webphone-btn-reconnect').on('click', function() {
+        WebPhone.reconnect();
     });
 
     $('#webphone-number').on('keypress', function(e) {

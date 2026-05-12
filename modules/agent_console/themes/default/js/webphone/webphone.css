@@ -85,6 +85,16 @@
     background: #d9534f;
 }
 
+.webphone-auth-failed {
+    background: #fcf8e3;
+    color: #8a6d3b;
+    border: 1px solid #f0ad4e;
+}
+
+.webphone-auth-failed .status-indicator {
+    background: #f0ad4e;
+}
+
 .webphone-ringing {
     animation: ringing-pulse 0.5s infinite;
 }
@@ -159,6 +169,15 @@
 
 .webphone-btn-answer:hover:not(:disabled) {
     background: #46b8da;
+}
+
+.webphone-btn-reconnect {
+    background: #f0ad4e;
+    color: white;
+}
+
+.webphone-btn-reconnect:hover:not(:disabled) {
+    background: #ec971f;
 }
 
 .webphone-call-info {
