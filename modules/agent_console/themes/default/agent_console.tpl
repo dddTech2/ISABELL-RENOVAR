@@ -94,9 +94,12 @@
 {/if}
 	        <button id="btn_logout" class="issabel-callcenter-boton-activo">{$BTN_FINALIZAR_LOGIN}</button>
 	    </div> {* issabel-callcenter-controles *}
-	    {* El panel que aparece a la derecha como área principal del módulo *}
-        
-    	    <div id="issabel-callcenter-contenido">
+
+        {* Wrapper flex para contenido y webphone *}
+        <div style="display: flex; flex-direction: row; gap: 10px; align-items: flex-start; margin-top: 10px;">
+	    
+	    {* El panel que aparece a la izquierda como área principal del módulo *}
+    	    <div id="issabel-callcenter-contenido" style="flex: 1; min-width: 0;">
                 <div class="left-container" id="left-container">
     			{* Definición de las cejillas de información/script/formulario *}
     			<div id="issabel-callcenter-cejillas-contenido">
@@ -142,6 +145,7 @@
                 </div>
             </div>
 
+        </div>{* fin wrapper flex contenido + webphone *}
 
 	</div>
 </div>{* issabel-callcenter-area-principal *}

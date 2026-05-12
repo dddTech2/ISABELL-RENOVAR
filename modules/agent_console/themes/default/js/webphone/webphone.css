@@ -4,29 +4,24 @@
 
 /* Layout adjustments for webphone in console only */
 #issabel-callcenter-area-principal #issabel-callcenter-contenido {
-    width: calc(100% - 300px) !important;
+    /* width is now handled by flexbox */
 }
 
 #issabel-callcenter-area-principal #new-webphone-wrapper {
-    position: absolute;
-    right: 10px;
-    bottom: 0;
-    height: 380pt;
-    width: 280px;
-    z-index: 10;
+    /* Positioning handled by flexbox */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    background: #f5f5f5;
 }
 
 /* Responsive: stack on smaller screens */
 @media only screen and (max-width: 1200px) {
-    #issabel-callcenter-area-principal #issabel-callcenter-contenido {
-        width: 100% !important;
+    #issabel-callcenter-area-principal > div[style*="display: flex"] {
+        flex-direction: column !important;
     }
     
     #issabel-callcenter-area-principal #new-webphone-wrapper {
-        position: relative;
-        width: 100%;
-        height: auto;
-        right: 0;
+        width: 100% !important;
         margin-top: 10px;
     }
 }
