@@ -101,6 +101,14 @@ function _getSipPassword($extension) {
     _debug("WEBPHONE: Final password length for $extension: " . strlen($sipPassword));
     return $sipPassword;
 }
+
+// Helper: inject webphone CSS/JS includes via PHP (bypasses Smarty cache)
+function _webphone_includes_html() {
+    $base = 'modules/agent_console/themes/default/js/webphone';
+    return '<link rel="stylesheet" href="' . $base . '/webphone.css" />' . "\n"
+         . '<script type="text/javascript" src="' . $base . '/sip-0.20.0.min.js"></script>' . "\n"
+         . '<script type="text/javascript" src="' . $base . '/sip-phone.js"></script>' . "\n";
+}
 // =========================================================================
 
 
@@ -368,7 +376,7 @@ function manejarLogin_HTML($module_name, &$smarty, $sDirLocalPlantillas)
             }
         }
     }
-    $sContenido = $smarty->fetch("$sDirLocalPlantillas/login_agent.tpl");
+    $sContenido = _webphone_includes_html() . $smarty->fetch("$sDirLocalPlantillas/login_agent.tpl");
     return $sContenido . _cc_debug_flush_html();
 }
 
@@ -1045,7 +1053,7 @@ function manejarSesionActiva_HTML($module_name, &$smarty, $sDirLocalPlantillas, 
         echo "localStorage.setItem('mhrgl.com.expert.ice_servers', '[{ url: \'stun:stun.a.google.com:19302\'}]');";
         echo "</script>";
 
-    return $smarty->fetch("$sDirLocalPlantillas/agent_console.tpl") . _cc_debug_flush_html();
+    return _webphone_includes_html() . $smarty->fetch("$sDirLocalPlantillas/agent_console.tpl") . _cc_debug_flush_html();
 }
 
 function _manejarSesionActiva_HTML_generarInformacion($smarty, $sDirLocalPlantillas, $infoLlamada, $infoCampania)

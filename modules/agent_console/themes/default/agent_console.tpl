@@ -20,11 +20,6 @@
   +----------------------------------------------------------------------+
   $Id: default.conf.php,v 1.1.1.1 2007/03/23 00:13:58 elandivar Exp $
 *}
-{* WebPhone includes *}
-<link rel="stylesheet" href="modules/agent_console/themes/default/js/webphone/webphone.css" />
-<script type="text/javascript" src="modules/agent_console/themes/default/js/webphone/sip-0.20.0.min.js"></script>
-<script type="text/javascript" src="modules/agent_console/themes/default/js/webphone/sip-phone.js"></script>
-
 {* Incluir todas las bibliotecas y CSS necesarios *}
 {foreach from=$LISTA_JQUERY_CSS item=CURR_ITEM}
     {if $CURR_ITEM[0] == 'css'}
