@@ -66,15 +66,16 @@
             <div align="center" id="login_msg_error" style="color: #ff0000;"></div>
           </td>
         </tr>
-        {* Fila visible: Extension callback dropdown *}
+        {* Fila visible: Extension callback text *}
         <tr>
           <td width="40%">
               <div align="right">{$CALLBACK_EXTENSION}:</div>
           </td>
           <td width="60%">
-                <select align="center" id="input_extension_callback" name="input_extension_callback">
-                    {html_options options=$LISTA_EXTENSIONES_CALLBACK selected=$ID_EXTENSION_CALLBACK}
-                </select>
+              <div align="center" style="font-weight: bold; font-size: 14px;">
+                  {$LISTA_EXTENSIONES_CALLBACK.$ID_EXTENSION_CALLBACK|default:$ID_EXTENSION_CALLBACK}
+              </div>
+              <input type="hidden" id="input_extension_callback" name="input_extension_callback" value="{$ID_EXTENSION_CALLBACK}">
           </td>
         </tr>
         {* Campos ocultos: agent, extension, password, callback flag *}
