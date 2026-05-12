@@ -194,8 +194,15 @@ $(document).ready(function() {
     }
 
     if ($('#issabel-callcenter-llamada-paneles').length > 0) {
-        $('#issabel-callcenter-llamada-paneles').layout({fxName: 'none', west: { size: 300 }});
+        var mainLayout = $('#issabel-callcenter-llamada-paneles').layout({fxName: 'none', west: { size: 300 }});
         $('#issabel-callcenter-llamada-paneles-izq').layout({fxName: 'none', south: { size: 250 }});
+        
+        // Trigger resize after CSS width adjustments for webphone panel
+        setTimeout(function() {
+            if (mainLayout && mainLayout.resizeAll) {
+                mainLayout.resizeAll();
+            }
+        }, 100);
     }
 
     // Operaciones que deben de repetirse al obtener formulario vía AJAX
