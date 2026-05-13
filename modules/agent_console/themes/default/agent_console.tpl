@@ -130,8 +130,15 @@
                         <span class="status-indicator"></span>
                         <span class="status-text">Conectando...</span>
                     </div>
+                    <div class="webphone-autoanswer-row">
+                        <label class="webphone-toggle">
+                            <input type="checkbox" id="webphone-autoanswer" />
+                            <span class="webphone-toggle-slider"></span>
+                        </label>
+                        <span class="webphone-autoanswer-label">Auto-Respuesta</span>
+                    </div>
                     <div class="webphone-number-row">
-                        <input type="text" id="webphone-number" placeholder="Número a marcar" />
+                        <input type="text" id="webphone-number" placeholder="Numero a marcar" />
                     </div>
                     <div class="webphone-buttons">
                         <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
@@ -338,6 +345,14 @@ $(document).ready(function() {
         $('#webphone-btn-reconnect').on('click', function() {
             WebPhone.reconnect();
         });
+
+        // Auto-answer toggle
+        $('#webphone-autoanswer').on('change', function() {
+            WebPhone.setAutoAnswer($(this).is(':checked'));
+        });
+        
+        // Load saved auto-answer preference
+        WebPhone.loadAutoAnswerPreference();
 
         $('#webphone-number').on('keypress', function(e) {
             if (e.which === 13) {

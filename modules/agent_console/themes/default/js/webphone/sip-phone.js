@@ -16,7 +16,8 @@ var WebPhone = (function() {
         domain: '',
         wssServer: '',
         wssPort: '8089',
-        wssPath: '/ws'
+        wssPath: '/ws',
+        autoAnswerDelay: 1500 // milliseconds before auto-answering
     };
     var audioElements = {
         remote: null,
@@ -25,7 +26,8 @@ var WebPhone = (function() {
     var state = {
         registered: false,
         callState: 'idle', // idle, calling, ringing, connected
-        authFailed: false
+        authFailed: false,
+        autoAnswer: false
     };
     var callbacks = {
         onRegistered: null,
@@ -39,9 +41,65 @@ var WebPhone = (function() {
     var ringtoneOscillator = null;
     var ringtoneGain = null;
     var ringtoneInterval = null;
+    
+    // Auto-answer timeout reference
+    var autoAnswerTimeout = null;
 
     function log(msg) {
         console.log('[WebPhone] ' + msg);
+    }
+
+    // ============================================
+    // AUTO-ANSWER
+    // ============================================
+    
+    function setAutoAnswer(enabled) {
+        state.autoAnswer = enabled;
+        log('Auto-answer ' + (enabled ? 'ENABLED' : 'DISABLED'));
+        
+        // Update UI
+        var $row = $('.webphone-autoanswer-row');
+        if (enabled) {
+            $row.addClass('active');
+        } else {
+            $row.removeClass('active');
+        }
+        
+        // Save to localStorage for persistence
+        try {
+            localStorage.setItem('webphone_autoanswer', enabled ? '1' : '0');
+        } catch (e) {}
+    }
+    
+    function loadAutoAnswerPreference() {
+        try {
+            var saved = localStorage.getItem('webphone_autoanswer');
+            if (saved === '1') {
+                setAutoAnswer(true);
+                $('#webphone-autoanswer').prop('checked', true);
+            }
+        } catch (e) {}
+    }
+    
+    function triggerAutoAnswer() {
+        if (!state.autoAnswer || !currentSession) {
+            return;
+        }
+        
+        log('Auto-answer triggered, will answer in ' + config.autoAnswerDelay + 'ms');
+        
+        // Clear any existing timeout
+        if (autoAnswerTimeout) {
+            clearTimeout(autoAnswerTimeout);
+        }
+        
+        // Auto-answer after delay (gives agent a moment to see the incoming call)
+        autoAnswerTimeout = setTimeout(function() {
+            if (state.callState === 'ringing' && currentSession) {
+                log('Auto-answering call now');
+                answer();
+            }
+        }, config.autoAnswerDelay);
     }
 
     // ============================================
@@ -443,17 +501,30 @@ var WebPhone = (function() {
             log('Incoming session state: ' + newState);
             switch(newState) {
                 case SIP.SessionState.Established:
+                    // Clear auto-answer timeout if call was answered manually
+                    if (autoAnswerTimeout) {
+                        clearTimeout(autoAnswerTimeout);
+                        autoAnswerTimeout = null;
+                    }
                     updateCallState('connected');
                     attachMedia();
                     break;
                 case SIP.SessionState.Terminated:
                     log('Incoming call terminated');
+                    // Clear auto-answer timeout
+                    if (autoAnswerTimeout) {
+                        clearTimeout(autoAnswerTimeout);
+                        autoAnswerTimeout = null;
+                    }
                     stopRingtoneSound();
                     currentSession = null;
                     updateCallState('idle');
                     break;
             }
         });
+        
+        // Trigger auto-answer if enabled
+        triggerAutoAnswer();
     }
 
     function answer() {
@@ -698,7 +769,10 @@ var WebPhone = (function() {
         hangup: hangup,
         disconnect: disconnect,
         reconnect: reconnect,
+        setAutoAnswer: setAutoAnswer,
+        loadAutoAnswerPreference: loadAutoAnswerPreference,
         isRegistered: function() { return state.registered; },
-        getState: function() { return state; }
+        getState: function() { return state; },
+        isAutoAnswer: function() { return state.autoAnswer; }
     };
 })();
