@@ -2,23 +2,45 @@
  * WebPhone Panel Styles
  */
 
-/* Layout adjustments for webphone in console only */
+/* Use Flexbox for the wrap to properly align content and webphone */
+#issabel-callcenter-area-principal #issabel-callcenter-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
+}
+
+/* Controls row takes full width */
+#issabel-callcenter-area-principal #issabel-callcenter-controles {
+    flex: 0 0 100%;
+    margin-bottom: 10px;
+}
+
+/* Main content takes remaining space but with a max-width limit */
 #issabel-callcenter-area-principal #issabel-callcenter-contenido {
-    width: calc(100% - 300px) !important;
+    position: relative !important;
+    flex: 1 1 0%;
+    min-width: 0;
+    max-width: 1200px;
+    width: auto !important;
+    height: 380pt;
+    left: auto !important;
     right: auto !important;
-    left: 0 !important;
+    bottom: auto !important;
 }
 
 #issabel-callcenter-area-principal #issabel-callcenter-contenido .left-container {
     width: 100% !important;
 }
 
+/* WebPhone Panel positioned next to main content */
 #issabel-callcenter-area-principal #new-webphone-wrapper {
-    position: absolute;
-    right: 10px;
-    bottom: 0;
+    position: relative !important;
+    flex: 0 0 280px;
+    margin-left: 10px;
     height: 380pt;
-    width: 280px;
+    width: 280px !important;
+    right: auto !important;
+    bottom: auto !important;
     z-index: 10;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     border-radius: 4px;
@@ -29,14 +51,16 @@
 @media only screen and (max-width: 1200px) {
     #issabel-callcenter-area-principal #issabel-callcenter-contenido {
         width: 100% !important;
+        flex: 0 0 100%;
+        max-width: 100%;
     }
     
     #issabel-callcenter-area-principal #new-webphone-wrapper {
-        position: relative;
+        flex: 0 0 100%;
         width: 100% !important;
-        height: auto;
-        right: 0;
+        margin-left: 0;
         margin-top: 10px;
+        height: auto;
     }
 }
 
