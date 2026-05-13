@@ -2,13 +2,11 @@
  * WebPhone Panel Styles
  */
 
-/* Limit the entire app width on wide monitors */
+/* Container: limit width to prevent excessive stretching */
 #issabel-callcenter-area-principal #issabel-callcenter-wrap {
     position: relative;
-    max-width: 1500px;
+    max-width: 1150px;
     width: 100%;
-    margin: 0 auto 0 0; /* Align left */
-    display: block;
 }
 
 #issabel-callcenter-area-principal #issabel-callcenter-controles {
@@ -17,16 +15,15 @@
 }
 
 /* 
- * Absolute positioning for Content and WebPhone.
- * Content stretches from left to right: 300px.
- * WebPhone sits in the remaining 300px space.
+ * Content (Formularios): fixed max-width, positioned from left.
+ * This prevents the form from becoming "muy ancho" on large screens.
  */
 #issabel-callcenter-area-principal #issabel-callcenter-contenido {
     position: absolute !important;
     left: 0 !important;
-    right: 300px !important;
-    width: auto !important;
-    max-width: none !important;
+    width: 850px !important;
+    max-width: calc(100% - 300px) !important; /* shrink on small screens */
+    right: auto !important;
     height: 380pt;
     bottom: auto !important;
 }
@@ -35,13 +32,17 @@
     width: 100% !important;
 }
 
+/* 
+ * WebPhone: positioned right after content with 10px gap.
+ * left = content width (850px) + gap (10px) = 860px
+ */
 #issabel-callcenter-area-principal #new-webphone-wrapper {
     position: absolute !important;
-    right: 10px !important;
+    left: 860px !important;
     width: 280px !important;
     height: 380pt;
+    right: auto !important;
     bottom: auto !important;
-    margin-left: 0 !important;
     z-index: 10;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     border-radius: 4px;
@@ -53,15 +54,15 @@
     #issabel-callcenter-area-principal #issabel-callcenter-contenido {
         position: relative !important;
         width: 100% !important;
-        right: auto !important;
+        max-width: 100% !important;
+        left: auto !important;
     }
     
     #issabel-callcenter-area-principal #new-webphone-wrapper {
         position: relative !important;
+        left: auto !important;
         width: 100% !important;
         max-width: 280px;
-        right: auto !important;
-        margin-left: 0 !important;
         margin-top: 10px;
     }
 }
@@ -111,7 +112,6 @@
     text-align: center;
 }
 
-/* Registration states */
 .webphone-registered {
     background: #dff0d8;
     color: #3c763d;
@@ -144,11 +144,6 @@
     background: #f0ad4e;
 }
 
-/* ============================================
-   CALL STATE INDICATORS - PROMINENT VISUALS
-   ============================================ */
-
-/* Outgoing call - Calling state */
 .webphone-calling {
     background: #fff3cd !important;
     color: #856404 !important;
@@ -172,7 +167,6 @@
     100% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 193, 7, 0.4); }
 }
 
-/* Incoming call - Ringing state - MOST PROMINENT */
 .webphone-ringing-incoming {
     background: #f8d7da !important;
     color: #721c24 !important;
@@ -208,7 +202,6 @@
     50% { opacity: 0.6; }
 }
 
-/* Connected call */
 .webphone-connected {
     background: #d4edda !important;
     color: #155724 !important;
@@ -223,8 +216,6 @@
 .webphone-connected .status-text {
     font-size: 14px;
 }
-
-/* ============================================ */
 
 .webphone-number-row {
     display: flex;
