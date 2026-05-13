@@ -1037,7 +1037,10 @@ function manejarSesionActiva_HTML($module_name, &$smarty, $sDirLocalPlantillas, 
     }
     $smarty->assign('CUSTOM_PANELS', $htmlpanels);
 
-
+    // LEGACY: mhrgl.com webphone code (commented out - replaced by SIP.js integration)
+    // This code injected localStorage settings for the old Browser-Phone webphone.
+    // The new webphone uses SIP.js directly and doesn't need these localStorage entries.
+    /*
         echo "<script>";
         echo "localStorage.setItem('mhrgl.com.identity.display_name', '$extension');";
         echo "localStorage.setItem('mhrgl.com.identity.impi', '$extension');";
@@ -1052,6 +1055,8 @@ function manejarSesionActiva_HTML($module_name, &$smarty, $sDirLocalPlantillas, 
         //echo "localStorage.setItem('mhrgl.com.expert.ice_servers', '[]');";
         echo "localStorage.setItem('mhrgl.com.expert.ice_servers', '[{ url: \'stun:stun.a.google.com:19302\'}]');";
         echo "</script>";
+    */
+    // END LEGACY
 
     return _webphone_includes_html() . $smarty->fetch("$sDirLocalPlantillas/agent_console.tpl") . _cc_debug_flush_html();
 }
