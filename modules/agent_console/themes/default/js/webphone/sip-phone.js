@@ -33,10 +33,121 @@ var WebPhone = (function() {
         onCallStateChange: null,
         onError: null
     };
+    
+    // Audio context for ringtones
+    var audioContext = null;
+    var ringtoneOscillator = null;
+    var ringtoneGain = null;
+    var ringtoneInterval = null;
 
     function log(msg) {
         console.log('[WebPhone] ' + msg);
     }
+
+    // ============================================
+    // AUDIO: Ringtone generation using Web Audio API
+    // ============================================
+    
+    function initAudioContext() {
+        if (!audioContext) {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                log('Web Audio API not supported: ' + e.message);
+            }
+        }
+        return audioContext;
+    }
+
+    function playRingtoneSound(type) {
+        stopRingtoneSound();
+        
+        var ctx = initAudioContext();
+        if (!ctx) return;
+        
+        // Resume audio context if suspended (browser autoplay policy)
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+        
+        ringtoneGain = ctx.createGain();
+        ringtoneGain.gain.value = 0.3;
+        ringtoneGain.connect(ctx.destination);
+        
+        if (type === 'incoming') {
+            // Incoming call ringtone: classic phone ring pattern
+            var ringPattern = function() {
+                if (!ringtoneGain) return;
+                
+                // Create oscillator for ring tone
+                ringtoneOscillator = ctx.createOscillator();
+                ringtoneOscillator.type = 'sine';
+                ringtoneOscillator.frequency.value = 440; // A4 note
+                ringtoneOscillator.connect(ringtoneGain);
+                ringtoneOscillator.start();
+                
+                // Stop after 400ms, pause 200ms, repeat
+                setTimeout(function() {
+                    if (ringtoneOscillator) {
+                        ringtoneOscillator.stop();
+                        ringtoneOscillator.disconnect();
+                        ringtoneOscillator = null;
+                    }
+                }, 400);
+            };
+            
+            ringPattern();
+            ringtoneInterval = setInterval(ringPattern, 600); // Ring every 600ms
+            
+        } else if (type === 'outgoing') {
+            // Outgoing call ringback tone: periodic beeps
+            var beepPattern = function() {
+                if (!ringtoneGain) return;
+                
+                ringtoneOscillator = ctx.createOscillator();
+                ringtoneOscillator.type = 'sine';
+                ringtoneOscillator.frequency.value = 480; // Ringback tone frequency
+                ringtoneOscillator.connect(ringtoneGain);
+                ringtoneOscillator.start();
+                
+                setTimeout(function() {
+                    if (ringtoneOscillator) {
+                        ringtoneOscillator.stop();
+                        ringtoneOscillator.disconnect();
+                        ringtoneOscillator = null;
+                    }
+                }, 200);
+            };
+            
+            beepPattern();
+            ringtoneInterval = setInterval(beepPattern, 500);
+        }
+        
+        log('Playing ' + type + ' ringtone');
+    }
+
+    function stopRingtoneSound() {
+        if (ringtoneInterval) {
+            clearInterval(ringtoneInterval);
+            ringtoneInterval = null;
+        }
+        if (ringtoneOscillator) {
+            try {
+                ringtoneOscillator.stop();
+                ringtoneOscillator.disconnect();
+            } catch (e) {}
+            ringtoneOscillator = null;
+        }
+        if (ringtoneGain) {
+            try {
+                ringtoneGain.disconnect();
+            } catch (e) {}
+            ringtoneGain = null;
+        }
+        log('Ringtone stopped');
+    }
+
+    // ============================================
 
     function updateCallState(newState) {
         state.callState = newState;
@@ -52,16 +163,20 @@ var WebPhone = (function() {
         var $hangupBtn = $('#webphone-btn-hangup');
         var $answerBtn = $('#webphone-btn-answer');
         var $reconnectBtn = $('#webphone-btn-reconnect');
+        var $statusText = $status.find('.status-text');
+
+        // Remove all call-related classes
+        $status.removeClass('webphone-calling webphone-ringing-incoming webphone-connected');
 
         if (state.authFailed) {
             $status.removeClass('webphone-registered webphone-unregistered').addClass('webphone-auth-failed');
-            $status.find('.status-text').text('Error de autenticacion');
+            $statusText.text('Error de autenticacion');
         } else if (state.registered) {
             $status.removeClass('webphone-unregistered webphone-auth-failed').addClass('webphone-registered');
-            $status.find('.status-text').text('Registrado');
+            $statusText.text('Registrado');
         } else {
             $status.removeClass('webphone-registered webphone-auth-failed').addClass('webphone-unregistered');
-            $status.find('.status-text').text('No registrado');
+            $statusText.text('No registrado');
         }
 
         // Show reconnect button only on auth failure
@@ -77,24 +192,34 @@ var WebPhone = (function() {
                 $hangupBtn.hide();
                 $answerBtn.hide();
                 $('#webphone-number').prop('disabled', false);
+                stopRingtoneSound();
                 break;
             case 'calling':
                 $callBtn.hide();
                 $hangupBtn.show().prop('disabled', false);
                 $answerBtn.hide();
                 $('#webphone-number').prop('disabled', true);
+                $status.addClass('webphone-calling');
+                $statusText.text('LLAMANDO...');
+                playRingtoneSound('outgoing');
                 break;
             case 'ringing':
                 $callBtn.hide();
                 $hangupBtn.show().prop('disabled', false);
                 $answerBtn.show().prop('disabled', false);
                 $('#webphone-number').prop('disabled', true);
+                $status.addClass('webphone-ringing-incoming');
+                $statusText.text('LLAMADA ENTRANTE!');
+                playRingtoneSound('incoming');
                 break;
             case 'connected':
                 $callBtn.hide();
                 $hangupBtn.show().prop('disabled', false);
                 $answerBtn.hide();
                 $('#webphone-number').prop('disabled', true);
+                $status.addClass('webphone-connected');
+                $statusText.text('EN LLAMADA');
+                stopRingtoneSound();
                 break;
         }
     }
@@ -277,7 +402,7 @@ var WebPhone = (function() {
                 if (statusCode === 401 || statusCode === 403) {
                     // Authentication failure - STOP to prevent fail2ban
                     log('AUTH FAILURE: Stopping all retry attempts to prevent fail2ban block');
-                    showError('Contraseña incorrecta');
+                    showError('Contrasena incorrecta');
                     disconnect();
                 } else {
                     showError('Registro fallo: ' + statusCode);
@@ -317,8 +442,6 @@ var WebPhone = (function() {
                     break;
             }
         });
-
-        playRingtone(true);
     }
 
     function answer() {
@@ -340,7 +463,7 @@ var WebPhone = (function() {
 
         currentSession.accept(options).then(function() {
             log('Call answered');
-            playRingtone(false);
+            stopRingtoneSound();
             attachMedia();
         }).catch(function(e) {
             log('Failed to answer: ' + (e.message || e));
@@ -366,7 +489,7 @@ var WebPhone = (function() {
             });
         }
 
-        playRingtone(false);
+        stopRingtoneSound();
         currentSession = null;
         updateCallState('idle');
     }
@@ -451,16 +574,10 @@ var WebPhone = (function() {
         log('Remote media attached');
     }
 
-    function playRingtone(play) {
-        if (play) {
-            $('#webphone-status').addClass('webphone-ringing');
-        } else {
-            $('#webphone-status').removeClass('webphone-ringing');
-        }
-    }
-
     function disconnect() {
         log('Disconnecting...');
+
+        stopRingtoneSound();
 
         if (currentSession) {
             hangup();
@@ -484,6 +601,7 @@ var WebPhone = (function() {
 
     function reconnect() {
         log('Reconnecting...');
+        stopRingtoneSound();
         registerAttempts = 0;
         state.authFailed = false;
         state.registered = false;

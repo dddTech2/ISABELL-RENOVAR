@@ -88,31 +88,43 @@
 .webphone-status {
     display: flex;
     align-items: center;
-    padding: 6px 8px;
+    padding: 8px 10px;
     border-radius: 3px;
     margin-bottom: 10px;
     font-weight: bold;
+    font-size: 13px;
+    transition: all 0.3s ease;
 }
 
 .webphone-status .status-indicator {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    margin-right: 8px;
+    margin-right: 10px;
+    flex-shrink: 0;
 }
 
+.webphone-status .status-text {
+    flex: 1;
+    text-align: center;
+}
+
+/* Registration states */
 .webphone-registered {
     background: #dff0d8;
     color: #3c763d;
+    border: 1px solid #d6e9c6;
 }
 
 .webphone-registered .status-indicator {
     background: #5cb85c;
+    box-shadow: 0 0 6px #5cb85c;
 }
 
 .webphone-unregistered {
     background: #f2dede;
     color: #a94442;
+    border: 1px solid #ebccd1;
 }
 
 .webphone-unregistered .status-indicator {
@@ -129,15 +141,87 @@
     background: #f0ad4e;
 }
 
-.webphone-ringing {
-    animation: ringing-pulse 0.5s infinite;
+/* ============================================
+   CALL STATE INDICATORS - PROMINENT VISUALS
+   ============================================ */
+
+/* Outgoing call - Calling state */
+.webphone-calling {
+    background: #fff3cd !important;
+    color: #856404 !important;
+    border: 2px solid #ffc107 !important;
+    animation: calling-pulse 0.8s ease-in-out infinite;
 }
 
-@keyframes ringing-pulse {
-    0% { background-color: #fcf8e3; }
-    50% { background-color: #f0ad4e; }
-    100% { background-color: #fcf8e3; }
+.webphone-calling .status-indicator {
+    background: #ffc107;
+    box-shadow: 0 0 10px #ffc107;
 }
+
+.webphone-calling .status-text {
+    font-size: 15px;
+    letter-spacing: 1px;
+}
+
+@keyframes calling-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 193, 7, 0.4); }
+    50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(255, 193, 7, 0.6); }
+    100% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 193, 7, 0.4); }
+}
+
+/* Incoming call - Ringing state - MOST PROMINENT */
+.webphone-ringing-incoming {
+    background: #f8d7da !important;
+    color: #721c24 !important;
+    border: 3px solid #dc3545 !important;
+    animation: ringing-flash 0.4s ease-in-out infinite;
+}
+
+.webphone-ringing-incoming .status-indicator {
+    background: #dc3545;
+    box-shadow: 0 0 15px #dc3545;
+    animation: indicator-blink 0.4s ease-in-out infinite;
+}
+
+.webphone-ringing-incoming .status-text {
+    font-size: 16px;
+    letter-spacing: 2px;
+    font-weight: bold;
+    animation: text-blink 0.4s ease-in-out infinite;
+}
+
+@keyframes ringing-flash {
+    0%, 100% { background: #f8d7da; transform: scale(1); }
+    50% { background: #fff5f5; transform: scale(1.03); }
+}
+
+@keyframes indicator-blink {
+    0%, 100% { opacity: 1; box-shadow: 0 0 15px #dc3545; }
+    50% { opacity: 0.3; box-shadow: 0 0 5px #dc3545; }
+}
+
+@keyframes text-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Connected call */
+.webphone-connected {
+    background: #d4edda !important;
+    color: #155724 !important;
+    border: 2px solid #28a745 !important;
+}
+
+.webphone-connected .status-indicator {
+    background: #28a745;
+    box-shadow: 0 0 8px #28a745;
+}
+
+.webphone-connected .status-text {
+    font-size: 14px;
+}
+
+/* ============================================ */
 
 .webphone-number-row {
     display: flex;
@@ -197,12 +281,18 @@
 }
 
 .webphone-btn-answer {
-    background: #5bc0de;
+    background: #17a2b8;
     color: white;
+    animation: answer-pulse 1s ease-in-out infinite;
 }
 
 .webphone-btn-answer:hover:not(:disabled) {
-    background: #46b8da;
+    background: #138496;
+}
+
+@keyframes answer-pulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(23, 162, 184, 0.4); }
+    50% { box-shadow: 0 0 10px rgba(23, 162, 184, 0.8); }
 }
 
 .webphone-btn-reconnect {
