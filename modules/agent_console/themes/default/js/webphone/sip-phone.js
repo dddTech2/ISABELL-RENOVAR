@@ -426,19 +426,31 @@ var WebPhone = (function() {
 
     function handleIncomingCall(session) {
         log('Incoming call from: ' + session.remoteIdentity.uri.user);
+        
+        // If there's already an active session, reject the new call
+        if (currentSession) {
+            log('Already in a call, rejecting incoming call');
+            session.reject().catch(function(e) {
+                log('Reject failed: ' + (e.message || e));
+            });
+            return;
+        }
+        
         currentSession = session;
         updateCallState('ringing');
 
         session.stateChange.addListener(function(newState) {
-            log('Session state: ' + newState);
+            log('Incoming session state: ' + newState);
             switch(newState) {
                 case SIP.SessionState.Established:
                     updateCallState('connected');
                     attachMedia();
                     break;
                 case SIP.SessionState.Terminated:
-                    updateCallState('idle');
+                    log('Incoming call terminated');
+                    stopRingtoneSound();
                     currentSession = null;
+                    updateCallState('idle');
                     break;
             }
         });
@@ -477,18 +489,69 @@ var WebPhone = (function() {
             return;
         }
 
-        log('Hanging up...');
+        var sessionState = currentSession.state;
+        log('Hanging up... current session state: ' + sessionState);
 
-        if (currentSession.state === SIP.SessionState.Initial) {
-            currentSession.cancel().catch(function(e) {
-                log('Cancel failed: ' + (e.message || e));
-            });
-        } else {
-            currentSession.bye().catch(function(e) {
-                log('Bye failed: ' + (e.message || e));
-            });
+        // Important: Don't nullify session immediately - let the state change listener handle cleanup
+        // The listener will set currentSession = null when state becomes Terminated
+
+        try {
+            if (sessionState === SIP.SessionState.Initial || sessionState === SIP.SessionState.Establishing) {
+                // Call not yet connected
+                // For outgoing calls (Inviter): use cancel()
+                // For incoming calls (Invitation): use reject()
+                if (currentSession instanceof SIP.Invitation) {
+                    // Incoming call - reject it
+                    log('Rejecting incoming call (state: ' + sessionState + ')');
+                    if (currentSession.reject) {
+                        currentSession.reject().then(function() {
+                            log('Reject sent successfully');
+                        }).catch(function(e) {
+                            log('Reject error: ' + (e.message || e));
+                            forceCleanup();
+                        });
+                    } else {
+                        log('No reject method, forcing cleanup');
+                        forceCleanup();
+                    }
+                } else {
+                    // Outgoing call - cancel it
+                    log('Canceling outgoing call (state: ' + sessionState + ')');
+                    if (currentSession.cancel) {
+                        currentSession.cancel().then(function() {
+                            log('Cancel sent successfully');
+                        }).catch(function(e) {
+                            log('Cancel error: ' + (e.message || e));
+                            forceCleanup();
+                        });
+                    } else {
+                        log('No cancel method, forcing cleanup');
+                        forceCleanup();
+                    }
+                }
+            } else if (sessionState === SIP.SessionState.Established) {
+                // Call is active - send BYE
+                log('Sending BYE (active call)');
+                currentSession.bye().then(function() {
+                    log('BYE sent successfully');
+                }).catch(function(e) {
+                    log('BYE error: ' + (e.message || e));
+                    forceCleanup();
+                });
+            } else {
+                log('Session in unexpected state: ' + sessionState + ', forcing cleanup');
+                forceCleanup();
+            }
+        } catch (e) {
+            log('Exception during hangup: ' + e.message);
+            forceCleanup();
         }
 
+        stopRingtoneSound();
+    }
+
+    function forceCleanup() {
+        log('Force cleanup called');
         stopRingtoneSound();
         currentSession = null;
         updateCallState('idle');
@@ -502,6 +565,12 @@ var WebPhone = (function() {
 
         if (!number || number.trim() === '') {
             log('Cannot call: no number provided');
+            return;
+        }
+
+        // If already in a call, don't start a new one
+        if (currentSession) {
+            log('Already in a call, cannot dial');
             return;
         }
 
@@ -527,25 +596,28 @@ var WebPhone = (function() {
         currentSession = new SIP.Inviter(userAgent, target, inviterOptions);
 
         currentSession.stateChange.addListener(function(newState) {
-            log('Session state: ' + newState);
+            log('Outgoing session state: ' + newState);
             switch(newState) {
                 case SIP.SessionState.Established:
                     updateCallState('connected');
                     attachMedia();
                     break;
                 case SIP.SessionState.Terminated:
-                    updateCallState('idle');
+                    log('Outgoing call terminated');
+                    stopRingtoneSound();
                     currentSession = null;
+                    updateCallState('idle');
                     break;
             }
         });
 
         currentSession.invite().then(function() {
-            log('INVITE sent');
+            log('INVITE sent successfully');
         }).catch(function(e) {
             log('INVITE failed: ' + (e.message || e));
-            updateCallState('idle');
+            stopRingtoneSound();
             currentSession = null;
+            updateCallState('idle');
         });
     }
 
