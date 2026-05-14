@@ -17,7 +17,7 @@ var WebPhone = (function() {
         wssServer: '',
         wssPort: '8089',
         wssPath: '/ws',
-        autoAnswerDelay: 1500 // milliseconds before auto-answering
+        autoAnswerDelay: 500 // milliseconds before auto-answering
     };
     var audioElements = {
         remote: null,
@@ -341,7 +341,8 @@ var WebPhone = (function() {
                 peerConnectionConfiguration: {
                     bundlePolicy: 'balanced',
                     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-                }
+                },
+                iceGatheringTimeout: 500
             },
             displayName: config.extension,
             authorizationUsername: config.extension,
