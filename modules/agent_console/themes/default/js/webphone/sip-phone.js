@@ -158,13 +158,13 @@ var WebPhone = (function() {
             ringtoneInterval = setInterval(ringPattern, 600); // Ring every 600ms
             
         } else if (type === 'outgoing') {
-            // Outgoing call ringback tone: periodic beeps
+            // Outgoing call ringback tone: standard ring pattern (1s on, 3s off)
             var beepPattern = function() {
                 if (!ringtoneGain) return;
                 
                 ringtoneOscillator = ctx.createOscillator();
                 ringtoneOscillator.type = 'sine';
-                ringtoneOscillator.frequency.value = 480; // Ringback tone frequency
+                ringtoneOscillator.frequency.value = 440; // A4 note - standard ringback
                 ringtoneOscillator.connect(ringtoneGain);
                 ringtoneOscillator.start();
                 
@@ -174,11 +174,11 @@ var WebPhone = (function() {
                         ringtoneOscillator.disconnect();
                         ringtoneOscillator = null;
                     }
-                }, 200);
+                }, 1000); // 1 second beep
             };
             
             beepPattern();
-            ringtoneInterval = setInterval(beepPattern, 500);
+            ringtoneInterval = setInterval(beepPattern, 4000); // Repeat every 4 seconds (1s on + 3s off)
         }
         
         log('Playing ' + type + ' ringtone');
