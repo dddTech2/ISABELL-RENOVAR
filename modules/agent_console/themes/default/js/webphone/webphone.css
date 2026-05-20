@@ -18,11 +18,12 @@
     margin-bottom: 10px;
 }
 
-/* Content (Formularios): fixed width, no grow */
+/* Content (Formularios): flexible width, responsive */
 #issabel-callcenter-area-principal #issabel-callcenter-contenido {
-    flex: 0 0 850px;
+    flex: 1 1 500px;
     max-width: 850px;
-    width: 850px;
+    min-width: 450px;
+    width: 100%;
     position: relative !important;
     height: 380pt;
     left: auto !important;
@@ -48,11 +49,16 @@
 }
 
 /* Responsive: stack vertically on smaller screens */
-@media only screen and (max-width: 1200px) {
+@media only screen and (max-width: 768px) {
+    #issabel-callcenter-area-principal #issabel-callcenter-wrap {
+        height: auto !important;
+    }
+    
     #issabel-callcenter-area-principal #issabel-callcenter-contenido {
         flex: 0 0 100%;
         max-width: 100%;
         width: 100%;
+        height: auto !important;
     }
     
     #issabel-callcenter-area-principal #new-webphone-wrapper {
@@ -61,6 +67,7 @@
         max-width: 280px;
         margin-left: 0;
         margin-top: 10px;
+        height: auto !important;
     }
 }
 
