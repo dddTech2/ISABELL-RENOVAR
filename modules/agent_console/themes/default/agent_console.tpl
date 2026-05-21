@@ -94,6 +94,12 @@
 {/if}
 	        <button id="btn_logout" class="issabel-callcenter-boton-activo">{$BTN_FINALIZAR_LOGIN}</button>
 	    </div> {* issabel-callcenter-controles *}
+        <div id="issabel-callcenter-controles-break">
+            <span class="quickbreak-label">Descansos Rápidos:</span>
+            {foreach from=$LISTA_BREAKS key=break_id item=break_name}
+                <button type="button" class="btn-quickbreak" data-breakid="{$break_id}">{$break_name}</button>
+            {/foreach}
+        </div>
 	    {* El panel que aparece a la derecha como área principal del módulo *}
         
     	    <div id="issabel-callcenter-contenido">

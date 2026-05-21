@@ -231,6 +231,13 @@ $(document).ready(function() {
     	}
     });
 
+    // El siguiente código se ejecuta al hacer click en los botones rápidos de break
+    $('.btn-quickbreak').click(function() {
+        var breakid = $(this).data('breakid');
+        $('#break_select').val(breakid);
+        do_break();
+    });
+
     // Botón para guardar formularios
     $('#btn_guardar_formularios').click(do_save_forms);
 
@@ -340,7 +347,17 @@ function initialize_client_state(nuevoEstado)
     abrir_url_externo2(nuevoEstado.urlopentype2, nuevoEstado.url2, nuevoEstado.urldescription2, false);
     abrir_url_externo(nuevoEstado.urlopentype, nuevoEstado.url, nuevoEstado.urldescription, false);
     
-    
+    // Inicializar estado de botones rápidos de break
+    if (estadoCliente.break_id != null) {
+        $('.btn-quickbreak').each(function() {
+            var $btn = $(this);
+            if ($btn.data('breakid') == estadoCliente.break_id) {
+                $btn.addClass('active-break').prop('disabled', true);
+            } else {
+                $btn.prop('disabled', true);
+            }
+        });
+    }
 }
 
 // Inicializar el cronómetro con el valor de segundos indicado
@@ -956,6 +973,14 @@ function manejarRespuestaStatus(respuesta)
 				.removeClass('issabel-callcenter-boton-break')
 				.addClass('issabel-callcenter-boton-unbreak')
 				.children('span').text(respuesta[i].txt_btn_break);
+			$('.btn-quickbreak').each(function() {
+				var $btn = $(this);
+				if ($btn.data('breakid') == respuesta[i].break_id) {
+					$btn.addClass('active-break').prop('disabled', true);
+				} else {
+					$btn.prop('disabled', true);
+				}
+			});
 			break;
 		case 'breakexit':
 			// El agente ha salido del break
@@ -964,6 +989,7 @@ function manejarRespuestaStatus(respuesta)
 				.removeClass('issabel-callcenter-boton-unbreak')
 				.addClass('issabel-callcenter-boton-break')
 				.children('span').text(respuesta[i].txt_btn_break);
+			$('.btn-quickbreak').removeClass('active-break').prop('disabled', false);
 			break;
 		case 'holdenter':
 			estadoCliente.onhold = true;
