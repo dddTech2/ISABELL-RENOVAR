@@ -28,7 +28,8 @@ var WebPhone = (function() {
         callState: 'idle', // idle, calling, ringing, connected
         authFailed: false,
         autoAnswer: false,
-        lastCallError: '' // Stores temporary call rejection errors (e.g. 404, 486)
+        lastCallError: '', // Stores temporary call rejection errors (e.g. 404, 486)
+        isVoicemail: false // Track if call was answered by a voicemail system
     };
     var callbacks = {
         onRegistered: null,
@@ -280,7 +281,11 @@ var WebPhone = (function() {
                 $answerBtn.hide();
                 $('#webphone-number').prop('disabled', true);
                 $status.addClass('webphone-connected');
-                $statusText.text('EN LLAMADA');
+                if (state.isVoicemail) {
+                    $statusText.text('BUZÓN DE VOZ');
+                } else {
+                    $statusText.text('EN LLAMADA');
+                }
                 stopRingtoneSound();
                 break;
         }
@@ -658,6 +663,7 @@ var WebPhone = (function() {
 
         log('Calling: ' + number);
         state.lastCallError = ''; // Clear previous error
+        state.isVoicemail = false; // Reset voicemail flag
 
         var target = SIP.UserAgent.makeURI('sip:' + number + '@' + config.domain);
         if (!target) {
@@ -739,6 +745,17 @@ var WebPhone = (function() {
                             updateUI();
                         }
                     }, 5000);
+                },
+                onAccept: function(response) {
+                    log('Call accepted (200 OK)');
+                    if (response && response.message) {
+                        var vmHeader = response.message.getHeader('X-Voicemail') || response.message.getHeader('X-Asterisk-Voicemail');
+                        if (vmHeader && (vmHeader.toLowerCase() === 'yes' || vmHeader.toLowerCase() === 'true')) {
+                            log('Detected voicemail answer via custom SIP header');
+                            state.isVoicemail = true;
+                            updateUI();
+                        }
+                    }
                 }
             }
         };
