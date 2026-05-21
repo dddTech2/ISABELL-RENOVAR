@@ -336,9 +336,9 @@ function initialize_client_state(nuevoEstado)
     setTimeout(do_checkstatus, 1);
 
     iniciar_cronometro((nuevoEstado.timer_seconds !== '') ? nuevoEstado.timer_seconds : null);
-    abrir_url_externo3(nuevoEstado.urlopentype3, nuevoEstado.url3, nuevoEstado.urldescription3);
-    abrir_url_externo2(nuevoEstado.urlopentype2, nuevoEstado.url2, nuevoEstado.urldescription2);
-    abrir_url_externo(nuevoEstado.urlopentype, nuevoEstado.url, nuevoEstado.urldescription);
+    abrir_url_externo3(nuevoEstado.urlopentype3, nuevoEstado.url3, nuevoEstado.urldescription3, false);
+    abrir_url_externo2(nuevoEstado.urlopentype2, nuevoEstado.url2, nuevoEstado.urldescription2, false);
+    abrir_url_externo(nuevoEstado.urlopentype, nuevoEstado.url, nuevoEstado.urldescription, false);
     
     
 }
@@ -1020,17 +1020,17 @@ function manejarRespuestaStatus(respuesta)
             if (!respuesta[i].urlopentype3){
                 respuesta[i].urlopentype3 = "DELETE";
             }
-            abrir_url_externo3(respuesta[i].urlopentype3, respuesta[i].url3, respuesta[i].urldescription3);
+            abrir_url_externo3(respuesta[i].urlopentype3, respuesta[i].url3, respuesta[i].urldescription3, true);
 
             if (!respuesta[i].urlopentype2){
                 respuesta[i].urlopentype2 = "DELETE";
             }
-            abrir_url_externo2(respuesta[i].urlopentype2, respuesta[i].url2, respuesta[i].urldescription2);
+            abrir_url_externo2(respuesta[i].urlopentype2, respuesta[i].url2, respuesta[i].urldescription2, true);
 
             if (!respuesta[i].urlopentype){
                 respuesta[i].urlopentype = "DELETE";
             }
-			abrir_url_externo(respuesta[i].urlopentype, respuesta[i].url, respuesta[i].urldescription);
+			abrir_url_externo(respuesta[i].urlopentype, respuesta[i].url, respuesta[i].urldescription, true);
 			break;
 		case 'agentunlinked':
 	        // El agente se ha desconectado de la llamada
@@ -1100,7 +1100,7 @@ function mostrar_mensaje_error(s)
 	});
 }
 
-function abrir_url_externo(urlopentype, url, title)
+function abrir_url_externo(urlopentype, url, title, autoOpen)
 {
 		switch (urlopentype) {
 		case 'iframe':
@@ -1154,6 +1154,10 @@ function abrir_url_externo(urlopentype, url, title)
                         window.open(url, '_blank');
                     }
                 });
+
+                if (autoOpen) {
+                    window.open(url, '_blank');
+                }
             }
             break;
         default:
@@ -1161,7 +1165,7 @@ function abrir_url_externo(urlopentype, url, title)
 		}
 }
 
-function abrir_url_externo2(urlopentype, url2, title)
+function abrir_url_externo2(urlopentype, url2, title, autoOpen)
 {
     if (urlopentype != null) {
         switch (urlopentype) {
@@ -1218,13 +1222,17 @@ function abrir_url_externo2(urlopentype, url2, title)
                         window.open(url2, '_blank');
                     }
                 });
+
+                if (autoOpen) {
+                    window.open(url2, '_blank');
+                }
             }
             break;
         }
     }
 }
 
-function abrir_url_externo3(urlopentype, url3, title)
+function abrir_url_externo3(urlopentype, url3, title, autoOpen)
 {
     if (urlopentype != null) {
         switch (urlopentype) {
@@ -1280,6 +1288,10 @@ function abrir_url_externo3(urlopentype, url3, title)
                         window.open(url3, '_blank');
                     }
                 });
+
+                if (autoOpen) {
+                    window.open(url3, '_blank');
+                }
             }
             break;
         }
