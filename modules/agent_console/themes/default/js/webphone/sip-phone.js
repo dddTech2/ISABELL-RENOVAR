@@ -27,7 +27,8 @@ var WebPhone = (function() {
         registered: false,
         callState: 'idle', // idle, calling, ringing, connected
         authFailed: false,
-        autoAnswer: false
+        autoAnswer: false,
+        lastCallError: '' // Stores temporary call rejection errors (e.g. 404, 486)
     };
     var callbacks = {
         onRegistered: null,
@@ -229,6 +230,9 @@ var WebPhone = (function() {
         if (state.authFailed) {
             $status.removeClass('webphone-registered webphone-unregistered').addClass('webphone-auth-failed');
             $statusText.text('Error de autenticacion');
+        } else if (state.lastCallError) {
+            $status.removeClass('webphone-registered webphone-connected').addClass('webphone-unregistered');
+            $statusText.text(state.lastCallError);
         } else if (state.registered) {
             $status.removeClass('webphone-unregistered webphone-auth-failed').addClass('webphone-registered');
             $statusText.text('Registrado');
@@ -496,6 +500,12 @@ var WebPhone = (function() {
         }
         
         currentSession = session;
+        currentSession.delegate = {
+            onSessionDescriptionHandler: function(sdh, provisional) {
+                log('Incoming SessionDescriptionHandler created. Provisional: ' + provisional);
+                attachMedia(sdh);
+            }
+        };
         updateCallState('ringing');
 
         session.stateChange.addListener(function(newState) {
@@ -647,6 +657,7 @@ var WebPhone = (function() {
         }
 
         log('Calling: ' + number);
+        state.lastCallError = ''; // Clear previous error
 
         var target = SIP.UserAgent.makeURI('sip:' + number + '@' + config.domain);
         if (!target) {
@@ -657,6 +668,7 @@ var WebPhone = (function() {
         updateCallState('calling');
 
         var inviterOptions = {
+            earlyMedia: true,
             sessionDescriptionHandlerOptions: {
                 constraints: {
                     audio: true,
@@ -666,6 +678,12 @@ var WebPhone = (function() {
         };
 
         currentSession = new SIP.Inviter(userAgent, target, inviterOptions);
+        currentSession.delegate = {
+            onSessionDescriptionHandler: function(sdh, provisional) {
+                log('Outgoing SessionDescriptionHandler created. Provisional: ' + provisional);
+                attachMedia(sdh);
+            }
+        };
 
         currentSession.stateChange.addListener(function(newState) {
             log('Outgoing session state: ' + newState);
@@ -683,7 +701,49 @@ var WebPhone = (function() {
             }
         });
 
-        currentSession.invite().then(function() {
+        var inviteOptions = {
+            requestDelegate: {
+                onReject: function(response) {
+                    var statusCode = response.message.statusCode;
+                    var reason = response.message.reasonPhrase || 'Rechazado';
+                    log('Call rejected, status code: ' + statusCode + ' reason: ' + reason);
+
+                    if (statusCode === 487) {
+                        return; // Normal cancellation when user hangs up before answering
+                    }
+
+                    var friendlyMessage = 'Llamada rechazada';
+                    if (statusCode === 404) {
+                        friendlyMessage = 'Número no existe (404)';
+                    } else if (statusCode === 486) {
+                        friendlyMessage = 'Línea ocupada (486)';
+                    } else if (statusCode === 480) {
+                        friendlyMessage = 'No disponible (480)';
+                    } else if (statusCode === 403) {
+                        friendlyMessage = 'Sin permisos (403)';
+                    } else if (statusCode === 400) {
+                        friendlyMessage = 'Número inválido (400)';
+                    } else if (statusCode === 503) {
+                        friendlyMessage = 'Congestión / Canales ocupados (503)';
+                    } else {
+                        friendlyMessage = 'Error ' + statusCode + ': ' + reason;
+                    }
+
+                    state.lastCallError = friendlyMessage;
+                    updateUI();
+
+                    // Clear error message after 5 seconds
+                    setTimeout(function() {
+                        if (state.lastCallError === friendlyMessage) {
+                            state.lastCallError = '';
+                            updateUI();
+                        }
+                    }, 5000);
+                }
+            }
+        };
+
+        currentSession.invite(inviteOptions).then(function() {
             log('INVITE sent successfully');
         }).catch(function(e) {
             log('INVITE failed: ' + (e.message || e));
@@ -693,10 +753,16 @@ var WebPhone = (function() {
         });
     }
 
-    function attachMedia() {
+    function attachMedia(sdh) {
         if (!currentSession) return;
 
-        var pc = currentSession.sessionDescriptionHandler.peerConnection;
+        var handler = sdh || currentSession.sessionDescriptionHandler;
+        if (!handler) {
+            log('No sessionDescriptionHandler available');
+            return;
+        }
+
+        var pc = handler.peerConnection;
         if (!pc) {
             log('No peerConnection available');
             return;
@@ -722,6 +788,7 @@ var WebPhone = (function() {
             pc._mediaAttached = true;
             pc.addEventListener('track', function(event) {
                 log('pc ontrack event received, kind: ' + event.track.kind);
+                stopRingtoneSound(); // Stop ringtone when remote audio track starts
                 if (event.streams && event.streams[0]) {
                     setRemoteStream(event.streams[0]);
                 } else {
@@ -737,6 +804,7 @@ var WebPhone = (function() {
         pc.getReceivers().forEach(function(receiver) {
             if (receiver.track) {
                 log('Found existing receiver track: ' + receiver.track.kind);
+                stopRingtoneSound(); // Stop ringtone if we already have receiver tracks
                 if (!remoteStream) {
                     remoteStream = new MediaStream();
                 }

@@ -1,22 +1,40 @@
-# SOP - WebPhone Audio Fix (Voicemail/Buzón)
+# SOP - WebPhone Audio & Call Errors Fix
 
 ## Objetivo
-Resolver el problema de silencio en el WebPhone cuando una llamada saliente no es contestada y es redirigida al buzón de voz (voicemail) de Asterisk.
+1. Resolver el problema de silencio en el WebPhone cuando una llamada saliente no es contestada y es redirigida al buzón de voz o a un mensaje de error/congestión (early media).
+2. Mostrar mensajes legibles y amigables para el usuario (agente) cuando una llamada saliente falle debido a códigos de error SIP (ej. Número no existe 404, Línea ocupada 486, No disponible 480, Congestión 503, Solicitud incorrecta 400).
 
 ## Entradas y Salidas
-- **Entrada:** Evento de estado `Established` en SIP.js para llamadas salientes.
-- **Salida:** Reproducción automática del audio del buzón de voz en el elemento `<audio>` remoto del navegador.
+- **Entrada:** Respuesta provisional (1xx con SDP) o de rechazo (3xx-6xx) de la sesión de llamada saliente en SIP.js.
+- **Salida:** 
+  - Reproducción automática del audio de la llamada desde el primer instante en que se reciba señal del canal (Early Media).
+  - Silenciado del tono artificial de timbrado apenas se reciba audio real.
+  - Visualización del error amigable en el estado del WebPhone durante 5 segundos antes de retornar al estado "Registrado".
 
 ## Lógica y Pasos
-1. **Acceder a la conexión WebRTC:** Obtener el objeto `RTCPeerConnection` desde el `sessionDescriptionHandler` de SIP.js.
-2. **Prevenir Duplicación de Listeners:** Antes de agregar listeners, verificar si ya se han configurado en la conexión actual usando una bandera personalizada (ej. `pc._mediaAttached`).
-3. **Escuchar Eventos de Pistas de Audio:** Agregar un event listener para el evento `track` del `RTCPeerConnection` (`pc.addEventListener('track', ...)`).
-4. **Asignación Dinámica del Stream:** Cuando se reciba una pista:
-   - Si el evento proporciona un Stream (`event.streams[0]`), asignarlo al `srcObject` del elemento `<audio>` remoto.
-   - Si no proporciona un Stream, crear uno nuevo, agregar el track del evento, y asignarlo.
-5. **Verificación de Receivers Existentes:** Mantener una búsqueda inicial en `pc.getReceivers()` para reproducir cualquier track que ya esté establecido en el momento de invocar la conexión.
-6. **Llamar a Play:** Ejecutar `.play()` en el elemento de audio capturando cualquier excepción para evitar errores silenciosos en la consola.
+
+### 1. Conexión de Audio (Early Media y Buzón de Voz)
+- **Configuración de llamada:** Añadir la opción `earlyMedia: true` en `InviterOptions` al crear la sesión saliente para habilitar el procesamiento inmediato de SDP provisionales en SIP.js.
+- **Registro del Delegate del SDH:** Registrar el callback `onSessionDescriptionHandler(sdh, provisional)` en el delegado de la sesión inmediatamente después de crearla.
+- **Asignación temprana:** Invocar a `attachMedia(sdh)` dentro de `onSessionDescriptionHandler` para enganchar el listener del evento `track` del `RTCPeerConnection` antes de que la sesión cambie de estado a `Established`.
+- **Apagado del timbre artificial:** En `attachMedia()`, si se detecta que se recibe un track de audio remoto, invocar inmediatamente `stopRingtoneSound()` para apagar el pitido de espera simulado y permitir escuchar el audio de la troncal.
+
+### 2. Control y Mapeo de Códigos de Error SIP
+- **Callback onReject:** Pasar un objeto `requestDelegate` con el método `onReject(response)` al realizar la llamada (`invite()`).
+- **Mapeo de Códigos:**
+  - Código `404`: Mostrar "Número no existe (404)".
+  - Código `486`: Mostrar "Línea ocupada (486)".
+  - Código `480`: Mostrar "No disponible (480)".
+  - Código `403`: Mostrar "Sin permisos (403)".
+  - Código `400`: Mostrar "Número inválido (400)".
+  - Código `503`: Mostrar "Congestión / Canales ocupados (503)".
+  - Código `487`: Ignorar (es la cancelación normal cuando el usuario cuelga antes de contestar).
+  - Otros códigos: Mostrar "Error [Código]: [Razón]".
+- **Visualización:**
+  - Guardar el error mapeado en una variable de estado temporal (`state.lastCallError`).
+  - Actualizar la interfaz de usuario (`updateUI()`) para mostrar este texto sobre el estado.
+  - Ejecutar un temporizador (`setTimeout`) de 5000 ms (5 segundos) para borrar `state.lastCallError` y retornar la pantalla a "Registrado".
 
 ## Restricciones y Trampas Conocidas
-- **Políticas de Autoplay:** Los navegadores restringen la reproducción automática de audio si no hay interacción previa del usuario. La consola del agente requiere que el usuario haga clic para entrar, lo que cumple esta interacción.
-- **Múltiples Llamadas a attachMedia:** El método `attachMedia` se llama en varias transiciones de estado. La bandera personalizada en `RTCPeerConnection` evita duplicar los manejadores de eventos.
+- **Código 487 (Request Terminated):** Siempre se genera cuando el emisor cancela la llamada. Debe ignorarse para que no aparezca como un error.
+- **Interrupción de Temporizador:** Al realizar una nueva llamada, se debe limpiar `state.lastCallError` inmediatamente para borrar cualquier mensaje de error previo de la pantalla.
