@@ -138,7 +138,7 @@
                     </div>
                     <div class="webphone-autoanswer-row">
                         <label class="webphone-toggle">
-                            <input type="checkbox" id="webphone-autoanswer" />
+                            <input type="checkbox" id="webphone-autoanswer" disabled="disabled" />
                             <span class="webphone-toggle-slider"></span>
                         </label>
                         <span class="webphone-autoanswer-label">Auto-Respuesta</span>

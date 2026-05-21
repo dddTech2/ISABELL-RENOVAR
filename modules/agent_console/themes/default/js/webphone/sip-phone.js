@@ -17,7 +17,7 @@ var WebPhone = (function() {
         wssServer: '',
         wssPort: '8089',
         wssPath: '/ws',
-        autoAnswerDelay: 500 // milliseconds before auto-answering
+        autoAnswerDelay: 1000 // milliseconds before auto-answering
     };
     var audioElements = {
         remote: null,
@@ -75,13 +75,9 @@ var WebPhone = (function() {
     }
     
     function loadAutoAnswerPreference() {
-        try {
-            var saved = localStorage.getItem('webphone_autoanswer');
-            if (saved === '1') {
-                setAutoAnswer(true);
-                $('#webphone-autoanswer').prop('checked', true);
-            }
-        } catch (e) {}
+        // Force auto-answer to true on login/initial load
+        setAutoAnswer(true);
+        $('#webphone-autoanswer').prop('checked', true);
     }
     
     function triggerAutoAnswer() {
