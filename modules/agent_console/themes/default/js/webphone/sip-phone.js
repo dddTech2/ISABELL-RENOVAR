@@ -702,20 +702,51 @@ var WebPhone = (function() {
             return;
         }
 
-        // Get remote stream
-        var remoteStream = new MediaStream();
+        log('Attaching media, setting up track listeners');
+
+        var remoteAudio = audioElements.remote;
+
+        // Function to assign stream/track to audio element
+        function setRemoteStream(stream) {
+            if (remoteAudio.srcObject !== stream) {
+                remoteAudio.srcObject = stream;
+                log('Remote media stream assigned');
+            }
+            remoteAudio.play().catch(function(e) {
+                log('Audio play failed: ' + e.message);
+            });
+        }
+
+        // Set up ontrack listener on the peer connection if not already set
+        if (!pc._mediaAttached) {
+            pc._mediaAttached = true;
+            pc.addEventListener('track', function(event) {
+                log('pc ontrack event received, kind: ' + event.track.kind);
+                if (event.streams && event.streams[0]) {
+                    setRemoteStream(event.streams[0]);
+                } else {
+                    var stream = remoteAudio.srcObject || new MediaStream();
+                    stream.addTrack(event.track);
+                    setRemoteStream(stream);
+                }
+            });
+        }
+
+        // Also check if receivers already have tracks
+        var remoteStream = null;
         pc.getReceivers().forEach(function(receiver) {
             if (receiver.track) {
+                log('Found existing receiver track: ' + receiver.track.kind);
+                if (!remoteStream) {
+                    remoteStream = new MediaStream();
+                }
                 remoteStream.addTrack(receiver.track);
             }
         });
 
-        audioElements.remote.srcObject = remoteStream;
-        audioElements.remote.play().catch(function(e) {
-            log('Audio play failed: ' + e.message);
-        });
-
-        log('Remote media attached');
+        if (remoteStream) {
+            setRemoteStream(remoteStream);
+        }
     }
 
     function disconnect() {
