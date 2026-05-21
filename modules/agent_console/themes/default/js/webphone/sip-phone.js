@@ -29,7 +29,8 @@ var WebPhone = (function() {
         authFailed: false,
         autoAnswer: false,
         lastCallError: '', // Stores temporary call rejection errors (e.g. 404, 486)
-        isVoicemail: false // Track if call was answered by a voicemail system
+        isVoicemail: false, // Track if call was answered by a voicemail system
+        muted: false // Track mute state
     };
     var callbacks = {
         onRegistered: null,
@@ -223,6 +224,7 @@ var WebPhone = (function() {
         var $hangupBtn = $('#webphone-btn-hangup');
         var $answerBtn = $('#webphone-btn-answer');
         var $reconnectBtn = $('#webphone-btn-reconnect');
+        var $muteBtn = $('#webphone-btn-mute');
         var $statusText = $status.find('.status-text');
 
         // Remove all call-related classes
@@ -254,6 +256,8 @@ var WebPhone = (function() {
                 $callBtn.show().prop('disabled', !state.registered);
                 $hangupBtn.hide();
                 $answerBtn.hide();
+                $muteBtn.hide();
+                setMute(false); // Reset mute state when idle
                 $('#webphone-number').prop('disabled', false);
                 stopRingtoneSound();
                 break;
@@ -261,6 +265,8 @@ var WebPhone = (function() {
                 $callBtn.hide();
                 $hangupBtn.show().prop('disabled', false);
                 $answerBtn.hide();
+                $muteBtn.hide();
+                setMute(false); // Reset mute state when dialing
                 $('#webphone-number').prop('disabled', true);
                 $status.addClass('webphone-calling');
                 $statusText.text('LLAMANDO...');
@@ -270,6 +276,8 @@ var WebPhone = (function() {
                 $callBtn.hide();
                 $hangupBtn.show().prop('disabled', false);
                 $answerBtn.show().prop('disabled', false);
+                $muteBtn.hide();
+                setMute(false); // Reset mute state when ringing
                 $('#webphone-number').prop('disabled', true);
                 $status.addClass('webphone-ringing-incoming');
                 $statusText.text('LLAMADA ENTRANTE!');
@@ -279,6 +287,7 @@ var WebPhone = (function() {
                 $callBtn.hide();
                 $hangupBtn.show().prop('disabled', false);
                 $answerBtn.hide();
+                $muteBtn.show().prop('disabled', false);
                 $('#webphone-number').prop('disabled', true);
                 $status.addClass('webphone-connected');
                 if (state.isVoicemail) {
@@ -878,6 +887,48 @@ var WebPhone = (function() {
         }
     }
 
+    function toggleMute() {
+        setMute(!state.muted);
+    }
+
+    function setMute(muteVal) {
+        state.muted = muteVal;
+        
+        var $muteBtn = $('#webphone-btn-mute');
+        if (muteVal) {
+            $muteBtn.addClass('muted').text('Silenciado');
+        } else {
+            $muteBtn.removeClass('muted').text('Silenciar');
+        }
+
+        if (!currentSession) {
+            return;
+        }
+
+        var sdh = currentSession.sessionDescriptionHandler;
+        if (!sdh) {
+            log('No sessionDescriptionHandler to set mute');
+            return;
+        }
+
+        var pc = sdh.peerConnection;
+        if (!pc) {
+            log('No peerConnection to set mute');
+            return;
+        }
+
+        if (typeof pc.getSenders === 'function') {
+            pc.getSenders().forEach(function(sender) {
+                if (sender.track && sender.track.kind === 'audio') {
+                    sender.track.enabled = !muteVal;
+                }
+            });
+            log('Call audio tracks ' + (muteVal ? 'disabled (muted)' : 'enabled (unmuted)'));
+        } else {
+            log('getSenders is not supported on peerConnection');
+        }
+    }
+
     // Public API
     return {
         init: init,
@@ -888,6 +939,8 @@ var WebPhone = (function() {
         reconnect: reconnect,
         setAutoAnswer: setAutoAnswer,
         loadAutoAnswerPreference: loadAutoAnswerPreference,
+        toggleMute: toggleMute,
+        setMute: setMute,
         isRegistered: function() { return state.registered; },
         getState: function() { return state; },
         isAutoAnswer: function() { return state.autoAnswer; }

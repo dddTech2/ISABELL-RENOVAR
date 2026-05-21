@@ -400,3 +400,24 @@
     color: #666;
     font-size: 11px;
 }
+
+/* ============================================ 
+   MUTE BUTTON STYLES
+   ============================================ */
+.webphone-btn-mute {
+    background: #6c757d;
+    color: white;
+}
+
+.webphone-btn-mute:hover:not(:disabled) {
+    background: #5a6268;
+}
+
+.webphone-btn-mute.muted {
+    background: #ffc107;
+    color: #212529;
+}
+
+.webphone-btn-mute.muted:hover:not(:disabled) {
+    background: #e0a800;
+}

@@ -143,6 +143,7 @@
                     <div class="webphone-buttons">
                         <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
                         <button id="webphone-btn-hangup" class="webphone-btn webphone-btn-hangup" style="display:none;">Colgar</button>
+                        <button id="webphone-btn-mute" class="webphone-btn webphone-btn-mute" style="display:none;">Silenciar</button>
                         <button id="webphone-btn-answer" class="webphone-btn webphone-btn-answer" style="display:none;">Contestar</button>
                         <button id="webphone-btn-reconnect" class="webphone-btn webphone-btn-reconnect" style="display:none;">Reconectar</button>
                     </div>
@@ -336,6 +337,10 @@ $(document).ready(function() {
 
         $('#webphone-btn-hangup').on('click', function() {
             WebPhone.hangup();
+        });
+
+        $('#webphone-btn-mute').on('click', function() {
+            WebPhone.toggleMute();
         });
 
         $('#webphone-btn-answer').on('click', function() {
