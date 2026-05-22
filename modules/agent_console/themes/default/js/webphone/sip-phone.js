@@ -982,6 +982,10 @@ var WebPhone = (function() {
         }
         if (sent) {
             playDTMFTone(tone);
+            var $numInput = $('#webphone-number');
+            if ($numInput.length) {
+                $numInput.val($numInput.val() + tone);
+            }
             return true;
         }
         log('Cannot send DTMF: no supported DTMF sending method found on session');

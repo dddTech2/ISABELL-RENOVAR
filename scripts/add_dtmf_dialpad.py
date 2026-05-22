@@ -265,6 +265,10 @@ def modify_js(path):
         }
         if (sent) {
             playDTMFTone(tone);
+            var $numInput = $('#webphone-number');
+            if ($numInput.length) {
+                $numInput.val($numInput.val() + tone);
+            }
             return true;
         }
         log('Cannot send DTMF: no supported DTMF sending method found on session');
@@ -272,14 +276,22 @@ def modify_js(path):
     }
 
 """
-    if 'playDTMFTone' not in content:
-        # Check if the old sendDTMF implementation is present
-        if 'function sendDTMF(tone)' in content:
-            # Replace the old function with the new one
+    if '$numInput.val($numInput.val() + tone)' not in content:
+        # Check if the playDTMFTone implementation is present
+        if 'function playDTMFTone(tone)' in content:
+            # Replace the playDTMFTone and sendDTMF block with the new one
+            old_func_pattern = r'    var audioCtx = null;\s*function playDTMFTone\(tone\) \{[\s\S]*?no supported DTMF sending method found on session\'\);\s*return false;\s*\}'
+            content, count = re.subn(old_func_pattern, send_dtmf_code.strip('\n').replace('\n', line_ending), content)
+            if count > 0:
+                print("  Updated playDTMFTone and sendDTMF implementations to support visual digit updates")
+            else:
+                raise ValueError("Could not find the playDTMFTone and sendDTMF implementations to replace")
+        elif 'function sendDTMF(tone)' in content:
+            # Replace the sendDTMF function with the new ones
             old_func_pattern = r'    function sendDTMF\(tone\) \{[\s\S]*?no supported DTMF sending method found on session\'\);\s*return false;\s*\}'
             content, count = re.subn(old_func_pattern, send_dtmf_code.strip('\n').replace('\n', line_ending), content)
             if count > 0:
-                print("  Updated old sendDTMF implementation to support local audio tones")
+                print("  Updated old sendDTMF implementation to support playDTMFTone and visual digit updates")
             else:
                 raise ValueError("Could not find the old sendDTMF implementation to replace")
         elif 'function sendDTMF(tone)' not in content:
@@ -291,7 +303,7 @@ def modify_js(path):
         else:
             print("  sendDTMF function exists but cannot determine if it's updated or old. No changes made.")
     else:
-        print("  playDTMFTone function already exists")
+        print("  playDTMFTone function with visual digit updates already exists")
 
     # 2. Update updateUI() to show/hide dialpad
     if '$dialpad.show()' not in content:

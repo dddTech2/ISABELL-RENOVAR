@@ -30,6 +30,7 @@
   - Validar si hay una sesión activa (`currentSession`).
   - Invocar el método correspondiente de envío de tono.
   - Reproducir el sonido local del tono DTMF mediante `playDTMFTone(tone)` usando el Web Audio API (AudioContext) con las frecuencias estándar DTMF (baja/alta) durante 150ms con rampa exponencial de volumen para evitar chasquidos.
+  - Concatenar el dígito del tono DTMF al campo de texto `#webphone-number` para dar retroalimentación visual al usuario en pantalla de lo que está marcando.
 - En `updateUI()`, obtener la referencia al elemento `#webphone-dialpad`:
   - Mostrar el dialpad (`show()`) únicamente cuando el estado de la llamada (`state.callState`) sea `connected`.
   - Ocultar el dialpad (`hide()`) en cualquier otro estado (`idle`, `calling`, `ringing`).
