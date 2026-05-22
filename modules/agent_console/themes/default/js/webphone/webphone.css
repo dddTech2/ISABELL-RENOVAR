@@ -491,8 +491,5 @@
 .webphone-toggle input:disabled + .webphone-toggle-slider {
     cursor: not-allowed;
     opacity: 0.8;
-}
-
-.webphone-toggle-slider {
-    pointer-events: none; /* Disables click interactions on the toggle label */
+    pointer-events: none; /* Disables click interactions on the toggle slider when disabled */
 }

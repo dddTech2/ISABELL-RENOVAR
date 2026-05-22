@@ -75,9 +75,19 @@ var WebPhone = (function() {
     }
     
     function loadAutoAnswerPreference() {
-        // Force auto-answer to true on login/initial load
-        setAutoAnswer(true);
-        $('#webphone-autoanswer').prop('checked', true);
+        try {
+            var saved = localStorage.getItem('webphone_autoanswer');
+            if (saved === '1') {
+                setAutoAnswer(true);
+                $('#webphone-autoanswer').prop('checked', true);
+            } else {
+                setAutoAnswer(false);
+                $('#webphone-autoanswer').prop('checked', false);
+            }
+        } catch (e) {
+            setAutoAnswer(false);
+            $('#webphone-autoanswer').prop('checked', false);
+        }
     }
     
     function triggerAutoAnswer() {

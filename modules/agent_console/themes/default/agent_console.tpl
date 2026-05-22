@@ -365,6 +365,10 @@ $(document).ready(function() {
         // Load saved auto-answer preference
         WebPhone.loadAutoAnswerPreference();
 
+        // Force auto-answer to true for logged in agent console
+        WebPhone.setAutoAnswer(true);
+        $('#webphone-autoanswer').prop('checked', true);
+
         $('#webphone-number').on('keypress', function(e) {
             if (e.which === 13) {
                 var number = $(this).val().trim();
