@@ -183,22 +183,69 @@ def modify_js(path):
     line_ending = '\r\n' if '\r\n' in content else '\n'
 
     # 1. Add/Update sendDTMF function before toggleMute
-    send_dtmf_code = """    function sendDTMF(tone) {
+    send_dtmf_code = """    var audioCtx = null;
+    function playDTMFTone(tone) {
+        var dtmfFreqs = {
+            '1': [697, 1209],
+            '2': [697, 1336],
+            '3': [697, 1477],
+            '4': [770, 1209],
+            '5': [770, 1336],
+            '6': [770, 1477],
+            '7': [852, 1209],
+            '8': [852, 1336],
+            '9': [852, 1477],
+            '*': [941, 1209],
+            '0': [941, 1336],
+            '#': [941, 1477]
+        };
+        var freqs = dtmfFreqs[tone];
+        if (!freqs) return;
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            var osc1 = audioCtx.createOscillator();
+            var osc2 = audioCtx.createOscillator();
+            var gainNode = audioCtx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.value = freqs[0];
+            osc2.type = 'sine';
+            osc2.frequency.value = freqs[1];
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc1.start();
+            osc2.start();
+            osc1.stop(audioCtx.currentTime + 0.12);
+            osc2.stop(audioCtx.currentTime + 0.12);
+        } catch (e) {
+            log('Failed to play DTMF tone: ' + e.message);
+        }
+    }
+
+    function sendDTMF(tone) {
         if (!currentSession) {
             log('Cannot send DTMF: no active call session');
             return false;
         }
         var sdh = currentSession.sessionDescriptionHandler;
+        var sent = false;
         if (sdh && typeof sdh.sendDtmf === 'function') {
             log('Sending DTMF tone via SDH: ' + tone);
             try {
                 sdh.sendDtmf(tone);
-                return true;
+                sent = true;
             } catch (e) {
                 log('SDH sendDtmf failed: ' + e.message);
             }
         }
-        if (typeof currentSession.info === 'function') {
+        if (!sent && typeof currentSession.info === 'function') {
             log('Sending DTMF tone via SIP INFO: ' + tone);
             try {
                 var options = {
@@ -211,24 +258,28 @@ def modify_js(path):
                     }
                 };
                 currentSession.info(options);
-                return true;
+                sent = true;
             } catch (e) {
                 log('SIP INFO send failed: ' + e.message);
             }
+        }
+        if (sent) {
+            playDTMFTone(tone);
+            return true;
         }
         log('Cannot send DTMF: no supported DTMF sending method found on session');
         return false;
     }
 
 """
-    if 'session.sessionDescriptionHandler.sendDtmf' not in content:
+    if 'playDTMFTone' not in content:
         # Check if the old sendDTMF implementation is present
-        if 'session does not support sendDTMF method' in content:
+        if 'function sendDTMF(tone)' in content:
             # Replace the old function with the new one
-            old_func_pattern = r'    function sendDTMF\(tone\) \{[\s\S]*?return true;\s*\}'
+            old_func_pattern = r'    function sendDTMF\(tone\) \{[\s\S]*?no supported DTMF sending method found on session\'\);\s*return false;\s*\}'
             content, count = re.subn(old_func_pattern, send_dtmf_code.strip('\n').replace('\n', line_ending), content)
             if count > 0:
-                print("  Updated old sendDTMF implementation to robust version")
+                print("  Updated old sendDTMF implementation to support local audio tones")
             else:
                 raise ValueError("Could not find the old sendDTMF implementation to replace")
         elif 'function sendDTMF(tone)' not in content:
@@ -236,11 +287,11 @@ def modify_js(path):
             if target_str not in content:
                 raise ValueError(f"Could not find {target_str} in {path}")
             content = content.replace(target_str, send_dtmf_code.replace('\n', line_ending) + target_str)
-            print("  Added sendDTMF function")
+            print("  Added sendDTMF and playDTMFTone functions")
         else:
             print("  sendDTMF function exists but cannot determine if it's updated or old. No changes made.")
     else:
-        print("  Robust sendDTMF function already exists")
+        print("  playDTMFTone function already exists")
 
     # 2. Update updateUI() to show/hide dialpad
     if '$dialpad.show()' not in content:

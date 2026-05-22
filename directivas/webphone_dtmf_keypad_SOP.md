@@ -28,7 +28,8 @@
 ### 3. Lógica en JavaScript/SIP (JavaScript)
 - En `sip-phone.js`, implementar la función `sendDTMF(tone)`:
   - Validar si hay una sesión activa (`currentSession`).
-  - Invocar `currentSession.sendDTMF(tone)`.
+  - Invocar el método correspondiente de envío de tono.
+  - Reproducir el sonido local del tono DTMF mediante `playDTMFTone(tone)` usando el Web Audio API (AudioContext) con las frecuencias estándar DTMF (baja/alta) durante 150ms con rampa exponencial de volumen para evitar chasquidos.
 - En `updateUI()`, obtener la referencia al elemento `#webphone-dialpad`:
   - Mostrar el dialpad (`show()`) únicamente cuando el estado de la llamada (`state.callState`) sea `connected`.
   - Ocultar el dialpad (`hide()`) en cualquier otro estado (`idle`, `calling`, `ringing`).
