@@ -493,3 +493,63 @@
     opacity: 0.8;
     pointer-events: none; /* Disables click interactions on the toggle slider when disabled */
 }
+
+
+/* ============================================ 
+   DTMF DIALPAD STYLES
+   ============================================ */
+.webphone-dialpad {
+    display: none;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #eaeaea;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+.dialpad-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.dialpad-row:last-child {
+    margin-bottom: 0;
+}
+
+.dialpad-btn {
+    flex: 1;
+    margin: 0 3px;
+    padding: 8px 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    background: #f8f9fa;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.1s ease-in-out;
+}
+
+.dialpad-btn:first-child {
+    margin-left: 0;
+}
+
+.dialpad-btn:last-child {
+    margin-right: 0;
+}
+
+.dialpad-btn:hover:not(:disabled) {
+    background: #e2e6ea;
+    border-color: #dae0e5;
+}
+
+.dialpad-btn:active:not(:disabled),
+.dialpad-btn.active:not(:disabled) {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}

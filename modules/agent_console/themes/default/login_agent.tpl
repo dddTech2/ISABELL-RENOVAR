@@ -56,6 +56,28 @@
         <div class="webphone-number-row">
             <input type="text" id="webphone-number" placeholder="Numero a marcar" />
         </div>
+        <div id="webphone-dialpad" class="webphone-dialpad" style="display: none;">
+            <div class="dialpad-row">
+                <button type="button" class="dialpad-btn" data-tone="1">1</button>
+                <button type="button" class="dialpad-btn" data-tone="2">2</button>
+                <button type="button" class="dialpad-btn" data-tone="3">3</button>
+            </div>
+            <div class="dialpad-row">
+                <button type="button" class="dialpad-btn" data-tone="4">4</button>
+                <button type="button" class="dialpad-btn" data-tone="5">5</button>
+                <button type="button" class="dialpad-btn" data-tone="6">6</button>
+            </div>
+            <div class="dialpad-row">
+                <button type="button" class="dialpad-btn" data-tone="7">7</button>
+                <button type="button" class="dialpad-btn" data-tone="8">8</button>
+                <button type="button" class="dialpad-btn" data-tone="9">9</button>
+            </div>
+            <div class="dialpad-row">
+                <button type="button" class="dialpad-btn" data-tone="*">*</button>
+                <button type="button" class="dialpad-btn" data-tone="0">0</button>
+                <button type="button" class="dialpad-btn" data-tone="#">#</button>
+            </div>
+        </div>
         <div class="webphone-buttons">
             <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
             <button id="webphone-btn-hangup" class="webphone-btn webphone-btn-hangup" style="display:none;">Colgar</button>
@@ -226,6 +248,44 @@ $(document).ready(function() {
     
     // Load saved auto-answer preference
     WebPhone.loadAutoAnswerPreference();
+
+    // Bind DTMF Dialpad buttons click
+    $('.dialpad-btn').on('click', function() {
+        var tone = $(this).data('tone');
+        if (tone !== undefined) {
+            WebPhone.sendDTMF(String(tone));
+        }
+    });
+
+    // Intercept physical keyboard keydowns for DTMF
+    $(document).on('keydown', function(e) {
+        var phoneState = WebPhone.getState();
+        if (phoneState.callState !== 'connected') {
+            return;
+        }
+
+        // Check if focused on input/textarea other than #webphone-number
+        var activeEl = document.activeElement;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT' || activeEl.isContentEditable)) {
+            if (activeEl.id !== 'webphone-number') {
+                return;
+            }
+        }
+
+        var tone = e.key;
+        if (tone === '*' || tone === '#' || (tone >= '0' && tone <= '9')) {
+            WebPhone.sendDTMF(tone);
+
+            var $btn = $('.dialpad-btn[data-tone="' + tone + '"]');
+            if ($btn.length) {
+                $btn.addClass('active');
+                setTimeout(function() {
+                    $btn.removeClass('active');
+                }, 150);
+            }
+            e.preventDefault();
+        }
+    });
 
     $('#webphone-number').on('keypress', function(e) {
         if (e.which === 13) {

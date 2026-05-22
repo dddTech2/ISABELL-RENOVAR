@@ -231,6 +231,7 @@ var WebPhone = (function() {
         var $answerBtn = $('#webphone-btn-answer');
         var $reconnectBtn = $('#webphone-btn-reconnect');
         var $muteBtn = $('#webphone-btn-mute');
+        var $dialpad = $('#webphone-dialpad');
         var $statusText = $status.find('.status-text');
 
         // Remove all call-related classes
@@ -303,6 +304,12 @@ var WebPhone = (function() {
                 }
                 stopRingtoneSound();
                 break;
+        }
+
+        if (state.callState === 'connected') {
+            $dialpad.show();
+        } else {
+            $dialpad.hide();
         }
     }
 
@@ -893,6 +900,20 @@ var WebPhone = (function() {
         }
     }
 
+    function sendDTMF(tone) {
+        if (!currentSession) {
+            log('Cannot send DTMF: no active call session');
+            return false;
+        }
+        if (typeof currentSession.sendDTMF !== 'function') {
+            log('Cannot send DTMF: session does not support sendDTMF method');
+            return false;
+        }
+        log('Sending DTMF tone: ' + tone);
+        currentSession.sendDTMF(tone);
+        return true;
+    }
+
     function toggleMute() {
         setMute(!state.muted);
     }
@@ -946,6 +967,7 @@ var WebPhone = (function() {
         setAutoAnswer: setAutoAnswer,
         loadAutoAnswerPreference: loadAutoAnswerPreference,
         toggleMute: toggleMute,
+        sendDTMF: sendDTMF,
         setMute: setMute,
         isRegistered: function() { return state.registered; },
         getState: function() { return state; },
