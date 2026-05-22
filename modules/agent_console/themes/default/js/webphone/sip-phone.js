@@ -905,13 +905,36 @@ var WebPhone = (function() {
             log('Cannot send DTMF: no active call session');
             return false;
         }
-        if (typeof currentSession.sendDTMF !== 'function') {
-            log('Cannot send DTMF: session does not support sendDTMF method');
-            return false;
+        var sdh = currentSession.sessionDescriptionHandler;
+        if (sdh && typeof sdh.sendDtmf === 'function') {
+            log('Sending DTMF tone via SDH: ' + tone);
+            try {
+                sdh.sendDtmf(tone);
+                return true;
+            } catch (e) {
+                log('SDH sendDtmf failed: ' + e.message);
+            }
         }
-        log('Sending DTMF tone: ' + tone);
-        currentSession.sendDTMF(tone);
-        return true;
+        if (typeof currentSession.info === 'function') {
+            log('Sending DTMF tone via SIP INFO: ' + tone);
+            try {
+                var options = {
+                    requestOptions: {
+                        body: {
+                            contentDisposition: "render",
+                            contentType: "application/dtmf-relay",
+                            content: "Signal=" + tone + "\r\nDuration=160"
+                        }
+                    }
+                };
+                currentSession.info(options);
+                return true;
+            } catch (e) {
+                log('SIP INFO send failed: ' + e.message);
+            }
+        }
+        log('Cannot send DTMF: no supported DTMF sending method found on session');
+        return false;
     }
 
     function toggleMute() {
