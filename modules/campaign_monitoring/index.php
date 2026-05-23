@@ -55,6 +55,9 @@ function _moduleContent(&$smarty, $module_name)
     case 'forceUnbreakAgent':
         $sContenido = manejarMonitoreo_forceUnbreakAgent($module_name, $smarty, $local_templates_dir);
         break;
+    case 'forceLoginAgent':
+        $sContenido = manejarMonitoreo_forceLoginAgent($module_name, $smarty, $local_templates_dir);
+        break;
     case 'getCampaigns':
         $sContenido = manejarMonitoreo_getCampaigns($module_name, $smarty, $local_templates_dir);
         break;
@@ -207,6 +210,13 @@ function manejarMonitoreo_getCampaignDetail($module_name, $smarty, $sDirLocalPla
             if (!is_array($estadoCampania)) {
                 $respuesta['status'] = 'error';
                 $respuesta['message'] = $oPaloConsola->errMsg;
+            } else {
+                // Filter out offline agents with unregistered extensions
+                foreach ($estadoCampania['agents'] as $k => $agent) {
+                    if ($agent['status'] == 'offline' && !$oPaloConsola->extensionEstaRegistrada($agent['agentchannel'])) {
+                        unset($estadoCampania['agents'][$k]);
+                    }
+                }
             }
         }
         if ($respuesta['status'] == 'success') {
@@ -362,6 +372,13 @@ function manejarMonitoreo_checkStatus($module_name, $smarty, $sDirLocalPlantilla
         jsonflush($bSSE, $respuesta);
         $oPaloConsola->desconectarTodo();
         return;
+    } else {
+        // Filter out offline agents with unregistered extensions
+        foreach ($estadoCampania['agents'] as $k => $agent) {
+            if ($agent['status'] == 'offline' && !$oPaloConsola->extensionEstaRegistrada($agent['agentchannel'])) {
+                unset($estadoCampania['agents'][$k]);
+            }
+        }
     }
 
     // Acumular inmediatamente las filas que son distintas en estado
@@ -709,7 +726,12 @@ function manejarMonitoreo_checkStatus($module_name, $smarty, $sDirLocalPlantilla
                             array('agentchannel' => $sCanalAgente), $evento);
                         unset($estadoCliente['agents'][$sCanalAgente]['queues']);
 
-                        $respuesta['agents']['add'][] = formatoAgente($estadoCliente['agents'][$sCanalAgente]);
+                        if ($estadoCliente['agents'][$sCanalAgente]['status'] == 'offline' && 
+                            !$oPaloConsola->extensionEstaRegistrada($sCanalAgente)) {
+                            unset($estadoCliente['agents'][$sCanalAgente]);
+                        } else {
+                            $respuesta['agents']['add'][] = formatoAgente($estadoCliente['agents'][$sCanalAgente]);
+                        }
                     } elseif (!in_array($estadoCliente['queue'], $evento['queues']) &&
                         isset($estadoCliente['agents'][$sCanalAgente])) {
 
@@ -918,6 +940,31 @@ function manejarMonitoreo_forceUnbreakAgent($module_name, $smarty, $sDirLocalPla
     } else {
         $oConsola = new PaloSantoConsola($sAgentChannel);
         $exito = $oConsola->terminarBreak();
+        if (!$exito) {
+            $respuesta['status'] = 'error';
+            $respuesta['message'] = $oConsola->errMsg;
+        }
+    }
+
+    $json = new Services_JSON();
+    Header('Content-Type: application/json');
+    return $json->encode($respuesta);
+}
+
+function manejarMonitoreo_forceLoginAgent($module_name, $smarty, $sDirLocalPlantillas)
+{
+    $respuesta = array(
+        'status'    =>  'success',
+        'message'   =>  '(no message)',
+    );
+
+    $sAgentChannel = getParameter('agentchannel');
+    if (is_null($sAgentChannel) || $sAgentChannel == '') {
+        $respuesta['status'] = 'error';
+        $respuesta['message'] = 'Canal de agente no válido';
+    } else {
+        $oConsola = new PaloSantoConsola($sAgentChannel);
+        $exito = $oConsola->loginAgente($sAgentChannel);
         if (!$exito) {
             $respuesta['status'] = 'error';
             $respuesta['message'] = $oConsola->errMsg;

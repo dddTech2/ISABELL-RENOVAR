@@ -635,7 +635,7 @@ $(document).ready(function() {
 		}
 	});
 
-	// Context menu handler for unbreaking agents
+	// Context menu handler for unbreaking/logging in agents
 	$(document).on('click', '.agent-table-wrapper table tbody tr', function(event) {
 		var agentChannel = $(this).attr('data-agent');
 		var agentStatus = $(this).attr('data-status') || '';
@@ -648,7 +648,25 @@ $(document).ready(function() {
 		               statusLower.indexOf('pause') !== -1 || 
 		               statusLower.indexOf('paused') !== -1;
 		
+		var isLoggedOut = statusLower.indexOf('no logon') !== -1 || 
+		                  statusLower.indexOf('logged out') !== -1 || 
+		                  statusLower.indexOf('no logoneado') !== -1;
+		
 		if (isPaused) {
+			$('#btnUnbreakAgent').show().text('🔓 Finalizar Descanso');
+			$('#btnForceLoginAgent').hide();
+			
+			$('#agentContextMenu').css({
+				top: event.pageY + 'px',
+				left: event.pageX + 'px'
+			}).fadeIn(150);
+			
+			$('#agentContextMenu').data('agentChannel', agentChannel);
+			event.stopPropagation();
+		} else if (isLoggedOut) {
+			$('#btnUnbreakAgent').hide();
+			$('#btnForceLoginAgent').show().text('🔑 Iniciar Sesión');
+			
 			$('#agentContextMenu').css({
 				top: event.pageY + 'px',
 				left: event.pageX + 'px'
@@ -683,6 +701,29 @@ $(document).ready(function() {
 				
 				if (response.status !== 'success') {
 					alert('Error al finalizar descanso: ' + response.message);
+				}
+			}, 'json');
+		}
+	});
+
+	$(document).on('click', '#btnForceLoginAgent', function(e) {
+		e.preventDefault();
+		var agentChannel = $('#agentContextMenu').data('agentChannel');
+		if (agentChannel) {
+			var btn = $(this);
+			btn.text('Procesando...');
+			
+			$.post('index.php', {
+				menu: module_name,
+				rawmode: 'yes',
+				action: 'forceLoginAgent',
+				agentchannel: agentChannel
+			}, function(response) {
+				$('#agentContextMenu').fadeOut(100);
+				btn.text('🔑 Iniciar Sesión');
+				
+				if (response.status !== 'success') {
+					alert('Error al iniciar sesión: ' + response.message);
 				}
 			}, 'json');
 		}

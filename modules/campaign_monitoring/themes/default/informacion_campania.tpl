@@ -222,5 +222,6 @@
 {* Context menu for agents on break *}
 <div id="agentContextMenu" style="display: none;">
   <a href="#" id="btnUnbreakAgent">🔓 Finalizar Descanso</a>
+  <a href="#" id="btnForceLoginAgent">🔑 Iniciar Sesión</a>
 </div>
 </div>
