@@ -59,6 +59,26 @@ $(document).ready(function() {
 		});
 	});
 
+	App.CampaignSelect = Ember.Select.extend({
+		optionView: Ember.SelectOption.extend({
+			classNameBindings: ['statusClass'],
+			statusClass: function() {
+				var content = this.get('content');
+				if (content) {
+					var status = content.get('status');
+					if (status === 'A' || status === 'active' || status === 'activequeue') {
+						return 'campaign-status-active';
+					} else if (status === 'I' || status === 'inactive') {
+						return 'campaign-status-inactive';
+					} else if (status === 'T' || status === 'finished' || status === 'terminada') {
+						return 'campaign-status-finished';
+					}
+				}
+				return '';
+			}.property('content.status')
+		})
+	});
+
 	App.CampaignRoute = Ember.Route.extend({
 		model: function(params) {
 			return $.get('index.php', {
@@ -155,7 +175,22 @@ $(document).ready(function() {
 		status:			null,
 		key_campaign:	function() {
 			return this.get('type') + '-' + this.get('id_campaign');
-		}.property('type', 'id_campaign')
+		}.property('type', 'id_campaign'),
+		label_with_status: function() {
+			var desc = this.get('desc_campaign');
+			var status = this.get('status');
+			var prefix = '';
+			if (status === 'A' || status === 'active' || status === 'activequeue') {
+				prefix = '🟢 ';
+			} else if (status === 'I' || status === 'inactive') {
+				prefix = '🟡 ';
+			} else if (status === 'T' || status === 'finished' || status === 'terminada') {
+				prefix = '🔴 ';
+			} else {
+				prefix = '⚪ ';
+			}
+			return prefix + desc;
+		}.property('desc_campaign', 'status')
 	});
 
 	App.CampaignDetails = Ember.Object.extend({

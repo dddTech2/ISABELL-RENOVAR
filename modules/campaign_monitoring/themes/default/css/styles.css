@@ -155,3 +155,19 @@ align-items: center;
 min-width: 20%;
 
 }
+/* Styles for campaign dropdown options based on status */
+select option.campaign-status-active {
+  background-color: #d4edda;
+  color: #155724;
+  font-weight: bold;
+}
+
+select option.campaign-status-inactive {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+select option.campaign-status-finished {
+  background-color: #f8d7da;
+  color: #721c24;
+}

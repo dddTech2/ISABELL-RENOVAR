@@ -12,10 +12,10 @@
 
 <b>{$ETIQUETA_CAMPANIA}:</b> <br>
 {literal}
-{{view Ember.Select
+{{view App.CampaignSelect
             contentBinding="content"
             optionValuePath="content.key_campaign"
-            optionLabelPath="content.desc_campaign"
+            optionLabelPath="content.label_with_status"
             valueBinding="key_campaign" }}
 {/literal}
 <br><br>
