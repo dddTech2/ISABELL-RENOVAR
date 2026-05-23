@@ -433,6 +433,7 @@ $(document).ready(function() {
 				  const agentUpdate = agentUpdateColor(agente.status, agente.agent);
 				  this.agentes.addObject(Ember.Object.create({
 				    canal:     agente.agent,
+				    nombre:    agente.name || agente.agent,
 				    numero:    agente.callnumber,
 				    troncal:   agente.trunk,
 				    estado:    agente.status,
@@ -457,6 +458,7 @@ $(document).ready(function() {
 			        //console.log(agenteLista);
 			        if (agenteLista != null) {
 			            agenteLista.setProperties({
+			                'nombre':   agente.name || agente.agent,
 			                'numero':   agente.callnumber,
 			                'troncal':  agente.trunk,
 			                'estado':   agente.status,

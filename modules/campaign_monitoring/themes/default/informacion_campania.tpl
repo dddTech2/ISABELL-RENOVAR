@@ -188,7 +188,7 @@
                 {literal}{{#view tagName="tbody"}}
                 {{#each agentes}}
                 <tr  {{bindAttr class="canal"}}>
-                    <td width="20%" nowrap="nowrap">{{canal}}</td>
+                    <td width="20%" nowrap="nowrap">{{nombre}}</td>
                     <td class="trAgent"nowrap="nowrap">{{image}}{{estado}}</td>
                     <td width="20%" nowrap="nowrap">{{numero}}</td>
                     <td width="20%" nowrap="nowrap">{{troncal}}</td>

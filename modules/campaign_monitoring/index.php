@@ -802,6 +802,18 @@ function formatoLlamadaNoConectada($activecall)
 
 function formatoAgente($agent)
 {
+    static $arrNombresAgentes = null;
+    if (is_null($arrNombresAgentes)) {
+        $arrNombresAgentes = array();
+        $oPaloConsola = new PaloSantoConsola();
+        $lista = $oPaloConsola->listarAgentes();
+        if (is_array($lista)) {
+            foreach ($lista as $chan => $formatted) {
+                $arrNombresAgentes[$chan] = $formatted;
+            }
+        }
+    }
+
     $sEtiquetaStatus = _tr($agent['status']);
     $sFechaHoy = date('Y-m-d');
     $sDesde = '-';
@@ -825,6 +837,7 @@ function formatoAgente($agent)
         $sDesde = substr($sDesde, strlen($sFechaHoy) + 1);
     return array(
         'agent'         =>  $agent['agentchannel'],
+        'name'          =>  isset($arrNombresAgentes[$agent['agentchannel']]) ? $arrNombresAgentes[$agent['agentchannel']] : $agent['agentchannel'],
         'status'        =>  $sEtiquetaStatus,
         'callnumber'    =>  is_null($agent['callinfo']['callnumber']) ? '-' : $agent['callinfo']['callnumber'],
         'trunk'         =>  is_null($agent['callinfo']['trunk']) ? '-' : $agent['callinfo']['trunk'],
