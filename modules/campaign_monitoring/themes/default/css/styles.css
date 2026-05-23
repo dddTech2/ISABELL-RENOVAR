@@ -171,3 +171,61 @@ select option.campaign-status-finished {
   background-color: #f8d7da;
   color: #721c24;
 }
+
+/* Context menu popover */
+#agentContextMenu {
+  display: none;
+  position: absolute;
+  z-index: 10000;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 180px;
+}
+
+#agentContextMenu a {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  color: #333;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+#agentContextMenu a:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Hover indicator for interactive rows */
+.agent-table-wrapper table tbody tr {
+  transition: transform 0.1s ease;
+}
+
+.agent-table-wrapper table tbody tr[data-status*="descanso"],
+.agent-table-wrapper table tbody tr[data-status*="Descanso"],
+.agent-table-wrapper table tbody tr[data-status*="break"],
+.agent-table-wrapper table tbody tr[data-status*="Break"],
+.agent-table-wrapper table tbody tr[data-status*="pause"],
+.agent-table-wrapper table tbody tr[data-status*="Pause"],
+.agent-table-wrapper table tbody tr[data-status*="paused"],
+.agent-table-wrapper table tbody tr[data-status*="Paused"] {
+  cursor: pointer;
+}
+
+.agent-table-wrapper table tbody tr[data-status*="descanso"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="Descanso"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="break"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="Break"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="pause"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="Pause"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="paused"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="Paused"]:hover {
+  filter: brightness(1.1);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+}

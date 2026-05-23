@@ -634,6 +634,59 @@ $(document).ready(function() {
 			r.scrollTop(r.prop('scrollHeight'));
 		}
 	});
+
+	// Context menu handler for unbreaking agents
+	$(document).on('click', '.agent-table-wrapper table tbody tr', function(event) {
+		var agentChannel = $(this).attr('data-agent');
+		var agentStatus = $(this).attr('data-status') || '';
+		
+		if (!agentChannel) return;
+
+		var statusLower = agentStatus.toLowerCase();
+		var isPaused = statusLower.indexOf('break') !== -1 || 
+		               statusLower.indexOf('descanso') !== -1 || 
+		               statusLower.indexOf('pause') !== -1 || 
+		               statusLower.indexOf('paused') !== -1;
+		
+		if (isPaused) {
+			$('#agentContextMenu').css({
+				top: event.pageY + 'px',
+				left: event.pageX + 'px'
+			}).fadeIn(150);
+			
+			$('#agentContextMenu').data('agentChannel', agentChannel);
+			event.stopPropagation();
+		} else {
+			$('#agentContextMenu').fadeOut(100);
+		}
+	});
+
+	$(document).on('click', function() {
+		$('#agentContextMenu').fadeOut(100);
+	});
+
+	$(document).on('click', '#btnUnbreakAgent', function(e) {
+		e.preventDefault();
+		var agentChannel = $('#agentContextMenu').data('agentChannel');
+		if (agentChannel) {
+			var btn = $(this);
+			btn.text('Procesando...');
+			
+			$.post('index.php', {
+				menu: module_name,
+				rawmode: 'yes',
+				action: 'forceUnbreakAgent',
+				agentchannel: agentChannel
+			}, function(response) {
+				$('#agentContextMenu').fadeOut(100);
+				btn.text('🔓 Finalizar Descanso');
+				
+				if (response.status !== 'success') {
+					alert('Error al finalizar descanso: ' + response.message);
+				}
+			}, 'json');
+		}
+	});
 });
 
 function mostrar_mensaje_error(s)

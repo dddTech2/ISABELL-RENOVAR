@@ -183,11 +183,11 @@
                 <td width="20%" nowrap="nowrap">{$ETIQUETA_DESDE}</td>
             </tr>
         </table>
-        <div class="llamadas" {literal}{{bindAttr style="alturaLlamada"}}{/literal}>
+        <div class="llamadas agent-table-wrapper" {literal}{{bindAttr style="alturaLlamada"}}{/literal}>
             <table>
                 {literal}{{#view tagName="tbody"}}
                 {{#each agentes}}
-                <tr  {{bindAttr class="canal"}}>
+                <tr  {{bindAttr class="canal"}} {{bindAttr data-agent="canal" data-status="estado"}}>
                     <td width="20%" nowrap="nowrap">{{nombre}}</td>
                     <td class="trAgent"nowrap="nowrap">{{image}}{{estado}}</td>
                     <td width="20%" nowrap="nowrap">{{numero}}</td>
@@ -218,4 +218,9 @@
 {{/view}}
 {{/if}}{/literal}
 </script>
+
+{* Context menu for agents on break *}
+<div id="agentContextMenu" style="display: none;">
+  <a href="#" id="btnUnbreakAgent">🔓 Finalizar Descanso</a>
+</div>
 </div>

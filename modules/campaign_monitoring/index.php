@@ -52,6 +52,9 @@ function _moduleContent(&$smarty, $module_name)
 
     // Procesar los eventos AJAX.
     switch (getParameter('action')) {
+    case 'forceUnbreakAgent':
+        $sContenido = manejarMonitoreo_forceUnbreakAgent($module_name, $smarty, $local_templates_dir);
+        break;
     case 'getCampaigns':
         $sContenido = manejarMonitoreo_getCampaigns($module_name, $smarty, $local_templates_dir);
         break;
@@ -899,6 +902,31 @@ function modificarReferenciasLibreriasJS($smarty)
     array_unshift($listaLibsJS_modulo, $sHandleBarsRef);
     $smarty->assign('HEADER_MODULES', implode("\n", $listaLibsJS_modulo));
     $smarty->assign('HEADER_LIBS_JQUERY', implode("\n", $listaLibsJS_framework));
+}
+
+function manejarMonitoreo_forceUnbreakAgent($module_name, $smarty, $sDirLocalPlantillas)
+{
+    $respuesta = array(
+        'status'    =>  'success',
+        'message'   =>  '(no message)',
+    );
+
+    $sAgentChannel = getParameter('agentchannel');
+    if (is_null($sAgentChannel) || $sAgentChannel == '') {
+        $respuesta['status'] = 'error';
+        $respuesta['message'] = 'Canal de agente no válido';
+    } else {
+        $oConsola = new PaloSantoConsola($sAgentChannel);
+        $exito = $oConsola->terminarBreak();
+        if (!$exito) {
+            $respuesta['status'] = 'error';
+            $respuesta['message'] = $oConsola->errMsg;
+        }
+    }
+
+    $json = new Services_JSON();
+    Header('Content-Type: application/json');
+    return $json->encode($respuesta);
 }
 
 ?>
