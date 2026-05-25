@@ -754,20 +754,6 @@ $(document).ready(function() {
 		e.preventDefault();
 		var agentChannel = $('#agentContextMenu').data('agentChannel');
 		if (agentChannel) {
-			var savedExt = localStorage.getItem('supervisor_extension') || '';
-			var supervisorExt = prompt("Ingrese su número de extensión para escuchar la llamada:", savedExt);
-			if (supervisorExt === null) {
-				$('#agentContextMenu').fadeOut(100);
-				return;
-			}
-			supervisorExt = supervisorExt.trim();
-			if (supervisorExt === '' || !/^\d+$/.test(supervisorExt)) {
-				alert("Debe ingresar una extensión numérica válida.");
-				$('#agentContextMenu').fadeOut(100);
-				return;
-			}
-			localStorage.setItem('supervisor_extension', supervisorExt);
-			
 			var btn = $(this);
 			btn.text('Conectando...');
 			
@@ -775,20 +761,20 @@ $(document).ready(function() {
 				menu: module_name,
 				rawmode: 'yes',
 				action: 'spyAgent',
-				agentchannel: agentChannel,
-				supervisorext: supervisorExt
+				agentchannel: agentChannel
 			}, function(response) {
 				$('#agentContextMenu').fadeOut(100);
 				btn.text('👂 Escuchar Llamada');
-				
+			
 				if (response.status !== 'success') {
 					alert('Error al escuchar llamada: ' + response.message);
 				} else {
-					alert('Llamada de escucha iniciada hacia la extensión ' + supervisorExt);
+					alert('Llamada de escucha iniciada hacia su extensión.');
 				}
 			}, 'json');
 		}
 	});
+
 });
 
 function mostrar_mensaje_error(s)

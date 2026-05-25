@@ -3,12 +3,12 @@
 ## Objetivo
 1. Permitir a los coordinadores y supervisores escuchar en tiempo real las llamadas activas de los agentes que se encuentren en estado ocupado ("Busy", "Ocupado", "On Call" o similar).
 2. Proporcionar una opción rápida `👂 Escuchar Llamada` en el menú contextual de los agentes para iniciar el monitoreo silencioso de la llamada.
-3. Solicitar e intermediar la extensión del supervisor para originar la llamada de escucha y guardarla en el navegador (`localStorage`) para facilitar futuras escuchas.
+3. Extraer la extensión del supervisor automáticamente desde su sesión de usuario activa en Issabel usando las clases de ACL, evitando que tenga que introducirla manualmente.
 
 ## Entradas y Salidas
 - **Entradas:**
   - Canal/Identificador del agente seleccionado (ej. `Agent/9002` o `PJSIP/2002`).
-  - Extensión telefónica del supervisor (introducida en la interfaz).
+  - Extensión telefónica del supervisor (extraída en el backend a través del objeto `paloACL`).
 - **Salidas:**
   - Petición AJAX POST a `index.php` con acción `spyAgent`.
   - Conexión AMI originando llamada de la extensión del supervisor a la función ChanSpy del agente (`<chanspy_code><agent_ext>`).
@@ -23,22 +23,21 @@
 - **Modificación en controlador JS (`javascript.js`):**
   - En la delegación de clic sobre las filas de agentes:
     - Evaluar si el estado del agente contiene `"busy"`, `"ocupado"`, `"oncall"` o `"occupé"`.
-    - Si es así, mostrar la opción `#btnSpyAgent` y ocultar las demás opciones del menú contextual (como unbreak y login). Mostrar el menú contextual en la posición del puntero.
+    - Si es así, mostrar la opción `#btnSpyAgent` y ocultar las demás opciones del menú contextual. Mostrar el menú contextual en la posición del puntero.
   - En el manejador de clic sobre `#btnSpyAgent`:
-    - Leer la última extensión de supervisor del `localStorage` (clave `supervisor_extension`).
-    - Presentar un `prompt()` solicitando la extensión del supervisor y pre-llenándolo con el valor leído.
-    - Si el usuario cancela o deja vacío, abortar la acción.
-    - Validar que sea numérico. Si es correcto, guardarlo en `localStorage`.
     - Cambiar el texto del botón a "Conectando...".
-    - Realizar un `$.post` con la acción `spyAgent` enviando los parámetros `agentchannel` y `supervisorext`.
+    - Realizar un `$.post` con la acción `spyAgent` enviando únicamente el parámetro `agentchannel`.
     - Al recibir la respuesta: Ocultar el menú contextual, restaurar el texto a "👂 Escuchar Llamada" y mostrar una alerta (`alert()`) confirmando el éxito o reportando el error detallado.
 
 ### 2. Controlador Backend (PHP)
 - **Modificación en controlador principal (`index.php`):**
   - Agregar el caso `spyAgent` al switch de peticiones AJAX en `_moduleContent()`.
   - Crear la función `manejarMonitoreo_spyAgent(...)` para procesar la petición:
-    - Extraer y limpiar parámetros (`agentchannel`, `supervisorext`).
-    - Obtener el número de extensión del agente a partir del canal usando expresiones regulares (ej. `/(\d+)/` o similar). Si no se puede extraer, retornar error.
+    - Declarar `global $arrConf;` para acceder a la configuración DSN.
+    - Obtener el nombre de usuario de la sesión (`$_SESSION['issabel_user']`).
+    - Instanciar `paloACL` con el DSN `acl` de `$arrConf` y obtener la extensión del usuario con `getUserExtension($user)`.
+    - Si la extensión está vacía, retornar un error indicando que no hay una extensión asignada a la cuenta.
+    - Extraer el número de extensión del agente a partir del canal usando expresiones regulares.
     - Conectar al DSN de Asterisk en MySQL (`generarDSNSistema('asteriskuser', 'asterisk')`) para buscar el código de ChanSpy en la tabla `featurecodes` (normalmente de `modulename = 'core'` y `feature = 'chanspy'`). Si no se encuentra o la BD falla, usar `555` como fallback.
     - Cargar e instanciar `AGI_AsteriskManager` e iniciar conexión con las credenciales locales de AMI (`admin` y `obtenerClaveAMIAdmin()`).
     - Ejecutar la acción AMI `Originate` con:
@@ -51,6 +50,5 @@
     - Verificar la respuesta de la AMI y retornar JSON con `status` 'success' o 'error'.
 
 ## Restricciones y Trampas Conocidas
-- **Extracción de la Extensión del Agente:** Ciertos canales de agentes dinámicos pueden no tener el formato exacto `Agent/XXX`. El regex de extracción debe ser robusto y soportar tanto `Agent/XXXX` como `PJSIP/XXXX`, `SIP/XXXX`, etc.
-- **Canal Local para Supervisor:** Originar hacia `local/<ext>@from-internal` es más compatible que originar a `PJSIP/<ext>` o `SIP/<ext>` directamente, ya que permite llamar a la extensión independientemente de su tipo de dispositivo (SIP/PJSIP/IAX2/virtual).
+- **Extensión del Supervisor en ACL:** La cuenta del supervisor o coordinador en la interfaz de Issabel debe tener configurada una extensión en la sección de control de accesos (usuarios). Si no está configurada, el backend fallará graciosamente reportando el error en la interfaz.
 - **Asincronía del Originate:** `Async` debe estar configurado como `true` para evitar retardos o bloqueos en la ejecución de la petición web mientras el supervisor contesta el teléfono.

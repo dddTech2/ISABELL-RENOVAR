@@ -14,7 +14,9 @@ def main():
     print(f"Modifying JS file: {js_file}")
     print(f"Modifying CSS file: {css_file}")
 
+    # ==========================================
     # 1. Modify PHP file
+    # ==========================================
     if not os.path.exists(php_file):
         print(f"Error: PHP file not found at {php_file}")
         return 1
@@ -39,47 +41,41 @@ def main():
         "        break;"
     )
 
-    if php_switch_target not in php_content_norm:
-        # Fallback to forceUnbreakAgent target
-        php_switch_target_fb = (
-            "    case 'forceUnbreakAgent':\n"
-            "        $sContenido = manejarMonitoreo_forceUnbreakAgent($module_name, $smarty, $local_templates_dir);\n"
-            "        break;"
-        )
-        php_switch_replace_fb = (
-            "    case 'forceUnbreakAgent':\n"
-            "        $sContenido = manejarMonitoreo_forceUnbreakAgent($module_name, $smarty, $local_templates_dir);\n"
-            "        break;\n"
-            "    case 'spyAgent':\n"
-            "        $sContenido = manejarMonitoreo_spyAgent($module_name, $smarty, $local_templates_dir);\n"
-            "        break;"
-        )
-        if php_switch_target_fb not in php_content_norm:
-            print("Error: PHP switch target not found")
+    if "case 'spyAgent':" not in php_content_norm:
+        if php_switch_target not in php_content_norm:
+            print("Error: PHP switch target not found in index.php")
             return 1
-        php_content_norm = php_content_norm.replace(php_switch_target_fb, php_switch_replace_fb)
-    else:
         php_content_norm = php_content_norm.replace(php_switch_target, php_switch_replace)
 
-    # Append manejarMonitoreo_spyAgent function before the closing PHP tag
-    php_spy_function = """
+    # Append new manejarMonitoreo_spyAgent function if not already present
+    if "function manejarMonitoreo_spyAgent" not in php_content_norm:
+        php_spy_function = """
 
 function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
 {
+    global $arrConf;
     $respuesta = array(
         'status'    =>  'success',
         'message'   =>  '(no message)',
     );
 
     $sAgentChannel = getParameter('agentchannel');
-    $sSupervisorExt = getParameter('supervisorext');
+    
+    // Obtener la extensión del supervisor desde la sesión de Issabel / ACL
+    $user = isset($_SESSION['issabel_user']) ? $_SESSION['issabel_user'] : null;
+    $sSupervisorExt = null;
+    if (!is_null($user)) {
+        $pDB_acl = new paloDB($arrConf['issabel_dsn']['acl']);
+        $pACL = new paloACL($pDB_acl);
+        $sSupervisorExt = $pACL->getUserExtension($user);
+    }
 
     if (is_null($sAgentChannel) || $sAgentChannel == '') {
         $respuesta['status'] = 'error';
         $respuesta['message'] = 'Canal de agente no válido';
-    } elseif (is_null($sSupervisorExt) || $sSupervisorExt == '' || !ctype_digit($sSupervisorExt)) {
+    } elseif (is_null($sSupervisorExt) || $sSupervisorExt == '') {
         $respuesta['status'] = 'error';
-        $respuesta['message'] = 'Extensión del supervisor no válida';
+        $respuesta['message'] = 'Su usuario de Issabel no tiene una extensión telefónica asociada en ACL';
     } else {
         // Extraer número de extensión del agente
         $agentExt = null;
@@ -136,13 +132,12 @@ function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
     return $json->encode($respuesta);
 }
 """
-
-    if php_content_norm.endswith("?>\n"):
-        php_content_norm = php_content_norm[:-3] + php_spy_function + "?>\n"
-    elif php_content_norm.endswith("?>"):
-        php_content_norm = php_content_norm[:-2] + php_spy_function + "?>"
-    else:
-        php_content_norm = php_content_norm + php_spy_function
+        if php_content_norm.endswith("?>\n"):
+            php_content_norm = php_content_norm[:-3] + php_spy_function + "?>\n"
+        elif php_content_norm.endswith("?>"):
+            php_content_norm = php_content_norm[:-2] + php_spy_function + "?>"
+        else:
+            php_content_norm = php_content_norm + php_spy_function
 
     if '\r\n' in php_content:
         php_content_norm = php_content_norm.replace('\n', '\r\n')
@@ -151,7 +146,9 @@ function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
         f.write(php_content_norm)
     print("Success: Updated index.php")
 
+    # ==========================================
     # 2. Modify template file
+    # ==========================================
     if not os.path.exists(tpl_file):
         print(f"Error: Template file not found at {tpl_file}")
         return 1
@@ -161,31 +158,19 @@ function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
 
     tpl_content_norm = tpl_content.replace('\r\n', '\n')
 
-    tpl_menu_target = (
-        "  <a href=\"#\" id=\"btnForceLoginAgent\">🔑 Iniciar Sesión</a>\n"
-        "</div>"
-    )
-    tpl_menu_replace = (
-        "  <a href=\"#\" id=\"btnForceLoginAgent\">🔑 Iniciar Sesión</a>\n"
-        "  <a href=\"#\" id=\"btnSpyAgent\">👂 Escuchar Llamada</a>\n"
-        "</div>"
-    )
-
-    if tpl_menu_target not in tpl_content_norm:
-        tpl_menu_target_fb = (
-            "  <a href=\"#\" id=\"btnUnbreakAgent\">🔓 Finalizar Descanso</a>\n"
+    if 'id="btnSpyAgent"' not in tpl_content_norm:
+        tpl_menu_target = (
+            "  <a href=\"#\" id=\"btnForceLoginAgent\">🔑 Iniciar Sesión</a>\n"
             "</div>"
         )
-        tpl_menu_replace_fb = (
-            "  <a href=\"#\" id=\"btnUnbreakAgent\">🔓 Finalizar Descanso</a>\n"
+        tpl_menu_replace = (
+            "  <a href=\"#\" id=\"btnForceLoginAgent\">🔑 Iniciar Sesión</a>\n"
             "  <a href=\"#\" id=\"btnSpyAgent\">👂 Escuchar Llamada</a>\n"
             "</div>"
         )
-        if tpl_menu_target_fb not in tpl_content_norm:
+        if tpl_menu_target not in tpl_content_norm:
             print("Error: Context menu target not found in informacion_campania.tpl")
             return 1
-        tpl_content_norm = tpl_content_norm.replace(tpl_menu_target_fb, tpl_menu_replace_fb)
-    else:
         tpl_content_norm = tpl_content_norm.replace(tpl_menu_target, tpl_menu_replace)
 
     if '\r\n' in tpl_content:
@@ -195,7 +180,9 @@ function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
         f.write(tpl_content_norm)
     print("Success: Updated informacion_campania.tpl")
 
+    # ==========================================
     # 3. Modify JS file
+    # ==========================================
     if not os.path.exists(js_file):
         print(f"Error: JS file not found at {js_file}")
         return 1
@@ -282,13 +269,14 @@ function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
         "\t\t}"
     )
 
-    if js_click_target not in js_content_norm:
-        print("Error: Context menu click handler target not found in javascript.js")
-        return 1
-    js_content_norm = js_content_norm.replace(js_click_target, js_click_replace)
+    if "var isBusy" not in js_content_norm:
+        if js_click_target not in js_content_norm:
+            print("Error: Context menu click handler target not found in javascript.js")
+            return 1
+        js_content_norm = js_content_norm.replace(js_click_target, js_click_replace)
 
-    # Append spy agent handler
-    js_spy_click_target = (
+    # Append spy agent handler right after forceLoginAgent click handler
+    js_force_login_handler = (
         "\t$(document).on('click', '#btnForceLoginAgent', function(e) {\n"
         "\t\te.preventDefault();\n"
         "\t\tvar agentChannel = $('#agentContextMenu').data('agentChannel');\n"
@@ -313,47 +301,11 @@ function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
         "\t});"
     )
 
-    js_spy_click_replace = (
-        "\t$(document).on('click', '#btnForceLoginAgent', function(e) {\n"
+    js_spy_handler = (
+        "\n\n\t$(document).on('click', '#btnSpyAgent', function(e) {\n"
         "\t\te.preventDefault();\n"
         "\t\tvar agentChannel = $('#agentContextMenu').data('agentChannel');\n"
         "\t\tif (agentChannel) {\n"
-        "\t\t\tvar btn = $(this);\n"
-        "\t\t\tbtn.text('Procesando...');\n"
-        "\t\t\t\n"
-        "\t\t\t$.post('index.php', {\n"
-        "\t\t\t\tmenu: module_name,\n"
-        "\t\t\t\trawmode: 'yes',\n"
-        "\t\t\t\taction: 'forceLoginAgent',\n"
-        "\t\t\t\tagentchannel: agentChannel\n"
-        "\t\t\t}, function(response) {\n"
-        "\t\t\t\t$('#agentContextMenu').fadeOut(100);\n"
-        "\t\t\t\tbtn.text('🔑 Iniciar Sesión');\n"
-        "\t\t\t\t\n"
-        "\t\t\t\tif (response.status !== 'success') {\n"
-        "\t\t\t\t\talert('Error al iniciar sesión: ' + response.message);\n"
-        "\t\t\t\t}\n"
-        "\t\t\t}, 'json');\n"
-        "\t\t}\n"
-        "\t});\n\n"
-        "\t$(document).on('click', '#btnSpyAgent', function(e) {\n"
-        "\t\te.preventDefault();\n"
-        "\t\tvar agentChannel = $('#agentContextMenu').data('agentChannel');\n"
-        "\t\tif (agentChannel) {\n"
-        "\t\t\tvar savedExt = localStorage.getItem('supervisor_extension') || '';\n"
-        "\t\t\tvar supervisorExt = prompt(\"Ingrese su número de extensión para escuchar la llamada:\", savedExt);\n"
-        "\t\t\tif (supervisorExt === null) {\n"
-        "\t\t\t\t$('#agentContextMenu').fadeOut(100);\n"
-        "\t\t\t\treturn;\n"
-        "\t\t\t}\n"
-        "\t\t\tsupervisorExt = supervisorExt.trim();\n"
-        "\t\t\tif (supervisorExt === '' || !/^\\d+$/.test(supervisorExt)) {\n"
-        "\t\t\t\talert(\"Debe ingresar una extensión numérica válida.\");\n"
-        "\t\t\t\t$('#agentContextMenu').fadeOut(100);\n"
-        "\t\t\t\treturn;\n"
-        "\t\t\t}\n"
-        "\t\t\tlocalStorage.setItem('supervisor_extension', supervisorExt);\n"
-        "\t\t\t\n"
         "\t\t\tvar btn = $(this);\n"
         "\t\t\tbtn.text('Conectando...');\n"
         "\t\t\t\n"
@@ -361,26 +313,26 @@ function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
         "\t\t\t\tmenu: module_name,\n"
         "\t\t\t\trawmode: 'yes',\n"
         "\t\t\t\taction: 'spyAgent',\n"
-        "\t\t\t\tagentchannel: agentChannel,\n"
-        "\t\t\t\tsupervisorext: supervisorExt\n"
+        "\t\t\t\tagentchannel: agentChannel\n"
         "\t\t\t}, function(response) {\n"
         "\t\t\t\t$('#agentContextMenu').fadeOut(100);\n"
         "\t\t\t\tbtn.text('👂 Escuchar Llamada');\n"
-        "\t\t\t\t\n"
+        "\t\t\t\n"
         "\t\t\t\tif (response.status !== 'success') {\n"
         "\t\t\t\t\talert('Error al escuchar llamada: ' + response.message);\n"
         "\t\t\t\t} else {\n"
-        "\t\t\t\t\talert('Llamada de escucha iniciada hacia la extensión ' + supervisorExt);\n"
+        "\t\t\t\t\talert('Llamada de escucha iniciada hacia su extensión.');\n"
         "\t\t\t\t}\n"
         "\t\t\t}, 'json');\n"
         "\t\t}\n"
         "\t});"
     )
 
-    if js_spy_click_target not in js_content_norm:
-        print("Error: Force login click handler target not found in javascript.js")
-        return 1
-    js_content_norm = js_content_norm.replace(js_spy_click_target, js_spy_click_replace)
+    if 'id="btnSpyAgent"' not in js_content_norm:
+        if js_force_login_handler not in js_content_norm:
+            print("Error: Force login click handler target not found in javascript.js")
+            return 1
+        js_content_norm = js_content_norm.replace(js_force_login_handler, js_force_login_handler + js_spy_handler)
 
     if '\r\n' in js_content:
         js_content_norm = js_content_norm.replace('\n', '\r\n')
@@ -389,7 +341,9 @@ function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
         f.write(js_content_norm)
     print("Success: Updated javascript.js")
 
+    # ==========================================
     # 4. Modify CSS file
+    # ==========================================
     if not os.path.exists(css_file):
         print(f"Error: CSS file not found at {css_file}")
         return 1

@@ -1012,20 +1012,29 @@ function manejarMonitoreo_forceLoginAgent($module_name, $smarty, $sDirLocalPlant
 
 function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
 {
+    global $arrConf;
     $respuesta = array(
         'status'    =>  'success',
         'message'   =>  '(no message)',
     );
 
     $sAgentChannel = getParameter('agentchannel');
-    $sSupervisorExt = getParameter('supervisorext');
+    
+    // Obtener la extensión del supervisor desde la sesión de Issabel / ACL
+    $user = isset($_SESSION['issabel_user']) ? $_SESSION['issabel_user'] : null;
+    $sSupervisorExt = null;
+    if (!is_null($user)) {
+        $pDB_acl = new paloDB($arrConf['issabel_dsn']['acl']);
+        $pACL = new paloACL($pDB_acl);
+        $sSupervisorExt = $pACL->getUserExtension($user);
+    }
 
     if (is_null($sAgentChannel) || $sAgentChannel == '') {
         $respuesta['status'] = 'error';
         $respuesta['message'] = 'Canal de agente no válido';
-    } elseif (is_null($sSupervisorExt) || $sSupervisorExt == '' || !ctype_digit($sSupervisorExt)) {
+    } elseif (is_null($sSupervisorExt) || $sSupervisorExt == '') {
         $respuesta['status'] = 'error';
-        $respuesta['message'] = 'Extensión del supervisor no válida';
+        $respuesta['message'] = 'Su usuario de Issabel no tiene una extensión telefónica asociada en ACL';
     } else {
         // Extraer número de extensión del agente
         $agentExt = null;
