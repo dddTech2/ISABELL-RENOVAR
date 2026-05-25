@@ -176,11 +176,11 @@
         <b>{$ETIQUETA_AGENTES}:</b>
         <table class="titulo" style="table-layout: fixed; width: 100%;">
             <tr>
-                <td width="20%" nowrap="nowrap">{$ETIQUETA_AGENTE}</td>
-                <td width="20%" nowrap="nowrap">{$ETIQUETA_ESTADO}</td>
-                <td width="20%" nowrap="nowrap">{$ETIQUETA_NUMERO_TELEFONO}</td>
-                <td width="20%" nowrap="nowrap">{$ETIQUETA_TRONCAL}</td>
-                <td width="20%" nowrap="nowrap">{$ETIQUETA_DESDE}</td>
+                <td width="35%" nowrap="nowrap">{$ETIQUETA_AGENTE}</td>
+                <td width="15%" nowrap="nowrap">{$ETIQUETA_ESTADO}</td>
+                <td width="15%" nowrap="nowrap">{$ETIQUETA_NUMERO_TELEFONO}</td>
+                <td width="10%" nowrap="nowrap">{$ETIQUETA_TRONCAL}</td>
+                <td width="25%" nowrap="nowrap">{$ETIQUETA_DESDE}</td>
             </tr>
         </table>
         <div class="llamadas agent-table-wrapper" {literal}{{bindAttr style="alturaLlamada"}}{/literal}>
@@ -188,11 +188,11 @@
                 {literal}{{#view tagName="tbody"}}
                 {{#each agentes}}
                 <tr  {{bindAttr class="canal"}} {{bindAttr data-agent="canal" data-status="estado"}}>
-                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{nombre}}">{{nombre}}</td>
-                    <td width="20%" nowrap="nowrap"><div class="trAgent">{{image}}{{estado}}</div></td>
-                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{numero}}</td>
-                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{troncal}}</td>
-                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{desde}}</td>
+                    <td width="35%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{nombre}}">{{nombre}}</td>
+                    <td width="15%" nowrap="nowrap"><div class="trAgent">{{image}}{{estado}}</div></td>
+                    <td width="15%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{numero}}</td>
+                    <td width="10%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{troncal}}</td>
+                    <td width="25%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{desde}}</td>
                 </tr>
                 {{/each}}
                 {{/view}}{/literal}
