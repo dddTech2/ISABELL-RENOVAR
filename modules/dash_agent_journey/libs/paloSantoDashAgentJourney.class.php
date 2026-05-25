@@ -23,7 +23,7 @@
 
 require_once('libs/paloSantoDB.class.php');
 
-class paloSantoDashDashAgentJourney
+class paloSantoDashAgentJourney
 {
     private $_DB;
     var $errMsg;
@@ -68,7 +68,7 @@ class paloSantoDashDashAgentJourney
      * @param bool $bHoldIncluded Whether to include Hold type breaks
      * @return array|null Array of events or NULL on error
      */
-    function getDashAgentJourney($sFechaInicio, $sFechaFin, $idAgent = NULL, $bHoldIncluded = false)
+    function getAgentJourney($sFechaInicio, $sFechaFin, $idAgent = NULL, $bHoldIncluded = false)
     {
         $sRegexp = '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/';
         if (!preg_match($sRegexp, $sFechaInicio)) {
