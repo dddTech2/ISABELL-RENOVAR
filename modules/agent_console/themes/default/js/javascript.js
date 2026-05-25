@@ -217,6 +217,9 @@ $(document).ready(function() {
     apply_form_styles();
 
     $('#submit_agent_login').click(do_login);
+    if ($('#submit_agent_login').length > 0) {
+        start_check_autologin();
+    }
     $('#btn_logout').click(do_logout);
     $('#btn_hangup').click(do_hangup);
     $('#btn_hold').click(do_hold);
@@ -515,6 +518,33 @@ function verificar_error_session(respuesta)
 			alert(respuesta['error']);
 		window.open('index.php', '_self');
 	}
+}
+
+function start_check_autologin()
+{
+    setTimeout(function check() {
+        if ($('#submit_agent_login').length === 0) return; // Parar si ya no está en login
+        
+        // Si ya está en espera del login, no hacer autologin
+        if ($('#login_icono_espera').css('visibility') === 'visible') {
+            setTimeout(check, 3000);
+            return;
+        }
+        
+        $.post('index.php?menu=' + module_name + '&rawmode=yes', {
+            menu:       module_name,
+            rawmode:    'yes',
+            action:     'checkAutoLogin'
+        }, function(response) {
+            if (response && response.status === true) {
+                window.location.reload();
+            } else {
+                setTimeout(check, 3000);
+            }
+        }, 'json').fail(function() {
+            setTimeout(check, 5000);
+        });
+    }, 3000);
 }
 
 // El siguiente código se ejecutará cuando se presione el botón de login del agente

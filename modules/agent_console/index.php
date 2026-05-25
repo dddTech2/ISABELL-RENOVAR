@@ -254,8 +254,16 @@ function manejarLogin($module_name, &$smarty, $sDirLocalPlantillas)
             'message'   =>  _tr('(internal) Action valid only while logged-in, agent session lost or not started')));
     }
 
-    if (!in_array($sAction, array('', 'doLogin', 'checkLogin')))
+    if (!in_array($sAction, array('', 'doLogin', 'checkLogin', 'checkAutoLogin')))
         $sAction = '';
+
+    // If the action is empty (initial page load), check if the agent is already logged in to auto-login
+    if ($sAction == '') {
+        if (_verificarYAutoLogonear($module_name, true)) {
+            Header('Location: index.php?menu=' . $module_name);
+            exit();
+        }
+    }
 
     switch ($sAction) {
     case 'doLogin':
@@ -263,6 +271,9 @@ function manejarLogin($module_name, &$smarty, $sDirLocalPlantillas)
         break;
     case 'checkLogin':
         $sContenido = manejarLogin_checkLogin();
+        break;
+    case 'checkAutoLogin':
+        $sContenido = manejarLogin_checkAutoLogin($module_name);
         break;
     default:
         $sContenido = manejarLogin_HTML($module_name, $smarty, $sDirLocalPlantillas);
@@ -272,6 +283,61 @@ function manejarLogin($module_name, &$smarty, $sDirLocalPlantillas)
     print_r($sAction);
 
     return $sContenido;
+}
+
+function _verificarYAutoLogonear($module_name, $autoStartSession = false)
+{
+    global $arrConf;
+
+    if (!isset($_SESSION['issabel_user'])) return false;
+
+    $pACL = new paloACL($arrConf['issabel_dsn']['acl']);
+    $idUser = $pACL->getIdUser($_SESSION['issabel_user']);
+    if ($idUser === FALSE) return false;
+
+    $tupla = $pACL->getUsers($idUser);
+    if (!is_array($tupla) || count($tupla) <= 0) return false;
+
+    $sipExtension = $tupla[0][3];
+    if (empty($sipExtension)) return false;
+
+    $oPaloConsola = new PaloSantoConsola();
+    $listaExtensionesCallback = $oPaloConsola->listarAgentes('dynamic');
+
+    $sSelectedAgent = 'PJSIP/' . $sipExtension;
+    foreach (array_keys($listaExtensionesCallback) as $k) {
+        $regs = NULL;
+        if (preg_match('|^(\w+)/(\d+)$|', $k, $regs) && $regs[2] == $sipExtension) {
+            $sSelectedAgent = $k;
+            break;
+        }
+    }
+
+    $oPaloConsolaCheck = new PaloSantoConsola($sSelectedAgent);
+    $estado = $oPaloConsolaCheck->estadoAgenteLogoneado($sipExtension);
+    $bIsLoggedIn = ($estado['estadofinal'] == 'logged-in');
+
+    if ($bIsLoggedIn && $autoStartSession) {
+        $_SESSION['callcenter']['estado_consola'] = 'logged-in';
+        $_SESSION['callcenter']['agente'] = $sSelectedAgent;
+        $_SESSION['callcenter']['agente_nombre'] = isset($listaExtensionesCallback[$sSelectedAgent]) ? $listaExtensionesCallback[$sSelectedAgent] : $sSelectedAgent;
+        $_SESSION['callcenter']['extension'] = $sipExtension;
+    }
+
+    $oPaloConsolaCheck->desconectarTodo();
+    $oPaloConsola->desconectarTodo();
+
+    return $bIsLoggedIn;
+}
+
+function manejarLogin_checkAutoLogin($module_name)
+{
+    $respuesta = array(
+        'status' => _verificarYAutoLogonear($module_name, true),
+    );
+    header('Content-Type: application/json');
+    echo json_encode($respuesta);
+    exit();
 }
 
 // Mostrar el formulario donde el agente ingresa su login
