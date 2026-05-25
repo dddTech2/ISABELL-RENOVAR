@@ -272,16 +272,20 @@ function renderDashboard(data) {
                    (totals['MANUAL_INCOMING'] || 0) + (totals['MANUAL_OUTGOING'] || 0);
     var breakTime = totals['BREAK'] || 0;
     
-    // Count calls from agents events to get total calls correctly
-    var totalCalls = 0;
-    data.agents.forEach(a => {
-        // We'll approximate total calls from events duration, but we should actually count occurrences.
-        // For now, let's just show events count as total calls or we might need backend change.
-        // We will just use raw events count related to calls if we can.
-    });
+    // Count total calls and calculate average talk time
+    var counts = data.counts || {};
+    var totalCalls = (counts['INCOMING_CALL'] || 0) + (counts['OUTGOING_CALL'] || 0) + 
+                     (counts['MANUAL_INCOMING'] || 0) + (counts['MANUAL_OUTGOING'] || 0);
+    
+    var avgTalkTime = 0;
+    if (totalCalls > 0) {
+        avgTalkTime = Math.floor(talkTime / totalCalls);
+    }
     
     document.getElementById('val-talk-time').innerText = formatTime(talkTime);
     document.getElementById('val-break-time').innerText = formatTime(breakTime);
+    document.getElementById('val-total-calls').innerText = totalCalls;
+    document.getElementById('val-avg-talk').innerText = formatTime(avgTalkTime);
     
     // Best / Worst Agents
     if (data.bestAgent) {

@@ -207,6 +207,7 @@ function calculateMetrics($recordset) {
         'MANUAL_OUTGOING' => 0,
         'HOLD' => 0
     );
+    $counts = array();
 
     foreach ($recordset as $event) {
         $agentName = $event['name'];
@@ -226,6 +227,11 @@ function calculateMetrics($recordset) {
         if (!isset($agents[$agentName]['types'][$type])) {
             $agents[$agentName]['types'][$type] = 0;
         }
+        
+        if (!isset($counts[$type])) {
+            $counts[$type] = 0;
+        }
+        $counts[$type]++;
 
         $agents[$agentName]['events']++;
         if ($duration > 0) {
@@ -268,6 +274,7 @@ function calculateMetrics($recordset) {
 
     return array(
         "totals" => $totals,
+        "counts" => $counts,
         "agents" => array_values($agents),
         "agentStats" => $agentStats,
         "bestAgent" => $bestAgent,
