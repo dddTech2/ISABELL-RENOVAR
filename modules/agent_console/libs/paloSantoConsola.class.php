@@ -2211,9 +2211,31 @@ class PaloSantoConsola
 
                 if (preg_match($pattern, $chan['channel']) || preg_match($pattern, $chan['peerchannel'])) {
                     $callNumber = $chan['exten'];
-                    if (empty($callNumber) || $callNumber == 's') {
+                    $isOutbound = FALSE;
+                    $cleanCallerId = $chan['callerid'];
+                    if (preg_match('/<(\d+)>/', $cleanCallerId, $matches)) {
+                        $cleanCallerId = $matches[1];
+                    }
+                    if ($cleanCallerId == $id) {
+                        $isOutbound = TRUE;
+                    }
+
+                    if ($isOutbound) {
+                        $dialed = null;
+                        if (preg_match('/(?:PJSIP|SIP|IAX2|Local)\/(?:[^\/]+\/)?(\d+)/i', $chan['data'], $matches)) {
+                            $dialed = $matches[1];
+                        }
+                        if (!empty($dialed)) {
+                            $callNumber = $dialed;
+                        } elseif (!empty($chan['exten']) && $chan['exten'] != 's' && $chan['exten'] != $id) {
+                            $callNumber = $chan['exten'];
+                        } else {
+                            $callNumber = $chan['callerid'];
+                        }
+                    } else {
                         $callNumber = $chan['callerid'];
                     }
+
                     if (preg_match('/<(\d+)>/', $callNumber, $matches)) {
                         $callNumber = $matches[1];
                     }

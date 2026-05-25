@@ -6,6 +6,7 @@
 3. Detectar llamadas activas (manuales o entrantes directas) para todos los agentes, incluso si se encuentran en descanso (`paused` / En descanso) u offline (`offline` / No logon).
 4. Conservar y mostrar el estado de pausa o desconexión original del agente mientras está en llamada (ej. `"Ocupado (En descanso: LUNCH)"`).
 5. Asegurar que el color amarillo (en llamada / ocupado) tenga prioridad visual en la tabla de monitoreo sobre el naranja (en descanso) y el rojo (desconectado), y que el menú contextual ofrezca todas las opciones aplicables al mismo tiempo.
+6. **Diferenciación de Números Dialados en Llamadas de Offline Agents:** [NUEVO] Si la llamada es saliente (CallerID coincide con la extensión del agente), extraer el número marcado de los datos de la aplicación `Dial` de Asterisk. Si es entrante, mostrar el CallerID de la llamada, evitando mostrar la propia extensión del agente en la columna de número telefónico.
 
 ## Entradas y Salidas
 - **Entradas:**
@@ -20,9 +21,15 @@
 ### 1. Detección de Llamadas en el Backend (`paloSantoConsola.class.php`)
 - En `modules/agent_console/libs/paloSantoConsola.class.php`:
   - En la función `leerEstadoCampania`:
-    - Cambiar la condición de escaneo de canales activos en Asterisk para incluir agentes en estado `offline`.
-    - Condición final: `if ($agent['status'] == 'online' || $agent['status'] == 'paused' || $agent['status'] == 'offline')`.
+    - Condición de escaneo: `if ($agent['status'] == 'online' || $agent['status'] == 'paused' || $agent['status'] == 'offline')`.
     - Antes de cambiar `$agent['status'] = 'oncall'`, guardar el estado anterior en `$agent['original_status'] = $agent['status']`.
+  - En la función `_detectarLlamadaActivaAgente`:
+    - Obtener el CallerID limpio del canal de Asterisk.
+    - Comparar el CallerID de origen con el identificador de la extensión del agente.
+    - Si coinciden (Llamada Saliente / Outbound):
+      - Buscar el número telefónico marcado extrayéndolo mediante expresiones regulares del campo de datos (`data`) de la aplicación de marcado (ej. `PJSIP/3137611617@Best` -> `3137611617`).
+    - Si no coinciden (Llamada Entrante / Inbound):
+      - Utilizar el CallerID del canal como número telefónico de origen de la llamada.
 
 ### 2. Formateo de Estados Combinados en el Backend (`index.php`)
 - En `modules/campaign_monitoring/index.php`:
@@ -37,20 +44,8 @@
 - En `modules/campaign_monitoring/themes/default/js/javascript.js`:
   - En `agentColor(status, canal)` y `agentUpdateColor(status, canal)`:
     - Mover el chequeo de "ocupado" (`status.includes('Ocupado')` o similar) al inicio de la estructura condicional.
-    - Si el estado contiene "Busy", "Ocupado", "Occupé", "Meşgul" o "Занят":
-      - Pintar la fila de amarillo.
-      - En `agentUpdateColor`, asignar la imagen del icono de ocupado (`agent-busy.png`).
-    - Si no, proceder con el chequeo de "En descanso" y asignar naranja y el icono de break.
 
 ### 4. Menú Contextual Concurrente (`javascript.js`)
 - En el manejador de clic sobre las filas de agentes:
-  - En lugar de usar `if/else` excluyentes, evaluar las banderas de estado de manera independiente:
-    - `hasPaused`: `statusLower` contiene break, descanso o pause.
-    - `hasLoggedOut`: `statusLower` contiene no logon, logged out o no logoneado.
-    - `hasBusy`: `statusLower` contiene busy, ocupado, oncall, on call u occupé.
-  - Mostrar u ocultar los botones `#btnUnbreakAgent`, `#btnForceLoginAgent` y `#btnSpyAgent` según corresponda a las banderas.
-  - Si al menos uno de los tres es verdadero, desplegar el menú contextual.
-
-## Restricciones y Trampas Conocidas
-- **Coexistencia de Estados:** Es posible que un agente esté en descanso y en llamada. Al dar prioridad al color amarillo, la fila se verá amarilla pero el texto del estado ("Ocupado (En descanso: LUNCH)") le indicará claramente al supervisor ambas realidades.
-- **Chequeo Concurrente del Menú Contextual:** Asegurar que los selectores de jQuery para mostrar y ocultar las opciones no colisionen y dejen visible el botón adecuado según el estado real.
+  - Evaluar de forma independiente si el agente tiene el estado de pausa, logout u ocupado.
+  - Mostrar u ocultar los botones correspondientes de manera concurrente.
