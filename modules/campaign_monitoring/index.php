@@ -451,7 +451,10 @@ function manejarMonitoreo_checkStatus($module_name, $smarty, $sDirLocalPlantilla
             && time() - $iTimestampInicio <  $iTimeoutPoll) {
 
             session_commit();
-            $listaEventos = $oPaloConsola->esperarEventoSesionActiva();
+            $iTiempoRestante = $iTimeoutPoll - (time() - $iTimestampInicio);
+            $waitTimeout = min($iTiempoRestante, 3);
+            if ($waitTimeout <= 0) $waitTimeout = 1;
+            $listaEventos = $oPaloConsola->esperarEventoSesionActiva($waitTimeout);
             if (is_null($listaEventos)) {
                 $respuesta['error'] = $oPaloConsola->errMsg;
                 jsonflush($bSSE, $respuesta);
@@ -740,6 +743,32 @@ function manejarMonitoreo_checkStatus($module_name, $smarty, $sDirLocalPlantilla
                         unset($estadoCliente['agents'][$sCanalAgente]);
                     }
                     break;
+                }
+            }
+
+            // Periodically check current server state (including Asterisk manual calls)
+            $estadoCampania = $oPaloConsola->leerEstadoCampania($estadoCliente['campaigntype'], $estadoCliente['campaignid']);
+            if (is_array($estadoCampania)) {
+                // Filter out offline agents with unregistered extensions
+                foreach ($estadoCampania['agents'] as $k_off => $agent_off) {
+                    if ($agent_off['status'] == 'offline' && !$oPaloConsola->extensionEstaRegistrada($agent_off['agentchannel'])) {
+                        unset($estadoCampania['agents'][$k_off]);
+                    }
+                }
+                foreach (array_keys($estadoCliente['agents']) as $k) {
+                    if (!isset($estadoCampania['agents'][$k])) {
+                        $respuesta['agents']['remove'][] = array('agent' => $estadoCliente['agents'][$k]['agentchannel']);
+                        unset($estadoCliente['agents'][$k]);
+                    } elseif ($estadoCliente['agents'][$k] != $estadoCampania['agents'][$k]) {
+                        $respuesta['agents']['update'][] = formatoAgente($estadoCampania['agents'][$k]);
+                        $estadoCliente['agents'][$k] = $estadoCampania['agents'][$k];
+                    }
+                }
+                foreach (array_keys($estadoCampania['agents']) as $k) {
+                    if (!isset($estadoCliente['agents'][$k])) {
+                        $respuesta['agents']['add'][] = formatoAgente($estadoCampania['agents'][$k]);
+                        $estadoCliente['agents'][$k] = $estadoCampania['agents'][$k];
+                    }
                 }
             }
         }

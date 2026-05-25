@@ -1113,12 +1113,12 @@ class PaloSantoConsola
         }
     }
 
-    function esperarEventoSesionActiva()
+    function esperarEventoSesionActiva($timeout = 30)
     {
         $this->errMsg = '';
         try {
             $oECCP = $this->_obtenerConexion('ECCP');
-            $oECCP->wait_response(30);
+            $oECCP->wait_response($timeout);
             $listaEventos = array();
             while ($e = $oECCP->getEvent()) {
                 foreach ($e->children() as $ee) $evt = $ee;
@@ -2148,7 +2148,7 @@ class PaloSantoConsola
         }
     }
 
-    private function _obtenerCanalesActivosAsterisk()
+    public function _obtenerCanalesActivosAsterisk()
     {
         $output = shell_exec("asterisk -rx 'core show channels concise'");
         $channels = array();
@@ -2181,7 +2181,7 @@ class PaloSantoConsola
         return $channels;
     }
 
-    private function _detectarLlamadaActivaAgente($agent, $activeChannels)
+    public function _detectarLlamadaActivaAgente($agent, $activeChannels)
     {
         $identifiers = array();
         if (!empty($agent['extension'])) {
