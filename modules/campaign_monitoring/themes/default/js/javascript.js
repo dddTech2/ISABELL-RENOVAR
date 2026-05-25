@@ -875,7 +875,6 @@ function lastCallIncoming(id_campaign, respuesta, agentes, queue) {
 }
 
 function lastCallOutgoing(id_campaign, respuesta, agentes, queue){
-	console.log(respuesta);
 	fetch('/modules/' + module_name + '/libs/api.php?id_campaignOutgoing=' + id_campaign + '&queue=' + queue)
         .then(response => response.json())
         .then(data => {
