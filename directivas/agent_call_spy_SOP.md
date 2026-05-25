@@ -34,14 +34,11 @@
     - Extraer el número telefónico externo descartando la extensión del propio agente y los números cortos/colas internos de la lista de candidatos (de `callerid`, `exten`, nombre de canal, y parámetros de marcado en `data`).
     - Trazar el canal de troncal (`SIP/Best` o similar) del mismo grafo de canales para evitar que se muestre el ID de bridge en la columna de troncal.
 
-### 2. Formateo de Estados Combinados en el Backend (`index.php`)
+### 2. Formateo de Estados en el Backend (`index.php`)
 - En `modules/campaign_monitoring/index.php`:
   - En la función `formatoAgente($agent)`:
     - En el switch para el caso `'oncall'`:
-      - Si existe `$agent['original_status']`:
-        - Si es `'paused'`: Formatear `$sEtiquetaStatus` como `_tr('oncall') . ' (' . _tr('paused') . ': ' . $agent['pauseinfo']['pausename'] . ')'` (ej. `Ocupado (En descanso: GESTION)`).
-        - Si es `'offline'`: Formatear `$sEtiquetaStatus` como `_tr('oncall') . ' (' . _tr('No logon') . ')'` (ej. `Ocupado (No logon)`).
-      - De lo contrario, mantener la traducción estándar de `'oncall'`.
+      - Mantener el estado simplificado a la traducción directa de `'oncall'` (ej. `Ocupado`) sin agregar paréntesis ni textos adicionales (como `(En descanso: ...)` o `(No logon)`), para evitar saturación de texto y problemas de superposición en las columnas de la tabla de monitoreo.
 
 ### 3. Prioridad de Colores e Iconos (`javascript.js`)
 - En `modules/campaign_monitoring/themes/default/js/javascript.js`:
