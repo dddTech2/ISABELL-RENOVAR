@@ -413,11 +413,11 @@ $(document).ready(function() {
 			
 			
 			// Lista de los agentes que atienden llamada
-			if (respuesta.agents != null && respuesta.agents.add != null)
+			if (respuesta.agents != null && respuesta.agents.add != null) {
 				// Logica para mantener las horas de las ultimas llamadas contestadas de los agentes
 				if (count === 0){
 					var agentesLastCall = this.agentes;
-					var queue = this.content.cola;
+					var queue = this.get('model') ? this.get('model').get('cola') : null;
 					if (paramsType === "outgoing") {
 						//console.log("queue_id", params.id_campaign);
 						lastCallOutgoing(idCampaign, respuesta.agents, agentesLastCall, queue);
@@ -428,25 +428,26 @@ $(document).ready(function() {
 					}
 					count++;
 				}
-			for (var i = 0; i < respuesta.agents.add.length; i++) {
-				  var agente = respuesta.agents.add[i];
-				  const agentUpdate = agentUpdateColor(agente.status, agente.agent);
-				  this.agentes.addObject(Ember.Object.create({
-				    canal:     agente.agent,
-				    nombre:    agente.name || agente.agent,
-				    numero:    agente.callnumber,
-				    troncal:   agente.trunk,
-				    estado:    agente.status,
-				    image: 	   Ember.String.htmlSafe(agentUpdate.statusImage),
-				    desde:     agente.desde,
-				    rtime:     new Date(),
-				    reciente:  true
-				  }));
-				  agentColor(agente.status, agente.agent);
+				for (var i = 0; i < respuesta.agents.add.length; i++) {
+					var agente = respuesta.agents.add[i];
+					const agentUpdate = agentUpdateColor(agente.status, agente.agent);
+					this.agentes.addObject(Ember.Object.create({
+						canal:     agente.agent,
+						nombre:    agente.name || agente.agent,
+						numero:    agente.callnumber,
+						troncal:   agente.trunk,
+						estado:    agente.status,
+						image: 	   Ember.String.htmlSafe(agentUpdate.statusImage),
+						desde:     agente.desde,
+						rtime:     new Date(),
+						reciente:  true
+					}));
+					agentColor(agente.status, agente.agent);
 				}
-			// Re-sort agents after adding: offline agents at bottom
-			if (respuesta.agents.add.length > 0) {
-				this.sortAgentsByStatus();
+				// Re-sort agents after adding: offline agents at bottom
+				if (respuesta.agents.add.length > 0) {
+					this.sortAgentsByStatus();
+				}
 			}
 
 			// Lista de agentes cuando actualizan sus estados

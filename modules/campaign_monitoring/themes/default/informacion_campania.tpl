@@ -189,7 +189,7 @@
                 {{#each agentes}}
                 <tr  {{bindAttr class="canal"}} {{bindAttr data-agent="canal" data-status="estado"}}>
                     <td width="20%" nowrap="nowrap">{{nombre}}</td>
-                    <td class="trAgent"nowrap="nowrap">{{image}}{{estado}}</td>
+                    <td width="20%" nowrap="nowrap"><div class="trAgent">{{image}}{{estado}}</div></td>
                     <td width="20%" nowrap="nowrap">{{numero}}</td>
                     <td width="20%" nowrap="nowrap">{{troncal}}</td>
                     <td width="20%" nowrap="nowrap">{{desde}}</td>

@@ -10,6 +10,7 @@ Permitir que la consola de monitoreo de campañas (`campaign_monitoring`) muestr
 - **Salidas:**
   - Modificación del estado del agente en el array `$reporte['agents']` dentro de `leerEstadoCampania` de `paloSantoConsola.class.php`.
   - Configuración de la estructura `callinfo` con el número telefónico, canal, y tiempo de inicio de la llamada para que el frontend de monitoreo de campaña lo muestre de forma nativa.
+  - Corrección de la plantilla del frontend para alinear las columnas del panel de agentes.
 
 ## Lógica y Pasos
 
@@ -37,10 +38,18 @@ Permitir que la consola de monitoreo de campañas (`campaign_monitoring`) muestr
 
 ### 3. Integración en `PaloSantoConsola`
 - Modificar la función `leerEstadoCampania` en `modules/agent_console/libs/paloSantoConsola.class.php`.
-- Al final de la función, antes de retornar el `$reporte`, recorrer `$reporte['agents']` y aplicar la lógica de detección si el agente está en estado `'online'` (Libre) o `'paused'`.
-- Añadir las funciones privadas auxiliares `_obtenerCanalesActivosAsterisk` y `_detectarLlamadaActivaAgente` dentro de la clase `PaloSantoConsola`.
+- Al final de la función, antes de retornar el `$reporte`, recorrer `$reporte['agents']` y aplicar la lógica de detección si el agente está en estado `'online'` o `'paused'`.
+- Añadir las funciones auxiliares `_obtenerCanalesActivosAsterisk` y `_detectarLlamadaActivaAgente` con visibilidad `public` en `PaloSantoConsola`.
+
+### 4. Ciclo de Espera Corta (Polling Activo) en `checkStatus`
+- Modificar `esperarEventoSesionActiva($timeout = 30)` en `PaloSantoConsola` para recibir el tiempo de espera máximo.
+- En `index.php` -> `manejarMonitoreo_checkStatus()`, limitar la espera de eventos en el bucle `while` a un máximo de 3 segundos (`min($restante, 3)`).
+- En cada iteración del bucle, re-evaluar el estado con `leerEstadoCampania()` y compararlo con el estado previo del cliente. Si hay diferencias en el estado de algún agente (debido al inicio o fin de una llamada manual), salir del bucle inmediatamente para retornar la actualización en tiempo real al navegador.
+
+### 5. Corrección de la Maquetación HTML de la Tabla de Agentes
+- En `modules/campaign_monitoring/themes/default/informacion_campania.tpl`, no aplicar la clase `trAgent` (la cual usa `display: flex;`) directamente a la etiqueta `<td>`.
+- Cambiar la etiqueta a `<td width="20%" nowrap="nowrap">` y envolver su contenido en un `<div class="trAgent">...</div>` para corregir la alineación de todas las columnas.
 
 ## Restricciones y Trampas Conocidas
-- **Eficiencia:** La ejecución de `shell_exec` para obtener los canales activos debe realizarse una única vez por petición de actualización (`checkStatus` o `getCampaignDetail`) y no repetitivamente en cada iteración de agente, para evitar sobrecarga del procesador.
-- **Formato del Canal:** Dependiendo de si la tecnología es SIP, PJSIP o IAX2, la nomenclatura del canal varía. La expresión regular de búsqueda debe ser flexible para contemplar cualquier prefijo tecnológico.
-- **Traducción de Estado:** El estado `'oncall'` es traducido nativamente en español por los archivos de idioma a `'Ocupado'`. El cliente Ember.js mapea `'Ocupado'` al color amarillo y al ícono de teléfono ocupado, por lo que no requiere modificaciones en el frontend.
+- **Desfase de Columnas por Flexbox:** En tablas HTML estándar, establecer `display: flex` en un elemento `<td>` destruye el comportamiento del motor de renderizado del navegador (`display: table-cell`). Esto desalinea las celdas y desborda los encabezados. La solución es mantener el `<td>` con su visualización por defecto y usar un `<div>` flexbox interno.
+- **Espera Larga Bloqueante:** Por defecto, la consola de monitoreo utiliza Comet con esperas de hasta 30 segundos en la cola de sockets de ECCP. Dado que las llamadas manuales ocurren fuera de los eventos de la campaña y no despiertan a ECCP, el servidor puede demorar hasta 30 segundos (o más si no hay pings) en notificar el cambio de estado. Utilizar esperas cortas de 3 segundos en el backend soluciona la reactividad sin generar sobrecarga.
