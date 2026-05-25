@@ -198,21 +198,21 @@ function getMetricsJSON($pDB, $module_name) {
 function calculateMetrics($recordset) {
     $agents = array();
     $totals = array(
-        'LOGIN' => 0,
-        'LOGOUT' => 0,
-        'BREAK' => 0,
-        'INCOMING_CALL' => 0,
-        'OUTGOING_CALL' => 0,
-        'MANUAL_INCOMING' => 0,
-        'MANUAL_OUTGOING' => 0,
-        'HOLD' => 0
+        'LOGIN' => 0, 'LOGOUT' => 0, 'BREAK' => 0,
+        'INCOMING_CALL' => 0, 'OUTGOING_CALL' => 0,
+        'MANUAL_INCOMING' => 0, 'MANUAL_OUTGOING' => 0, 'HOLD' => 0
     );
     $counts = array();
+    
+    // New KPI Aggregations
+    $call_statuses = array('Success' => 0, 'ShortCall' => 0, 'Busy' => 0, 'Failed' => 0, 'Congestion' => 0, 'Unknown' => 0);
+    $break_types = array();
 
     foreach ($recordset as $event) {
         $agentName = $event['name'];
         $type = $event['event_type'];
         $duration = (int)$event['duration'];
+        $detail = $event['event_detail'];
 
         if (!isset($agents[$agentName])) {
             $agents[$agentName] = array(
@@ -220,14 +220,15 @@ function calculateMetrics($recordset) {
                 'number' => $event['number'],
                 'events' => 0,
                 'total_duration' => 0,
-                'types' => array()
+                'types' => array(),
+                'call_statuses' => array('Success' => 0, 'ShortCall' => 0, 'Busy' => 0, 'Failed' => 0, 'Congestion' => 0, 'Unknown' => 0),
+                'break_types' => array()
             );
         }
 
         if (!isset($agents[$agentName]['types'][$type])) {
             $agents[$agentName]['types'][$type] = 0;
         }
-        
         if (!isset($counts[$type])) {
             $counts[$type] = 0;
         }
@@ -237,16 +238,54 @@ function calculateMetrics($recordset) {
         if ($duration > 0) {
             $agents[$agentName]['total_duration'] += $duration;
             $agents[$agentName]['types'][$type] += $duration;
-            
-            if (isset($totals[$type])) {
-                $totals[$type] += $duration;
-            } else {
-                $totals[$type] = $duration;
+            if (isset($totals[$type])) $totals[$type] += $duration;
+            else $totals[$type] = $duration;
+        }
+
+        // Parse KPIs
+        if ($type === 'OUTGOING_CALL' || $type === 'MANUAL_OUTGOING') {
+            // Extract status, e.g. "99999 (Success)"
+            if (preg_match('/\((.*?)\)$/', $detail, $m)) {
+                $status = ucfirst(strtolower(trim($m[1]))); // e.g., "Success", "Busy"
+                
+                // Convert common statuses to our standard bins
+                if (in_array($status, ['Busy', 'Congestion', 'Failed', 'Success', 'No answer'])) {
+                    if ($status == 'No answer') $status = 'Failed';
+                } else {
+                    $status = 'Unknown';
+                }
+
+                // Identify Short Calls
+                if ($status == 'Success' && $duration > 0 && $duration < 10) {
+                    $status = 'ShortCall';
+                }
+
+                if (!isset($call_statuses[$status])) $call_statuses[$status] = 0;
+                $call_statuses[$status]++;
+                
+                if (!isset($agents[$agentName]['call_statuses'][$status])) {
+                    $agents[$agentName]['call_statuses'][$status] = 0;
+                }
+                $agents[$agentName]['call_statuses'][$status]++;
             }
+        } elseif ($type === 'BREAK') {
+            $breakName = trim($detail);
+            if (empty($breakName)) $breakName = "Unspecified";
+            
+            if (!isset($break_types[$breakName])) {
+                $break_types[$breakName] = array('count' => 0, 'duration' => 0);
+            }
+            $break_types[$breakName]['count']++;
+            $break_types[$breakName]['duration'] += $duration;
+            
+            if (!isset($agents[$agentName]['break_types'][$breakName])) {
+                $agents[$agentName]['break_types'][$breakName] = array('count' => 0, 'duration' => 0);
+            }
+            $agents[$agentName]['break_types'][$breakName]['count']++;
+            $agents[$agentName]['break_types'][$breakName]['duration'] += $duration;
         }
     }
 
-    // Sort agents to find best/worst based on talk time (call events)
     $agentStats = array();
     foreach ($agents as $agent) {
         $talkTime = (isset($agent['types']['INCOMING_CALL']) ? $agent['types']['INCOMING_CALL'] : 0) + 
@@ -256,12 +295,29 @@ function calculateMetrics($recordset) {
                     
         $breakTime = isset($agent['types']['BREAK']) ? $agent['types']['BREAK'] : 0;
         
+        // Compute Individual KPIs
+        $outboundAttempts = (isset($agent['call_statuses']['Success']) ? $agent['call_statuses']['Success'] : 0) +
+                            (isset($agent['call_statuses']['ShortCall']) ? $agent['call_statuses']['ShortCall'] : 0) +
+                            (isset($agent['call_statuses']['Busy']) ? $agent['call_statuses']['Busy'] : 0) +
+                            (isset($agent['call_statuses']['Failed']) ? $agent['call_statuses']['Failed'] : 0) +
+                            (isset($agent['call_statuses']['Congestion']) ? $agent['call_statuses']['Congestion'] : 0);
+                            
+        $successCalls = isset($agent['call_statuses']['Success']) ? $agent['call_statuses']['Success'] : 0;
+        
+        $contactability = ($outboundAttempts > 0) ? round(($successCalls / $outboundAttempts) * 100, 2) : 0;
+        $tmo = ($successCalls > 0) ? round($talkTime / $successCalls, 1) : 0;
+        
         $agentStats[] = array(
             'name' => $agent['name'],
             'number' => $agent['number'],
             'talk_time' => $talkTime,
             'break_time' => $breakTime,
-            'total_time' => $agent['total_duration']
+            'total_time' => $agent['total_duration'],
+            'outbound_attempts' => $outboundAttempts,
+            'contactability' => $contactability,
+            'tmo' => $tmo,
+            'call_statuses' => $agent['call_statuses'],
+            'break_types' => $agent['break_types']
         );
     }
 
@@ -279,6 +335,8 @@ function calculateMetrics($recordset) {
         "agentStats" => $agentStats,
         "bestAgent" => $bestAgent,
         "worstAgent" => $worstAgent,
+        "call_statuses" => $call_statuses,
+        "break_types" => $break_types,
         "raw_events" => count($recordset),
         "recent_events" => array_slice($recordset, -100) // Last 100 events
     );

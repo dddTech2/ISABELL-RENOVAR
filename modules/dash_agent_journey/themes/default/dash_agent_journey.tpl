@@ -40,68 +40,67 @@
 
 .reload-btn:hover {
     background-color: #0056b3;
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
 }
 
 /* Summary Cards */
 .summary-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
     margin-bottom: 30px;
 }
 
 .card {
     background: #ffffff;
-    padding: 24px;
+    padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.03);
     text-align: center;
     border-top: 4px solid #007bff;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.06);
 }
 
 .card h3 {
-    margin: 0 0 12px 0;
+    margin: 0 0 10px 0;
     font-size: 13px;
     color: #6c757d;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
     font-weight: 600;
 }
 
 .card .value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: #212529;
+}
+
+.card .subtext {
+    font-size: 12px;
+    color: #adb5bd;
+    margin-top: 5px;
 }
 
 .card.cyan { border-top-color: #17a2b8; }
 .card.green { border-top-color: #28a745; }
 .card.orange { border-top-color: #fd7e14; }
 .card.purple { border-top-color: #6f42c1; }
+.card.red { border-top-color: #dc3545; }
 
 /* Main Content Area */
 .dash-main {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
-}
-
-.chart-container, .agent-stats, .event-log-container {
-    background: #ffffff;
-    padding: 24px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
     margin-bottom: 20px;
 }
 
-.chart-container h3, .agent-stats h3, .event-log-container h3 {
+.chart-container {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.chart-container h3 {
     margin-top: 0;
     color: #1a202c;
     border-bottom: 1px solid #e2e8f0;
@@ -110,30 +109,7 @@
     font-weight: 600;
 }
 
-.agent-card {
-    background: #f8f9fa;
-    padding: 16px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    border-left: 4px solid #adb5bd;
-}
-
-.agent-card.best { border-left-color: #28a745; }
-.agent-card.worst { border-left-color: #dc3545; }
-
-.agent-card h4 {
-    margin: 0 0 6px 0;
-    font-size: 14px;
-    color: #495057;
-}
-
-.agent-card p {
-    margin: 0;
-    font-size: 13px;
-    color: #6c757d;
-}
-
-/* Table styling for event log */
+/* Table styling */
 .event-table {
     width: 100%;
     border-collapse: collapse;
@@ -153,11 +129,6 @@
 .event-table td {
     padding: 12px;
     border-bottom: 1px solid #e9ecef;
-    color: #212529;
-}
-
-.event-table tr:hover {
-    background-color: #f1f3f5;
 }
 
 .loading-overlay {
@@ -174,6 +145,11 @@
     border-radius: 12px;
     display: none;
 }
+
+/* View Toggles */
+#view-coordinator, #view-agent {
+    display: none;
+}
 {/literal}
 </style>
 
@@ -181,71 +157,111 @@
     <div class="loading-overlay" id="dash-loading">Cargando Métricas...</div>
 
     <div class="dash-header">
-        <h2>Dashboard de Journey</h2>
-        <button class="reload-btn" onclick="fetchMetrics()">Actualizar</button>
+        <h2 id="dash-title">Dashboard Operativo</h2>
+        <button class="reload-btn" onclick="fetchMetrics()">Actualizar Datos</button>
     </div>
 
-    <div class="summary-cards">
-        <div class="card cyan">
-            <h3>Salientes por Campaña</h3>
-            <div class="value" id="val-outbound-campaign">0</div>
+    <!-- VISTA DEL COORDINADOR (GLOBAL) -->
+    <div id="view-coordinator">
+        <div class="summary-cards">
+            <div class="card green">
+                <h3>Contactabilidad Efectiva</h3>
+                <div class="value" id="glb-contactability">0%</div>
+                <div class="subtext" id="glb-contact-sub">0 intentos</div>
+            </div>
+            <div class="card cyan">
+                <h3>TMO Promedio</h3>
+                <div class="value" id="glb-tmo">0 min</div>
+                <div class="subtext">Llamadas Efectivas</div>
+            </div>
+            <div class="card red">
+                <h3>Tasa de Congestión/Fallo</h3>
+                <div class="value" id="glb-congestion">0%</div>
+                <div class="subtext">Troncal o Base de Datos</div>
+            </div>
+            <div class="card purple">
+                <h3>Llamadas Cortas (< 10s)</h3>
+                <div class="value" id="glb-shortcalls">0%</div>
+                <div class="subtext" id="glb-shortcalls-sub">0 llamadas</div>
+            </div>
         </div>
-        <div class="card purple">
-            <h3>Salientes Manuales</h3>
-            <div class="value" id="val-outbound-manual">0</div>
-        </div>
-        <div class="card green">
-            <h3>Total de Llamadas</h3>
-            <div class="value" id="val-total-calls">0</div>
-        </div>
-        <div class="card orange">
-            <h3>Total Pausas (Min)</h3>
-            <div class="value" id="val-break-time">0</div>
-        </div>
-    </div>
 
-    <div class="dash-main">
-        <div class="chart-container">
-            <h3>Distribución de Actividad</h3>
+        <div class="dash-main">
+            <div class="chart-container">
+                <h3>Estados de Llamada (Salientes)</h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="callStatusChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Distribución de Pausas</h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="breakTypesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container" style="margin-bottom: 20px;">
+            <h3>Comparación TMO vs Contactabilidad por Agente</h3>
             <div style="position: relative; height: 350px; width: 100%;">
-                <canvas id="activityChart"></canvas>
-            </div>
-        </div>
-
-        <div class="agent-stats">
-            <h3>Rendimiento (Llamadas)</h3>
-            <div class="agent-card best">
-                <h4>Mayor Tiempo Hablado</h4>
-                <p id="best-agent-name">N/A</p>
-                <p><strong id="best-agent-time">0 min</strong></p>
-            </div>
-            
-            <div class="agent-card worst">
-                <h4>Menor Tiempo Hablado</h4>
-                <p id="worst-agent-name">N/A</p>
-                <p><strong id="worst-agent-time">0 min</strong></p>
+                <canvas id="agentCompareChart"></canvas>
             </div>
         </div>
     </div>
-    
+
+    <!-- VISTA DEL ASESOR (INDIVIDUAL) -->
+    <div id="view-agent">
+        <div class="summary-cards">
+            <div class="card cyan">
+                <h3>Asesor</h3>
+                <div class="value" id="agt-name" style="font-size:20px;">Nombre</div>
+                <div class="subtext" id="agt-ext">Ext: 000</div>
+            </div>
+            <div class="card green">
+                <h3>Efectividad Individual</h3>
+                <div class="value" id="agt-contactability">0%</div>
+                <div class="subtext" id="agt-contact-sub">0 / 0</div>
+            </div>
+            <div class="card purple">
+                <h3>Desviación TMO</h3>
+                <div class="value" id="agt-tmo">0 min</div>
+                <div class="subtext" id="agt-tmo-sub">vs Campaña</div>
+            </div>
+            <div class="card orange">
+                <h3>Tiempo de Conexión</h3>
+                <div class="value" id="agt-connection">0 min</div>
+                <div class="subtext">Hablado + Pausa</div>
+            </div>
+        </div>
+        
+        <div class="dash-main">
+            <div class="chart-container">
+                <h3>Gestión del Tiempo (Asesor)</h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="agtTimeChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Resultados de Marcación</h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="agtStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BITÁCORA (COMÚN) -->
     <div class="chart-container">
-        <h3>Comparación de Agentes (Minutos)</h3>
-        <div style="position: relative; height: 350px; width: 100%;">
-            <canvas id="agentCompareChart"></canvas>
-        </div>
-    </div>
-
-    <div class="event-log-container">
-        <h3>Bitácora General de Eventos Recientes</h3>
+        <h3>Línea de Tiempo / Bitácora de Eventos</h3>
         <div style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
             <table class="event-table" id="eventLogTable">
                 <thead>
                     <tr>
-                        <th>Agente</th>
                         <th>Fecha/Hora</th>
+                        <th>Agente</th>
                         <th>Evento</th>
                         <th>Detalle</th>
-                        <th>Duración</th>
+                        <th>Duración (min)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -259,27 +275,23 @@
 <script>
 var moduleName = '{$MODULE_NAME}';
 {literal}
-var activityChartInstance = null;
-var agentCompareChartInstance = null;
+var charts = {};
+
+function destroyCharts() {
+    for (let key in charts) {
+        if (charts[key]) charts[key].destroy();
+    }
+}
 
 function formatMinutes(seconds) {
     if (!seconds || seconds <= 0) return '0.0';
     return (seconds / 60).toFixed(1);
 }
 
-function formatTimeHHMMSS(seconds) {
-    if (!seconds || seconds <= 0) return '00:00:00';
-    var h = Math.floor(seconds / 3600);
-    var m = Math.floor((seconds % 3600) / 60);
-    var s = Math.floor(seconds % 60);
-    return (h < 10 ? '0' + h : h) + ':' + (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
-}
-
 function fetchMetrics() {
     var loading = document.getElementById('dash-loading');
     loading.style.display = 'flex';
 
-    // Get filter values
     var date_start = document.getElementsByName('date_start')[0]?.value || '';
     var date_end = document.getElementsByName('date_end')[0]?.value || '';
     var agent = document.getElementsByName('agent')[0]?.value || '';
@@ -303,7 +315,7 @@ function fetchMetrics() {
                 alert("Error fetching metrics: " + data.error);
                 return;
             }
-            renderDashboard(data);
+            renderDashboard(data, agent !== '');
         })
         .catch(err => {
             loading.style.display = 'none';
@@ -314,133 +326,161 @@ function fetchMetrics() {
 
 function translateEventType(type) {
     const map = {
-        'LOGIN': 'Inicio de Sesión',
-        'LOGOUT': 'Cierre de Sesión',
-        'BREAK': 'Pausa',
-        'INCOMING_CALL': 'Llamada Entrante',
-        'OUTGOING_CALL': 'Llamada Saliente',
-        'MANUAL_INCOMING': 'Llamada Entrante Manual',
-        'MANUAL_OUTGOING': 'Llamada Saliente Manual',
-        'HOLD': 'Hold'
+        'LOGIN': 'Login', 'LOGOUT': 'Logout', 'BREAK': 'Pausa',
+        'INCOMING_CALL': 'Entrante', 'OUTGOING_CALL': 'Saliente',
+        'MANUAL_INCOMING': 'Entrante Manual', 'MANUAL_OUTGOING': 'Saliente Manual', 'HOLD': 'Hold'
     };
     return map[type] || type;
 }
 
-function renderDashboard(data) {
-    var totals = data.totals || {};
-    var counts = data.counts || {};
+function renderDashboard(data, isAgentFiltered) {
+    destroyCharts();
     
-    // Calculate calls
-    var outboundCampaign = counts['OUTGOING_CALL'] || 0;
-    var outboundManual = counts['MANUAL_OUTGOING'] || 0;
-    var totalCalls = (counts['INCOMING_CALL'] || 0) + (counts['OUTGOING_CALL'] || 0) + 
-                     (counts['MANUAL_INCOMING'] || 0) + (counts['MANUAL_OUTGOING'] || 0);
+    // Si la DB reporta 1 agente (y se filtró), mostramos Nivel 2
+    var isAgentView = isAgentFiltered && data.agentStats && data.agentStats.length === 1;
     
-    var breakTime = totals['BREAK'] || 0;
+    document.getElementById('view-coordinator').style.display = isAgentView ? 'none' : 'block';
+    document.getElementById('view-agent').style.display = isAgentView ? 'block' : 'none';
+    document.getElementById('dash-title').innerText = isAgentView ? 'Dashboard del Asesor' : 'Dashboard General (Coordinación)';
+
+    var st = data.call_statuses || {};
+    var totalAttempts = (st['Success']||0) + (st['ShortCall']||0) + (st['Busy']||0) + (st['Failed']||0) + (st['Congestion']||0);
+    var successes = (st['Success']||0) + (st['ShortCall']||0);
+    var congestions = (st['Busy']||0) + (st['Failed']||0) + (st['Congestion']||0);
+    var totalTalkTime = data.totals['OUTGOING_CALL'] || 0; // approximate global
     
-    // Update summary cards
-    document.getElementById('val-outbound-campaign').innerText = outboundCampaign;
-    document.getElementById('val-outbound-manual').innerText = outboundManual;
-    document.getElementById('val-total-calls').innerText = totalCalls;
-    document.getElementById('val-break-time').innerText = formatMinutes(breakTime);
-    
-    // Best / Worst Agents
-    if (data.bestAgent) {
-        document.getElementById('best-agent-name').innerText = data.bestAgent.name + ' (' + data.bestAgent.number + ')';
-        document.getElementById('best-agent-time').innerText = formatMinutes(data.bestAgent.talk_time) + ' min';
+    var globalContactability = totalAttempts > 0 ? ((successes / totalAttempts) * 100).toFixed(1) : 0;
+    var globalCongestion = totalAttempts > 0 ? ((congestions / totalAttempts) * 100).toFixed(1) : 0;
+    var globalTMO = successes > 0 ? formatMinutes(totalTalkTime / successes) : 0;
+    var globalShort = successes > 0 ? (((st['ShortCall']||0) / successes) * 100).toFixed(1) : 0;
+
+    if (isAgentView) {
+        var a = data.agentStats[0];
+        document.getElementById('agt-name').innerText = a.name;
+        document.getElementById('agt-ext').innerText = 'Ext: ' + a.number;
+        document.getElementById('agt-contactability').innerText = a.contactability + '%';
+        document.getElementById('agt-contact-sub').innerText = (a.call_statuses['Success']||0) + ' Éxitos / ' + a.outbound_attempts + ' Intentos';
+        document.getElementById('agt-tmo').innerText = a.tmo + ' min';
+        
+        var diff = a.tmo - parseFloat(globalTMO);
+        document.getElementById('agt-tmo-sub').innerText = (diff > 0 ? '+'+diff.toFixed(1) : diff.toFixed(1)) + ' min vs Campaña';
+        document.getElementById('agt-connection').innerText = formatMinutes(a.total_time) + ' min';
+
+        var ctxAgtTime = document.getElementById('agtTimeChart').getContext('2d');
+        charts['agtTime'] = new Chart(ctxAgtTime, {
+            type: 'pie',
+            data: {
+                labels: ['Tiempo Hablado', 'Tiempo en Pausa'],
+                datasets: [{
+                    data: [parseFloat(formatMinutes(a.talk_time)), parseFloat(formatMinutes(a.break_time))],
+                    backgroundColor: ['#28a745', '#fd7e14']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        var ctxAgtSt = document.getElementById('agtStatusChart').getContext('2d');
+        charts['agtStatus'] = new Chart(ctxAgtSt, {
+            type: 'doughnut',
+            data: {
+                labels: ['Success', 'ShortCall', 'Busy', 'Failed', 'Congestion'],
+                datasets: [{
+                    data: [
+                        a.call_statuses['Success']||0, a.call_statuses['ShortCall']||0,
+                        a.call_statuses['Busy']||0, a.call_statuses['Failed']||0,
+                        a.call_statuses['Congestion']||0
+                    ],
+                    backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
     } else {
-        document.getElementById('best-agent-name').innerText = 'N/A';
-        document.getElementById('best-agent-time').innerText = '0 min';
-    }
+        // Vista Global
+        document.getElementById('glb-contactability').innerText = globalContactability + '%';
+        document.getElementById('glb-contact-sub').innerText = totalAttempts + ' intentos totales';
+        document.getElementById('glb-tmo').innerText = globalTMO + ' min';
+        document.getElementById('glb-congestion').innerText = globalCongestion + '%';
+        document.getElementById('glb-shortcalls').innerText = globalShort + '%';
+        document.getElementById('glb-shortcalls-sub').innerText = (st['ShortCall']||0) + ' llamadas';
 
-    if (data.worstAgent) {
-        document.getElementById('worst-agent-name').innerText = data.worstAgent.name + ' (' + data.worstAgent.number + ')';
-        document.getElementById('worst-agent-time').innerText = formatMinutes(data.worstAgent.talk_time) + ' min';
-    } else {
-        document.getElementById('worst-agent-name').innerText = 'N/A';
-        document.getElementById('worst-agent-time').innerText = '0 min';
-    }
+        var ctxSt = document.getElementById('callStatusChart').getContext('2d');
+        charts['status'] = new Chart(ctxSt, {
+            type: 'doughnut',
+            data: {
+                labels: ['Success', 'ShortCall', 'Busy', 'Failed', 'Congestion'],
+                datasets: [{
+                    data: [st['Success']||0, st['ShortCall']||0, st['Busy']||0, st['Failed']||0, st['Congestion']||0],
+                    backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+        });
 
-    // Render Activity Chart (Pie)
-    var ctxAct = document.getElementById('activityChart').getContext('2d');
-    if (activityChartInstance) activityChartInstance.destroy();
-    activityChartInstance = new Chart(ctxAct, {
-        type: 'doughnut',
-        data: {
-            labels: ['Entrantes', 'Salientes Campaña', 'Salientes Manual', 'Pausas/Otros'],
-            datasets: [{
-                data: [
-                    (totals['INCOMING_CALL'] || 0) + (totals['MANUAL_INCOMING'] || 0),
-                    totals['OUTGOING_CALL'] || 0,
-                    totals['MANUAL_OUTGOING'] || 0,
-                    (totals['BREAK'] || 0) + (totals['HOLD'] || 0)
-                ],
-                backgroundColor: ['#28a745', '#17a2b8', '#6f42c1', '#fd7e14']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    });
+        var bt = data.break_types || {};
+        var bNames = Object.keys(bt);
+        var bValues = bNames.map(k => parseFloat(formatMinutes(bt[k].duration)));
+        
+        var ctxBrk = document.getElementById('breakTypesChart').getContext('2d');
+        charts['break'] = new Chart(ctxBrk, {
+            type: 'bar',
+            data: {
+                labels: bNames.length ? bNames : ['Sin Datos'],
+                datasets: [{
+                    label: 'Tiempo (Min)',
+                    data: bValues.length ? bValues : [0],
+                    backgroundColor: '#6f42c1'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
 
-    // Render Agent Compare Chart (Bar) - Converted to Minutes
-    var ctxComp = document.getElementById('agentCompareChart').getContext('2d');
-    if (agentCompareChartInstance) agentCompareChartInstance.destroy();
-    
-    var topAgents = data.agentStats ? data.agentStats.slice(0, 15) : [];
-    
-    agentCompareChartInstance = new Chart(ctxComp, {
-        type: 'bar',
-        data: {
-            labels: topAgents.map(a => a.name),
-            datasets: [
-                {
-                    label: 'Tiempo Hablado (Min)',
-                    data: topAgents.map(a => parseFloat(formatMinutes(a.talk_time))),
-                    backgroundColor: '#007bff'
-                },
-                {
-                    label: 'Tiempo Pausa (Min)',
-                    data: topAgents.map(a => parseFloat(formatMinutes(a.break_time))),
-                    backgroundColor: '#fd7e14'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { stacked: false },
-                y: { 
-                    stacked: false, 
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Minutos'
+        var topAgents = data.agentStats ? data.agentStats.slice(0, 20) : [];
+        var ctxComp = document.getElementById('agentCompareChart').getContext('2d');
+        charts['comp'] = new Chart(ctxComp, {
+            type: 'bar',
+            data: {
+                labels: topAgents.map(a => a.name),
+                datasets: [
+                    {
+                        label: 'TMO (Min)',
+                        data: topAgents.map(a => a.tmo),
+                        backgroundColor: '#007bff'
+                    },
+                    {
+                        label: 'Contactabilidad (%)',
+                        type: 'line',
+                        data: topAgents.map(a => a.contactability),
+                        borderColor: '#28a745',
+                        borderWidth: 2,
+                        yAxisID: 'y1'
                     }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { title: { display: true, text: 'Minutos' } },
+                    y1: { position: 'right', min: 0, max: 100, title: { display: true, text: 'Porcentaje' } }
                 }
             }
-        }
-    });
+        });
+    }
 
     // Render Event Log Table
     var tbody = document.querySelector('#eventLogTable tbody');
-    tbody.innerHTML = ''; // clear existing
+    tbody.innerHTML = ''; 
     if (data.recent_events && data.recent_events.length > 0) {
-        // Reverse array to show newest first, assuming recordset comes in chronological order
         var events = data.recent_events.slice().reverse();
         events.forEach(function(ev) {
             var tr = document.createElement('tr');
             
-            var tdAgent = document.createElement('td');
-            tdAgent.innerText = ev.name + " (" + ev.number + ")";
-            
             var tdTime = document.createElement('td');
             tdTime.innerText = ev.event_time;
+            
+            var tdAgent = document.createElement('td');
+            tdAgent.innerText = ev.name + " (" + ev.number + ")";
             
             var tdEvent = document.createElement('td');
             tdEvent.innerText = translateEventType(ev.event_type);
@@ -449,10 +489,10 @@ function renderDashboard(data) {
             tdDetail.innerText = ev.event_detail || '';
             
             var tdDur = document.createElement('td');
-            tdDur.innerText = formatTimeHHMMSS(ev.duration);
+            tdDur.innerText = formatMinutes(ev.duration);
             
-            tr.appendChild(tdAgent);
             tr.appendChild(tdTime);
+            tr.appendChild(tdAgent);
             tr.appendChild(tdEvent);
             tr.appendChild(tdDetail);
             tr.appendChild(tdDur);
@@ -464,13 +504,12 @@ function renderDashboard(data) {
         var td = document.createElement('td');
         td.colSpan = 5;
         td.style.textAlign = 'center';
-        td.innerText = 'No hay eventos recientes en este filtro.';
+        td.innerText = 'No hay eventos en este filtro.';
         tr.appendChild(td);
         tbody.appendChild(tr);
     }
 }
 
-// Initial fetch
 document.addEventListener("DOMContentLoaded", function() {
     fetchMetrics();
 });
