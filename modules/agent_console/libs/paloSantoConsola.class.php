@@ -1491,9 +1491,10 @@ class PaloSantoConsola
                     if ($agent['status'] == 'oncall') {
                         continue;
                     }
-                    if ($agent['status'] == 'online' || $agent['status'] == 'paused') {
+                    if ($agent['status'] == 'online' || $agent['status'] == 'paused' || $agent['status'] == 'offline') {
                         $callInfo = $this->_detectarLlamadaActivaAgente($agent, $activeChannels);
                         if ($callInfo !== FALSE) {
+                            $agent['original_status'] = $agent['status'];
                             $agent['status'] = 'oncall';
                             $agent['callinfo'] = $callInfo;
                         }

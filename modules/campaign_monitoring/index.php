@@ -888,6 +888,17 @@ function formatoAgente($agent)
         break;
     case 'oncall':
         $sDesde = $agent['callinfo']['linkstart'];
+        if (isset($agent['original_status'])) {
+            if ($agent['original_status'] == 'paused') {
+                $sEtiquetaPause = _tr('paused');
+                if (!is_null($agent['pauseinfo'])) {
+                    $sEtiquetaPause .= ': '.$agent['pauseinfo']['pausename'];
+                }
+                $sEtiquetaStatus = _tr('oncall') . ' (' . $sEtiquetaPause . ')';
+            } elseif ($agent['original_status'] == 'offline') {
+                $sEtiquetaStatus = _tr('oncall') . ' (' . _tr('No logon') . ')';
+            }
+        }
         break;
     }
     if (strpos($sDesde, $sFechaHoy) === 0)

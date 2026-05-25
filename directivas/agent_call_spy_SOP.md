@@ -1,9 +1,11 @@
-# SOP - Escucha de Llamadas en Tiempo Real (Call Spy / ChanSpy)
+# SOP - Escucha de Llamadas en Tiempo Real (Call Spy / ChanSpy) y Detección de Llamadas Activas
 
 ## Objetivo
 1. Permitir a los coordinadores y supervisores escuchar en tiempo real las llamadas activas de los agentes que se encuentren en estado ocupado ("Busy", "Ocupado", "On Call" o similar).
-2. Proporcionar una opción rápida `👂 Escuchar Llamada` en el menú contextual de los agentes para iniciar el monitoreo silencioso de la llamada.
-3. Extraer la extensión del supervisor automáticamente desde su sesión de usuario activa en Issabel usando las clases de ACL, evitando que tenga que introducirla manualmente.
+2. Extraer la extensión del supervisor automáticamente desde su sesión de usuario activa en Issabel usando las clases de ACL, evitando que tenga que introducirla manualmente.
+3. Detectar llamadas activas (manuales o entrantes directas) para todos los agentes, incluso si se encuentran en descanso (`paused` / En descanso) u offline (`offline` / No logon).
+4. Conservar y mostrar el estado de pausa o desconexión original del agente mientras está en llamada (ej. `"Ocupado (En descanso: LUNCH)"`).
+5. Asegurar que el color amarillo (en llamada / ocupado) tenga prioridad visual en la tabla de monitoreo sobre el naranja (en descanso) y el rojo (desconectado), y que el menú contextual ofrezca todas las opciones aplicables al mismo tiempo.
 
 ## Entradas y Salidas
 - **Entradas:**
@@ -15,40 +17,40 @@
 
 ## Lógica y Pasos
 
-### 1. Interfaz Gráfica y Menú Contextual (Template y JavaScript)
-- **Modificación en template (`informacion_campania.tpl`):**
-  - Agregar `<a href="#" id="btnSpyAgent">👂 Escuchar Llamada</a>` dentro del menú contextual `#agentContextMenu`.
-- **Modificación en estilos (`styles.css`):**
-  - Añadir cursor pointer y efectos de hover (`filter: brightness(1.1)`) para las filas de agentes cuyo estado contenga "busy", "ocupado", "oncall", "on call" u "occupé".
-- **Modificación en controlador JS (`javascript.js`):**
-  - En la delegación de clic sobre las filas de agentes:
-    - Evaluar si el estado del agente contiene `"busy"`, `"ocupado"`, `"oncall"` o `"occupé"`.
-    - Si es así, mostrar la opción `#btnSpyAgent` y ocultar las demás opciones del menú contextual. Mostrar el menú contextual en la posición del puntero.
-  - En el manejador de clic sobre `#btnSpyAgent`:
-    - Cambiar el texto del botón a "Conectando...".
-    - Realizar un `$.post` con la acción `spyAgent` enviando únicamente el parámetro `agentchannel`.
-    - Al recibir la respuesta: Ocultar el menú contextual, restaurar el texto a "👂 Escuchar Llamada" y mostrar una alerta (`alert()`) confirmando el éxito o reportando el error detallado.
+### 1. Detección de Llamadas en el Backend (`paloSantoConsola.class.php`)
+- En `modules/agent_console/libs/paloSantoConsola.class.php`:
+  - En la función `leerEstadoCampania`:
+    - Cambiar la condición de escaneo de canales activos en Asterisk para incluir agentes en estado `offline`.
+    - Condición final: `if ($agent['status'] == 'online' || $agent['status'] == 'paused' || $agent['status'] == 'offline')`.
+    - Antes de cambiar `$agent['status'] = 'oncall'`, guardar el estado anterior en `$agent['original_status'] = $agent['status']`.
 
-### 2. Controlador Backend (PHP)
-- **Modificación en controlador principal (`index.php`):**
-  - Agregar el caso `spyAgent` al switch de peticiones AJAX en `_moduleContent()`.
-  - Crear la función `manejarMonitoreo_spyAgent(...)` para procesar la petición:
-    - Declarar `global $arrConf;` para acceder a la configuración DSN.
-    - Obtener el nombre de usuario de la sesión (`$_SESSION['issabel_user']`).
-    - Instanciar `paloACL` con el DSN `acl` de `$arrConf` y obtener la extensión del usuario con `getUserExtension($user)`.
-    - Si la extensión está vacía, retornar un error indicando que no hay una extensión asignada a la cuenta.
-    - Extraer el número de extensión del agente a partir del canal usando expresiones regulares.
-    - Conectar al DSN de Asterisk en MySQL (`generarDSNSistema('asteriskuser', 'asterisk')`) para buscar el código de ChanSpy en la tabla `featurecodes` (normalmente de `modulename = 'core'` y `feature = 'chanspy'`). Si no se encuentra o la BD falla, usar `555` como fallback.
-    - Cargar e instanciar `AGI_AsteriskManager` e iniciar conexión con las credenciales locales de AMI (`admin` y `obtenerClaveAMIAdmin()`).
-    - Ejecutar la acción AMI `Originate` con:
-      - `Channel`: `local/<supervisorext>@from-internal`
-      - `Exten`: `<chanspy_code><agent_ext>` (ej. `5552002`)
-      - `Context`: `from-internal`
-      - `Priority`: `1`
-      - `Async`: `true`
-      - `CallerID`: `Escucha: Agente <agent_ext> <chanspy_code><agent_ext>`
-    - Verificar la respuesta de la AMI y retornar JSON con `status` 'success' o 'error'.
+### 2. Formateo de Estados Combinados en el Backend (`index.php`)
+- En `modules/campaign_monitoring/index.php`:
+  - En la función `formatoAgente($agent)`:
+    - En el switch para el caso `'oncall'`:
+      - Si existe `$agent['original_status']`:
+        - Si es `'paused'`: Formatear `$sEtiquetaStatus` como `_tr('oncall') . ' (' . _tr('paused') . ': ' . $agent['pauseinfo']['pausename'] . ')'` (ej. `Ocupado (En descanso: GESTION)`).
+        - Si es `'offline'`: Formatear `$sEtiquetaStatus` como `_tr('oncall') . ' (' . _tr('No logon') . ')'` (ej. `Ocupado (No logon)`).
+      - De lo contrario, mantener la traducción estándar de `'oncall'`.
+
+### 3. Prioridad de Colores e Iconos (`javascript.js`)
+- En `modules/campaign_monitoring/themes/default/js/javascript.js`:
+  - En `agentColor(status, canal)` y `agentUpdateColor(status, canal)`:
+    - Mover el chequeo de "ocupado" (`status.includes('Ocupado')` o similar) al inicio de la estructura condicional.
+    - Si el estado contiene "Busy", "Ocupado", "Occupé", "Meşgul" o "Занят":
+      - Pintar la fila de amarillo.
+      - En `agentUpdateColor`, asignar la imagen del icono de ocupado (`agent-busy.png`).
+    - Si no, proceder con el chequeo de "En descanso" y asignar naranja y el icono de break.
+
+### 4. Menú Contextual Concurrente (`javascript.js`)
+- En el manejador de clic sobre las filas de agentes:
+  - En lugar de usar `if/else` excluyentes, evaluar las banderas de estado de manera independiente:
+    - `hasPaused`: `statusLower` contiene break, descanso o pause.
+    - `hasLoggedOut`: `statusLower` contiene no logon, logged out o no logoneado.
+    - `hasBusy`: `statusLower` contiene busy, ocupado, oncall, on call u occupé.
+  - Mostrar u ocultar los botones `#btnUnbreakAgent`, `#btnForceLoginAgent` y `#btnSpyAgent` según corresponda a las banderas.
+  - Si al menos uno de los tres es verdadero, desplegar el menú contextual.
 
 ## Restricciones y Trampas Conocidas
-- **Extensión del Supervisor en ACL:** La cuenta del supervisor o coordinador en la interfaz de Issabel debe tener configurada una extensión en la sección de control de accesos (usuarios). Si no está configurada, el backend fallará graciosamente reportando el error en la interfaz.
-- **Asincronía del Originate:** `Async` debe estar configurado como `true` para evitar retardos o bloqueos en la ejecución de la petición web mientras el supervisor contesta el teléfono.
+- **Coexistencia de Estados:** Es posible que un agente esté en descanso y en llamada. Al dar prioridad al color amarillo, la fila se verá amarilla pero el texto del estado ("Ocupado (En descanso: LUNCH)") le indicará claramente al supervisor ambas realidades.
+- **Chequeo Concurrente del Menú Contextual:** Asegurar que los selectores de jQuery para mostrar y ocultar las opciones no colisionen y dejen visible el botón adecuado según el estado real.

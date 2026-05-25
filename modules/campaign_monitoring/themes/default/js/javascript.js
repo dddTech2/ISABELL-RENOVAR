@@ -653,40 +653,44 @@ $(document).ready(function() {
 		                  statusLower.indexOf('logged out') !== -1 || 
 		                  statusLower.indexOf('no logoneado') !== -1;
 		
-		var isBusy = statusLower.indexOf('busy') !== -1 || 
-		             statusLower.indexOf('ocupado') !== -1 || 
-		             statusLower.indexOf('oncall') !== -1 || 
-		             statusLower.indexOf('on call') !== -1 || 
-		             statusLower.indexOf('occupé') !== -1;
+		var hasPaused = statusLower.indexOf('break') !== -1 || 
+		                statusLower.indexOf('descanso') !== -1 || 
+		                statusLower.indexOf('pause') !== -1 || 
+		                statusLower.indexOf('paused') !== -1;
 		
-		if (isPaused) {
-			$('#btnUnbreakAgent').show().text('🔓 Finalizar Descanso');
-			$('#btnForceLoginAgent').hide();
-			$('#btnSpyAgent').hide();
+		var hasLoggedOut = statusLower.indexOf('no logon') !== -1 || 
+		                   statusLower.indexOf('logged out') !== -1 || 
+		                   statusLower.indexOf('no logoneado') !== -1;
+		
+		var hasBusy = statusLower.indexOf('busy') !== -1 || 
+		              statusLower.indexOf('ocupado') !== -1 || 
+		              statusLower.indexOf('oncall') !== -1 || 
+		              statusLower.indexOf('on call') !== -1 || 
+		              statusLower.indexOf('occupé') !== -1;
+		
+		if (hasPaused || hasLoggedOut || hasBusy) {
+			if (hasPaused) {
+				$('#btnUnbreakAgent').show().text('🔓 Finalizar Descanso');
+			} else {
+				$('#btnUnbreakAgent').hide();
+			}
 			
-			$('#agentContextMenu').css({
-				top: event.pageY + 'px',
-				left: event.pageX + 'px'
-			}).fadeIn(150);
+			if (hasLoggedOut) {
+				$('#btnForceLoginAgent').show().text('🔑 Iniciar Sesión');
+			} else {
+				$('#btnForceLoginAgent').hide();
+			}
 			
-			$('#agentContextMenu').data('agentChannel', agentChannel);
-			event.stopPropagation();
-		} else if (isLoggedOut) {
-			$('#btnUnbreakAgent').hide();
-			$('#btnForceLoginAgent').show().text('🔑 Iniciar Sesión');
-			$('#btnSpyAgent').hide();
-			
-			$('#agentContextMenu').css({
-				top: event.pageY + 'px',
-				left: event.pageX + 'px'
-			}).fadeIn(150);
-			
-			$('#agentContextMenu').data('agentChannel', agentChannel);
-			event.stopPropagation();
-		} else if (isBusy) {
-			$('#btnUnbreakAgent').hide();
-			$('#btnForceLoginAgent').hide();
-			$('#btnSpyAgent').show().text('👂 Escuchar Llamada');
+			if (hasBusy) {
+				var callNumberTd = $(this).find('td').eq(2).text().trim();
+				if (callNumberTd !== '' && callNumberTd !== '-') {
+					$('#btnSpyAgent').show().text('👂 Escuchar Llamada');
+				} else {
+					$('#btnSpyAgent').hide();
+				}
+			} else {
+				$('#btnSpyAgent').hide();
+			}
 			
 			$('#agentContextMenu').css({
 				top: event.pageY + 'px',
@@ -791,7 +795,9 @@ function mostrar_mensaje_error(s)
 function agentColor(status, canal) {
 setTimeout(() => {
 
-  if (status.includes('On break') || status.includes('En descanso') || status.includes('En pause') || status.includes('На перерыве') || status.includes('Molada')) {
+  if (status.includes('Busy') || status.includes('Ocupado') || status.includes('Occupé') || status.includes('Meşgul') || status.includes('Занят')) {
+    color = 'yellow';
+  } else if (status.includes('On break') || status.includes('En descanso') || status.includes('En pause') || status.includes('На перерыве') || status.includes('Molada')) {
     color = 'orange';
   } else {
     switch (status) {
@@ -836,7 +842,10 @@ setTimeout(() => {
 function agentUpdateColor(status, canal) {
   let statusImage;
 
-  if (status.includes('On break') || status.includes('En descanso') || status.includes('En pause') || status.includes('На перерыве') || status.includes('Molada')) {
+  if (status.includes('Busy') || status.includes('Ocupado') || status.includes('Occupé') || status.includes('Meşgul') || status.includes('Занят')) {
+    color = 'yellow';
+    statusImage = '<img src="/modules/' + module_name + '/images/agent-busy.png" alt="Ocupado" style="padding-right:1px;"/>';
+  } else if (status.includes('On break') || status.includes('En descanso') || status.includes('En pause') || status.includes('На перерыве') || status.includes('Molada')) {
     color = 'orange';
     statusImage = '<img src="/modules/' + module_name + '/images/agent-break.png" alt="En Break" style="padding-right:1px;"/>';
   } else {
