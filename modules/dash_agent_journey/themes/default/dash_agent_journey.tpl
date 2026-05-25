@@ -164,31 +164,31 @@
     <!-- VISTA DEL COORDINADOR (GLOBAL) -->
     <div id="view-coordinator">
         <div class="summary-cards">
-            <div class="card green">
-                <h3>Contactabilidad Efectiva</h3>
-                <div class="value" id="glb-contactability">0%</div>
-                <div class="subtext" id="glb-contact-sub">0 intentos</div>
-            </div>
             <div class="card cyan">
-                <h3>TMO Promedio</h3>
-                <div class="value" id="glb-tmo">0 min</div>
-                <div class="subtext">Llamadas Efectivas</div>
-            </div>
-            <div class="card red">
-                <h3>Tasa de Congestión/Fallo</h3>
-                <div class="value" id="glb-congestion">0%</div>
-                <div class="subtext">Troncal o Base de Datos</div>
+                <h3>Salientes Campaña</h3>
+                <div class="value" id="glb-camp-calls">0</div>
+                <div class="subtext" id="glb-camp-sub">0% Efectividad</div>
             </div>
             <div class="card purple">
-                <h3>Llamadas Cortas (< 10s)</h3>
-                <div class="value" id="glb-shortcalls">0%</div>
-                <div class="subtext" id="glb-shortcalls-sub">0 llamadas</div>
+                <h3>Salientes Manual</h3>
+                <div class="value" id="glb-man-calls">0</div>
+                <div class="subtext" id="glb-man-sub">0% Efectividad</div>
+            </div>
+            <div class="card green">
+                <h3>Contactabilidad Global</h3>
+                <div class="value" id="glb-contactability">0%</div>
+                <div class="subtext" id="glb-contact-sub">0 intentos totales</div>
+            </div>
+            <div class="card orange">
+                <h3>TMO Promedio</h3>
+                <div class="value" id="glb-tmo">0 min</div>
+                <div class="subtext">Global Efectivo</div>
             </div>
         </div>
 
         <div class="dash-main">
             <div class="chart-container">
-                <h3>Estados de Llamada (Salientes)</h3>
+                <h3>Estados de Llamada (Combinadas)</h3>
                 <div style="position: relative; height: 300px; width: 100%;">
                     <canvas id="callStatusChart"></canvas>
                 </div>
@@ -223,14 +223,14 @@
                 <div class="subtext" id="agt-contact-sub">0 / 0</div>
             </div>
             <div class="card purple">
+                <h3>Salientes (Campaña / Manual)</h3>
+                <div class="value" id="agt-out-split" style="font-size:20px;">0 / 0</div>
+                <div class="subtext" id="agt-out-sub">Totales Marcadas</div>
+            </div>
+            <div class="card orange">
                 <h3>Desviación TMO</h3>
                 <div class="value" id="agt-tmo">0 min</div>
                 <div class="subtext" id="agt-tmo-sub">vs Campaña</div>
-            </div>
-            <div class="card orange">
-                <h3>Tiempo de Conexión</h3>
-                <div class="value" id="agt-connection">0 min</div>
-                <div class="subtext">Hablado + Pausa</div>
             </div>
         </div>
         
@@ -242,7 +242,7 @@
                 </div>
             </div>
             <div class="chart-container">
-                <h3>Resultados de Marcación</h3>
+                <h3>Resultados de Marcación (Combinados)</h3>
                 <div style="position: relative; height: 300px; width: 100%;">
                     <canvas id="agtStatusChart"></canvas>
                 </div>
@@ -343,28 +343,42 @@ function renderDashboard(data, isAgentFiltered) {
     document.getElementById('view-agent').style.display = isAgentView ? 'block' : 'none';
     document.getElementById('dash-title').innerText = isAgentView ? 'Dashboard del Asesor' : 'Dashboard General (Coordinación)';
 
-    var st = data.call_statuses || {};
-    var totalAttempts = (st['Success']||0) + (st['ShortCall']||0) + (st['Busy']||0) + (st['Failed']||0) + (st['Congestion']||0);
-    var successes = (st['Success']||0) + (st['ShortCall']||0);
-    var congestions = (st['Busy']||0) + (st['Failed']||0) + (st['Congestion']||0);
-    var totalTalkTime = data.totals['OUTGOING_CALL'] || 0; // approximate global
+    var c_st = data.campaign_statuses || {};
+    var m_st = data.manual_statuses || {};
     
-    var globalContactability = totalAttempts > 0 ? ((successes / totalAttempts) * 100).toFixed(1) : 0;
-    var globalCongestion = totalAttempts > 0 ? ((congestions / totalAttempts) * 100).toFixed(1) : 0;
-    var globalTMO = successes > 0 ? formatMinutes(totalTalkTime / successes) : 0;
-    var globalShort = successes > 0 ? (((st['ShortCall']||0) / successes) * 100).toFixed(1) : 0;
+    var campAttempts = (c_st['Success']||0) + (c_st['ShortCall']||0) + (c_st['Busy']||0) + (c_st['Failed']||0) + (c_st['Congestion']||0);
+    var campSuccess = (c_st['Success']||0) + (c_st['ShortCall']||0);
+    var campEff = campAttempts > 0 ? ((campSuccess / campAttempts) * 100).toFixed(1) : 0;
+    
+    var manAttempts = (m_st['Success']||0) + (m_st['ShortCall']||0) + (m_st['Busy']||0) + (m_st['Failed']||0) + (m_st['Congestion']||0);
+    var manSuccess = (m_st['Success']||0) + (m_st['ShortCall']||0);
+    var manEff = manAttempts > 0 ? ((manSuccess / manAttempts) * 100).toFixed(1) : 0;
+    
+    var totalAttempts = campAttempts + manAttempts;
+    var totalSuccesses = campSuccess + manSuccess;
+    var totalTalkTime = data.totals['OUTGOING_CALL'] || 0; 
+    
+    var globalContactability = totalAttempts > 0 ? ((totalSuccesses / totalAttempts) * 100).toFixed(1) : 0;
+    var globalTMO = totalSuccesses > 0 ? formatMinutes(totalTalkTime / totalSuccesses) : 0;
 
     if (isAgentView) {
         var a = data.agentStats[0];
         document.getElementById('agt-name').innerText = a.name;
         document.getElementById('agt-ext').innerText = 'Ext: ' + a.number;
         document.getElementById('agt-contactability').innerText = a.contactability + '%';
-        document.getElementById('agt-contact-sub').innerText = (a.call_statuses['Success']||0) + ' Éxitos / ' + a.outbound_attempts + ' Intentos';
+        
+        var total_s = (a.campaign_statuses['Success']||0) + (a.manual_statuses['Success']||0);
+        document.getElementById('agt-contact-sub').innerText = total_s + ' Éxitos / ' + a.outbound_attempts + ' Intentos';
+        
+        var a_camp = (a.campaign_statuses['Success']||0) + (a.campaign_statuses['ShortCall']||0) + (a.campaign_statuses['Busy']||0) + (a.campaign_statuses['Failed']||0) + (a.campaign_statuses['Congestion']||0);
+        var a_man = (a.manual_statuses['Success']||0) + (a.manual_statuses['ShortCall']||0) + (a.manual_statuses['Busy']||0) + (a.manual_statuses['Failed']||0) + (a.manual_statuses['Congestion']||0);
+        
+        document.getElementById('agt-out-split').innerText = a_camp + ' / ' + a_man;
+        
         document.getElementById('agt-tmo').innerText = a.tmo + ' min';
         
         var diff = a.tmo - parseFloat(globalTMO);
         document.getElementById('agt-tmo-sub').innerText = (diff > 0 ? '+'+diff.toFixed(1) : diff.toFixed(1)) + ' min vs Campaña';
-        document.getElementById('agt-connection').innerText = formatMinutes(a.total_time) + ' min';
 
         var ctxAgtTime = document.getElementById('agtTimeChart').getContext('2d');
         charts['agtTime'] = new Chart(ctxAgtTime, {
@@ -386,9 +400,11 @@ function renderDashboard(data, isAgentFiltered) {
                 labels: ['Success', 'ShortCall', 'Busy', 'Failed', 'Congestion'],
                 datasets: [{
                     data: [
-                        a.call_statuses['Success']||0, a.call_statuses['ShortCall']||0,
-                        a.call_statuses['Busy']||0, a.call_statuses['Failed']||0,
-                        a.call_statuses['Congestion']||0
+                        (a.campaign_statuses['Success']||0) + (a.manual_statuses['Success']||0), 
+                        (a.campaign_statuses['ShortCall']||0) + (a.manual_statuses['ShortCall']||0),
+                        (a.campaign_statuses['Busy']||0) + (a.manual_statuses['Busy']||0), 
+                        (a.campaign_statuses['Failed']||0) + (a.manual_statuses['Failed']||0),
+                        (a.campaign_statuses['Congestion']||0) + (a.manual_statuses['Congestion']||0)
                     ],
                     backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
                 }]
@@ -398,12 +414,15 @@ function renderDashboard(data, isAgentFiltered) {
 
     } else {
         // Vista Global
+        document.getElementById('glb-camp-calls').innerText = campAttempts;
+        document.getElementById('glb-camp-sub').innerText = campEff + '% Efectividad';
+        
+        document.getElementById('glb-man-calls').innerText = manAttempts;
+        document.getElementById('glb-man-sub').innerText = manEff + '% Efectividad';
+        
         document.getElementById('glb-contactability').innerText = globalContactability + '%';
         document.getElementById('glb-contact-sub').innerText = totalAttempts + ' intentos totales';
         document.getElementById('glb-tmo').innerText = globalTMO + ' min';
-        document.getElementById('glb-congestion').innerText = globalCongestion + '%';
-        document.getElementById('glb-shortcalls').innerText = globalShort + '%';
-        document.getElementById('glb-shortcalls-sub').innerText = (st['ShortCall']||0) + ' llamadas';
 
         var ctxSt = document.getElementById('callStatusChart').getContext('2d');
         charts['status'] = new Chart(ctxSt, {
@@ -411,7 +430,13 @@ function renderDashboard(data, isAgentFiltered) {
             data: {
                 labels: ['Success', 'ShortCall', 'Busy', 'Failed', 'Congestion'],
                 datasets: [{
-                    data: [st['Success']||0, st['ShortCall']||0, st['Busy']||0, st['Failed']||0, st['Congestion']||0],
+                    data: [
+                        (c_st['Success']||0) + (m_st['Success']||0), 
+                        (c_st['ShortCall']||0) + (m_st['ShortCall']||0), 
+                        (c_st['Busy']||0) + (m_st['Busy']||0), 
+                        (c_st['Failed']||0) + (m_st['Failed']||0), 
+                        (c_st['Congestion']||0) + (m_st['Congestion']||0)
+                    ],
                     backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
                 }]
             },

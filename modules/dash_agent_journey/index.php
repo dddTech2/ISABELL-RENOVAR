@@ -205,7 +205,8 @@ function calculateMetrics($recordset) {
     $counts = array();
     
     // New KPI Aggregations
-    $call_statuses = array('Success' => 0, 'ShortCall' => 0, 'Busy' => 0, 'Failed' => 0, 'Congestion' => 0, 'Unknown' => 0);
+    $campaign_statuses = array('Success' => 0, 'ShortCall' => 0, 'Busy' => 0, 'Failed' => 0, 'Congestion' => 0, 'Unknown' => 0);
+    $manual_statuses = array('Success' => 0, 'ShortCall' => 0, 'Busy' => 0, 'Failed' => 0, 'Congestion' => 0, 'Unknown' => 0);
     $break_types = array();
 
     foreach ($recordset as $event) {
@@ -221,7 +222,8 @@ function calculateMetrics($recordset) {
                 'events' => 0,
                 'total_duration' => 0,
                 'types' => array(),
-                'call_statuses' => array('Success' => 0, 'ShortCall' => 0, 'Busy' => 0, 'Failed' => 0, 'Congestion' => 0, 'Unknown' => 0),
+                'campaign_statuses' => array('Success' => 0, 'ShortCall' => 0, 'Busy' => 0, 'Failed' => 0, 'Congestion' => 0, 'Unknown' => 0),
+                'manual_statuses' => array('Success' => 0, 'ShortCall' => 0, 'Busy' => 0, 'Failed' => 0, 'Congestion' => 0, 'Unknown' => 0),
                 'break_types' => array()
             );
         }
@@ -260,13 +262,23 @@ function calculateMetrics($recordset) {
                     $status = 'ShortCall';
                 }
 
-                if (!isset($call_statuses[$status])) $call_statuses[$status] = 0;
-                $call_statuses[$status]++;
-                
-                if (!isset($agents[$agentName]['call_statuses'][$status])) {
-                    $agents[$agentName]['call_statuses'][$status] = 0;
+                if ($type === 'OUTGOING_CALL') {
+                    if (!isset($campaign_statuses[$status])) $campaign_statuses[$status] = 0;
+                    $campaign_statuses[$status]++;
+                    
+                    if (!isset($agents[$agentName]['campaign_statuses'][$status])) {
+                        $agents[$agentName]['campaign_statuses'][$status] = 0;
+                    }
+                    $agents[$agentName]['campaign_statuses'][$status]++;
+                } else {
+                    if (!isset($manual_statuses[$status])) $manual_statuses[$status] = 0;
+                    $manual_statuses[$status]++;
+                    
+                    if (!isset($agents[$agentName]['manual_statuses'][$status])) {
+                        $agents[$agentName]['manual_statuses'][$status] = 0;
+                    }
+                    $agents[$agentName]['manual_statuses'][$status]++;
                 }
-                $agents[$agentName]['call_statuses'][$status]++;
             }
         } elseif ($type === 'BREAK') {
             $breakName = trim($detail);
@@ -295,14 +307,20 @@ function calculateMetrics($recordset) {
                     
         $breakTime = isset($agent['types']['BREAK']) ? $agent['types']['BREAK'] : 0;
         
-        // Compute Individual KPIs
-        $outboundAttempts = (isset($agent['call_statuses']['Success']) ? $agent['call_statuses']['Success'] : 0) +
-                            (isset($agent['call_statuses']['ShortCall']) ? $agent['call_statuses']['ShortCall'] : 0) +
-                            (isset($agent['call_statuses']['Busy']) ? $agent['call_statuses']['Busy'] : 0) +
-                            (isset($agent['call_statuses']['Failed']) ? $agent['call_statuses']['Failed'] : 0) +
-                            (isset($agent['call_statuses']['Congestion']) ? $agent['call_statuses']['Congestion'] : 0);
+        // Compute Individual KPIs (Combines both Campaign and Manual for generic Agent Stats)
+        $outboundAttempts = (isset($agent['campaign_statuses']['Success']) ? $agent['campaign_statuses']['Success'] : 0) +
+                            (isset($agent['campaign_statuses']['ShortCall']) ? $agent['campaign_statuses']['ShortCall'] : 0) +
+                            (isset($agent['campaign_statuses']['Busy']) ? $agent['campaign_statuses']['Busy'] : 0) +
+                            (isset($agent['campaign_statuses']['Failed']) ? $agent['campaign_statuses']['Failed'] : 0) +
+                            (isset($agent['campaign_statuses']['Congestion']) ? $agent['campaign_statuses']['Congestion'] : 0) +
+                            (isset($agent['manual_statuses']['Success']) ? $agent['manual_statuses']['Success'] : 0) +
+                            (isset($agent['manual_statuses']['ShortCall']) ? $agent['manual_statuses']['ShortCall'] : 0) +
+                            (isset($agent['manual_statuses']['Busy']) ? $agent['manual_statuses']['Busy'] : 0) +
+                            (isset($agent['manual_statuses']['Failed']) ? $agent['manual_statuses']['Failed'] : 0) +
+                            (isset($agent['manual_statuses']['Congestion']) ? $agent['manual_statuses']['Congestion'] : 0);
                             
-        $successCalls = isset($agent['call_statuses']['Success']) ? $agent['call_statuses']['Success'] : 0;
+        $successCalls = (isset($agent['campaign_statuses']['Success']) ? $agent['campaign_statuses']['Success'] : 0) +
+                        (isset($agent['manual_statuses']['Success']) ? $agent['manual_statuses']['Success'] : 0);
         
         $contactability = ($outboundAttempts > 0) ? round(($successCalls / $outboundAttempts) * 100, 2) : 0;
         $tmo = ($successCalls > 0) ? round($talkTime / $successCalls, 1) : 0;
@@ -316,7 +334,8 @@ function calculateMetrics($recordset) {
             'outbound_attempts' => $outboundAttempts,
             'contactability' => $contactability,
             'tmo' => $tmo,
-            'call_statuses' => $agent['call_statuses'],
+            'campaign_statuses' => $agent['campaign_statuses'],
+            'manual_statuses' => $agent['manual_statuses'],
             'break_types' => $agent['break_types']
         );
     }
@@ -335,7 +354,8 @@ function calculateMetrics($recordset) {
         "agentStats" => $agentStats,
         "bestAgent" => $bestAgent,
         "worstAgent" => $worstAgent,
-        "call_statuses" => $call_statuses,
+        "campaign_statuses" => $campaign_statuses,
+        "manual_statuses" => $manual_statuses,
         "break_types" => $break_types,
         "raw_events" => count($recordset),
         "recent_events" => array_slice($recordset, -100) // Last 100 events
