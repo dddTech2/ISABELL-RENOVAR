@@ -23,13 +23,16 @@
   - En la función `leerEstadoCampania`:
     - Condición de escaneo: `if ($agent['status'] == 'online' || $agent['status'] == 'paused' || $agent['status'] == 'offline')`.
     - Antes de cambiar `$agent['status'] = 'oncall'`, guardar el estado anterior en `$agent['original_status'] = $agent['status']`.
+  - En la función `_obtenerCanalesActivosAsterisk`:
+    - Usar la invariante de índices invertidos de Asterisk para soportar de manera robusta todas las versiones (11, 12, 13, 14 o más campos en `core show channels concise`):
+      - `duration` en el índice `count($fields) - 3`.
+      - `peerchannel` (ID de bridge / linkedid) en el índice `count($fields) - 2`.
+      - `uniqueid` en el índice `count($fields) - 1`.
   - En la función `_detectarLlamadaActivaAgente`:
-    - Obtener el CallerID limpio del canal de Asterisk.
-    - Comparar el CallerID de origen con el identificador de la extensión del agente.
-    - Si coinciden (Llamada Saliente / Outbound):
-      - Buscar el número telefónico marcado extrayéndolo mediante expresiones regulares del campo de datos (`data`) de la aplicación de marcado (ej. `PJSIP/3137611617@Best` -> `3137611617`).
-    - Si no coinciden (Llamada Entrante / Inbound):
-      - Utilizar el CallerID del canal como número telefónico de origen de la llamada.
+    - Identificar el canal activo del agente comparando su canal contra los identificadores (ej. `PJSIP/1005`).
+    - Trazar todo el grafo de canales vinculados (compartiendo el ID de bridge o cruzando las dos mitades de canales `Local`) para obtener todos los canales de la llamada.
+    - Extraer el número telefónico externo descartando la extensión del propio agente y los números cortos/colas internos de la lista de candidatos (de `callerid`, `exten`, nombre de canal, y parámetros de marcado en `data`).
+    - Trazar el canal de troncal (`SIP/Best` o similar) del mismo grafo de canales para evitar que se muestre el ID de bridge en la columna de troncal.
 
 ### 2. Formateo de Estados Combinados en el Backend (`index.php`)
 - En `modules/campaign_monitoring/index.php`:
