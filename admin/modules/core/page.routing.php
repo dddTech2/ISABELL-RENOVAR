@@ -162,7 +162,7 @@ $time_group_id = isset($_REQUEST['time_group_id']) ? $_REQUEST['time_group_id'] 
 $route_seq = isset($_REQUEST['route_seq']) ? $_REQUEST['route_seq'] : '';
 
 $goto = isset($_REQUEST['goto0'])?$_REQUEST['goto0']:'';
-$dest = $goto ? $_REQUEST[$goto . '0'] : '';
+$dest = $goto ? (isset($_REQUEST[$goto]) ? $_REQUEST[$goto] : (isset($_REQUEST[$goto . '0']) ? $_REQUEST[$goto . '0'] : '')) : '';
 
 //if submitting form, update database
 switch ($action) {
