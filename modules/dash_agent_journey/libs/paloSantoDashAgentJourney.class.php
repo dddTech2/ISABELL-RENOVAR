@@ -102,7 +102,7 @@ class paloSantoDashAgentJourney
                 audit.datetime_init AS event_time,
                 'LOGIN' AS event_type,
                 audit.login_extension AS event_detail,
-                NULL AS duration
+                IF(audit.datetime_end IS NULL, TIME_TO_SEC(TIMEDIFF(NOW(), audit.datetime_init)), 0) AS duration
             FROM audit
             JOIN agent ON audit.id_agent = agent.id
             WHERE audit.id_break IS NULL

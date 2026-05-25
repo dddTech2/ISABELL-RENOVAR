@@ -325,11 +325,19 @@ function calculateMetrics($recordset) {
         $contactability = ($outboundAttempts > 0) ? round(($successCalls / $outboundAttempts) * 100, 2) : 0;
         $tmo = ($successCalls > 0) ? round($talkTime / $successCalls, 1) : 0;
         
+        $loginTime = (isset($agent['types']['LOGIN']) ? $agent['types']['LOGIN'] : 0) + 
+                     (isset($agent['types']['LOGOUT']) ? $agent['types']['LOGOUT'] : 0);
+        
+        $idleTime = $loginTime - $talkTime - $breakTime;
+        if ($idleTime < 0) $idleTime = 0; // Prevent negative idle time in case of overlaps
+
         $agentStats[] = array(
             'name' => $agent['name'],
             'number' => $agent['number'],
             'talk_time' => $talkTime,
             'break_time' => $breakTime,
+            'idle_time' => $idleTime,
+            'login_time' => $loginTime,
             'total_time' => $agent['total_duration'],
             'outbound_attempts' => $outboundAttempts,
             'contactability' => $contactability,

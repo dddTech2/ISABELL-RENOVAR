@@ -384,10 +384,14 @@ function renderDashboard(data, isAgentFiltered) {
         charts['agtTime'] = new Chart(ctxAgtTime, {
             type: 'pie',
             data: {
-                labels: ['Tiempo Hablado', 'Tiempo en Pausa'],
+                labels: ['Tiempo Hablado', 'Tiempo en Pausa', 'Tiempo Libre (Disponible)'],
                 datasets: [{
-                    data: [parseFloat(formatMinutes(a.talk_time)), parseFloat(formatMinutes(a.break_time))],
-                    backgroundColor: ['#28a745', '#fd7e14']
+                    data: [
+                        parseFloat(formatMinutes(a.talk_time)), 
+                        parseFloat(formatMinutes(a.break_time)),
+                        parseFloat(formatMinutes(a.idle_time))
+                    ],
+                    backgroundColor: ['#28a745', '#fd7e14', '#007bff']
                 }]
             },
             options: { responsive: true, maintainAspectRatio: false }
