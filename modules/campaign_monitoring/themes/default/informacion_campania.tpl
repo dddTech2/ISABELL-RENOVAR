@@ -149,7 +149,7 @@
 <table width="100%" ><tr>
     <td width="35%" style="vertical-align: top;">
         <b>{$ETIQUETA_LLAMADAS_MARCANDO}:</b>
-        <table class="titulo">
+        <table class="titulo" style="table-layout: fixed; width: 100%;">
             <tr>
                 <td width="20%" nowrap="nowrap">{$ETIQUETA_ESTADO}</td>
                 <td width="30%" nowrap="nowrap">{$ETIQUETA_NUMERO_TELEFONO}</td>
@@ -158,14 +158,14 @@
             </tr>
         </table>
         <div class="llamadas" {literal}{{bindAttr style="alturaLlamada"}}{/literal}>
-            <table>
+            <table style="table-layout: fixed; width: 100%;">
                 {literal}{{#view tagName="tbody"}}
                 {{#each llamadasMarcando}}
                 <tr style="background-color:#00e7ffa6" {{bindAttr class="reciente"}}>
-                    <td width="20%" nowrap="nowrap">{{estado}}</td>
-                    <td width="30%" nowrap="nowrap">{{numero}}</td>
-                    <td width="30%" nowrap="nowrap">{{troncal}}</td>
-                    <td width="20%" nowrap="nowrap">{{desde}}</td>
+                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{estado}}</td>
+                    <td width="30%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{numero}}</td>
+                    <td width="30%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{troncal}}</td>
+                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{desde}}</td>
                 </tr>
                 {{/each}}
                 {{/view}}{/literal}
@@ -174,7 +174,7 @@
     </td>
     <td width="65%" style="vertical-align: top;">
         <b>{$ETIQUETA_AGENTES}:</b>
-        <table class="titulo">
+        <table class="titulo" style="table-layout: fixed; width: 100%;">
             <tr>
                 <td width="20%" nowrap="nowrap">{$ETIQUETA_AGENTE}</td>
                 <td width="20%" nowrap="nowrap">{$ETIQUETA_ESTADO}</td>
@@ -184,15 +184,15 @@
             </tr>
         </table>
         <div class="llamadas agent-table-wrapper" {literal}{{bindAttr style="alturaLlamada"}}{/literal}>
-            <table>
+            <table style="table-layout: fixed; width: 100%;">
                 {literal}{{#view tagName="tbody"}}
                 {{#each agentes}}
                 <tr  {{bindAttr class="canal"}} {{bindAttr data-agent="canal" data-status="estado"}}>
-                    <td width="20%" nowrap="nowrap">{{nombre}}</td>
+                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{nombre}}">{{nombre}}</td>
                     <td width="20%" nowrap="nowrap"><div class="trAgent">{{image}}{{estado}}</div></td>
-                    <td width="20%" nowrap="nowrap">{{numero}}</td>
-                    <td width="20%" nowrap="nowrap">{{troncal}}</td>
-                    <td width="20%" nowrap="nowrap">{{desde}}</td>
+                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{numero}}</td>
+                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{troncal}}</td>
+                    <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{desde}}</td>
                 </tr>
                 {{/each}}
                 {{/view}}{/literal}
