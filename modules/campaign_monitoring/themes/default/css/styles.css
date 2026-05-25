@@ -245,3 +245,31 @@ select option.campaign-status-finished {
   filter: brightness(1.1);
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
 }
+
+/* Hover and cursor pointer for busy/on call agents */
+.agent-table-wrapper table tbody tr[data-status*="busy"],
+.agent-table-wrapper table tbody tr[data-status*="Busy"],
+.agent-table-wrapper table tbody tr[data-status*="ocupado"],
+.agent-table-wrapper table tbody tr[data-status*="Ocupado"],
+.agent-table-wrapper table tbody tr[data-status*="occupé"],
+.agent-table-wrapper table tbody tr[data-status*="Occupé"],
+.agent-table-wrapper table tbody tr[data-status*="oncall"],
+.agent-table-wrapper table tbody tr[data-status*="Oncall"],
+.agent-table-wrapper table tbody tr[data-status*="On Call"],
+.agent-table-wrapper table tbody tr[data-status*="on call"] {
+  cursor: pointer;
+}
+
+.agent-table-wrapper table tbody tr[data-status*="busy"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="Busy"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="ocupado"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="Ocupado"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="occupé"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="Occupé"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="oncall"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="Oncall"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="On Call"]:hover,
+.agent-table-wrapper table tbody tr[data-status*="on call"]:hover {
+  filter: brightness(1.1);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+}

@@ -58,6 +58,9 @@ function _moduleContent(&$smarty, $module_name)
     case 'forceLoginAgent':
         $sContenido = manejarMonitoreo_forceLoginAgent($module_name, $smarty, $local_templates_dir);
         break;
+    case 'spyAgent':
+        $sContenido = manejarMonitoreo_spyAgent($module_name, $smarty, $local_templates_dir);
+        break;
     case 'getCampaigns':
         $sContenido = manejarMonitoreo_getCampaigns($module_name, $smarty, $local_templates_dir);
         break;
@@ -1005,4 +1008,77 @@ function manejarMonitoreo_forceLoginAgent($module_name, $smarty, $sDirLocalPlant
     return $json->encode($respuesta);
 }
 
+
+
+function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
+{
+    $respuesta = array(
+        'status'    =>  'success',
+        'message'   =>  '(no message)',
+    );
+
+    $sAgentChannel = getParameter('agentchannel');
+    $sSupervisorExt = getParameter('supervisorext');
+
+    if (is_null($sAgentChannel) || $sAgentChannel == '') {
+        $respuesta['status'] = 'error';
+        $respuesta['message'] = 'Canal de agente no válido';
+    } elseif (is_null($sSupervisorExt) || $sSupervisorExt == '' || !ctype_digit($sSupervisorExt)) {
+        $respuesta['status'] = 'error';
+        $respuesta['message'] = 'Extensión del supervisor no válida';
+    } else {
+        // Extraer número de extensión del agente
+        $agentExt = null;
+        if (preg_match('/(?:Agent|SIP|PJSIP|IAX2)\/(\d+)/i', $sAgentChannel, $matches)) {
+            $agentExt = $matches[1];
+        } elseif (preg_match('/^(\d+)$/', $sAgentChannel, $matches)) {
+            $agentExt = $matches[1];
+        }
+
+        if (is_null($agentExt)) {
+            $respuesta['status'] = 'error';
+            $respuesta['message'] = 'No se pudo obtener la extensión del agente del canal: ' . $sAgentChannel;
+        } else {
+            // Obtener código ChanSpy
+            $chanspyCode = '555';
+            $dsnAsterisk = generarDSNSistema('asteriskuser', 'asterisk');
+            $pDB_ast = new paloDB($dsnAsterisk);
+            if (empty($pDB_ast->errMsg)) {
+                $res = $pDB_ast->fetchTable("SELECT code FROM featurecodes WHERE modulename = 'core' AND feature = 'chanspy' AND active = 1", TRUE);
+                if (is_array($res) && count($res) > 0 && !empty($res[0]['code'])) {
+                    $chanspyCode = $res[0]['code'];
+                }
+            }
+
+            require_once '/var/lib/asterisk/agi-bin/phpagi-asmanager.php';
+            $astman = new AGI_AsteriskManager();
+            if (!$astman->connect("127.0.0.1", 'admin', obtenerClaveAMIAdmin())) {
+                $respuesta['status'] = 'error';
+                $respuesta['message'] = 'No se pudo conectar a la AMI de Asterisk';
+            } else {
+                $origResult = $astman->Originate(array(
+                    'Channel'  => "local/$sSupervisorExt@from-internal",
+                    'Exten'    => "$chanspyCode$agentExt",
+                    'Context'  => 'from-internal',
+                    'Priority' => '1',
+                    'Async'    => 'true',
+                    'CallerID' => "Escucha: Agente $agentExt <$chanspyCode$agentExt>"
+                ));
+                $astman->disconnect();
+
+                if (isset($origResult['Response']) && strtolower($origResult['Response']) == 'success') {
+                    $respuesta['status'] = 'success';
+                    $respuesta['message'] = 'Escucha iniciada con éxito';
+                } else {
+                    $respuesta['status'] = 'error';
+                    $respuesta['message'] = isset($origResult['Message']) ? $origResult['Message'] : 'Respuesta fallida de Asterisk AMI';
+                }
+            }
+        }
+    }
+
+    $json = new Services_JSON();
+    Header('Content-Type: application/json');
+    return $json->encode($respuesta);
+}
 ?>

@@ -653,9 +653,16 @@ $(document).ready(function() {
 		                  statusLower.indexOf('logged out') !== -1 || 
 		                  statusLower.indexOf('no logoneado') !== -1;
 		
+		var isBusy = statusLower.indexOf('busy') !== -1 || 
+		             statusLower.indexOf('ocupado') !== -1 || 
+		             statusLower.indexOf('oncall') !== -1 || 
+		             statusLower.indexOf('on call') !== -1 || 
+		             statusLower.indexOf('occupé') !== -1;
+		
 		if (isPaused) {
 			$('#btnUnbreakAgent').show().text('🔓 Finalizar Descanso');
 			$('#btnForceLoginAgent').hide();
+			$('#btnSpyAgent').hide();
 			
 			$('#agentContextMenu').css({
 				top: event.pageY + 'px',
@@ -667,6 +674,19 @@ $(document).ready(function() {
 		} else if (isLoggedOut) {
 			$('#btnUnbreakAgent').hide();
 			$('#btnForceLoginAgent').show().text('🔑 Iniciar Sesión');
+			$('#btnSpyAgent').hide();
+			
+			$('#agentContextMenu').css({
+				top: event.pageY + 'px',
+				left: event.pageX + 'px'
+			}).fadeIn(150);
+			
+			$('#agentContextMenu').data('agentChannel', agentChannel);
+			event.stopPropagation();
+		} else if (isBusy) {
+			$('#btnUnbreakAgent').hide();
+			$('#btnForceLoginAgent').hide();
+			$('#btnSpyAgent').show().text('👂 Escuchar Llamada');
 			
 			$('#agentContextMenu').css({
 				top: event.pageY + 'px',
@@ -725,6 +745,46 @@ $(document).ready(function() {
 				
 				if (response.status !== 'success') {
 					alert('Error al iniciar sesión: ' + response.message);
+				}
+			}, 'json');
+		}
+	});
+
+	$(document).on('click', '#btnSpyAgent', function(e) {
+		e.preventDefault();
+		var agentChannel = $('#agentContextMenu').data('agentChannel');
+		if (agentChannel) {
+			var savedExt = localStorage.getItem('supervisor_extension') || '';
+			var supervisorExt = prompt("Ingrese su número de extensión para escuchar la llamada:", savedExt);
+			if (supervisorExt === null) {
+				$('#agentContextMenu').fadeOut(100);
+				return;
+			}
+			supervisorExt = supervisorExt.trim();
+			if (supervisorExt === '' || !/^\d+$/.test(supervisorExt)) {
+				alert("Debe ingresar una extensión numérica válida.");
+				$('#agentContextMenu').fadeOut(100);
+				return;
+			}
+			localStorage.setItem('supervisor_extension', supervisorExt);
+			
+			var btn = $(this);
+			btn.text('Conectando...');
+			
+			$.post('index.php', {
+				menu: module_name,
+				rawmode: 'yes',
+				action: 'spyAgent',
+				agentchannel: agentChannel,
+				supervisorext: supervisorExt
+			}, function(response) {
+				$('#agentContextMenu').fadeOut(100);
+				btn.text('👂 Escuchar Llamada');
+				
+				if (response.status !== 'success') {
+					alert('Error al escuchar llamada: ' + response.message);
+				} else {
+					alert('Llamada de escucha iniciada hacia la extensión ' + supervisorExt);
 				}
 			}, 'json');
 		}

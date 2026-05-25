@@ -223,5 +223,6 @@
 <div id="agentContextMenu" style="display: none;">
   <a href="#" id="btnUnbreakAgent">🔓 Finalizar Descanso</a>
   <a href="#" id="btnForceLoginAgent">🔑 Iniciar Sesión</a>
+  <a href="#" id="btnSpyAgent">👂 Escuchar Llamada</a>
 </div>
 </div>
