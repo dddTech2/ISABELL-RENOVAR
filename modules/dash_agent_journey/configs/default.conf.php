@@ -22,7 +22,7 @@
   $Id: default.conf.php $ */
 
 global $arrConfModule;
-$arrConfModule['module_name'] = 'agent_journey';
+$arrConfModule['module_name'] = 'dash_agent_journey';
 $arrConfModule['templates_dir'] = 'themes';
 $arrConfModule['cadena_dsn'] = "mysql://asterisk:asterisk@localhost/call_center";
 ?>

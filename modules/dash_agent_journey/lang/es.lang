@@ -45,5 +45,6 @@ $arrLangModule=array(
 "Hold Included"                     => "Incluir Hold",
 "Yes"                               => "Sí",
 "No"                                => "No",
+    "Dash Agent Journey" => "Dashboard de Jornada de Agente",
 );
 ?>

@@ -45,5 +45,6 @@ $arrLangModule=array(
 "Hold Included"                     => "Hold Included",
 "Yes"                               => "Yes",
 "No"                                => "No",
+    "Dash Agent Journey" => "Dash Agent Journey",
 );
 ?>

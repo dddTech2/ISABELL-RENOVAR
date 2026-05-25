@@ -2,6 +2,7 @@
 {$CHARTJS}
 
 <style>
+{literal}
 /* Modern Dashboard Styling */
 .dash-wrapper {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -155,6 +156,7 @@
     border-radius: 8px;
     display: none;
 }
+{/literal}
 </style>
 
 <div class="dash-wrapper" style="position: relative;">
@@ -213,6 +215,8 @@
 </div>
 
 <script>
+var moduleName = '{$MODULE_NAME}';
+{literal}
 var activityChartInstance = null;
 var agentCompareChartInstance = null;
 
@@ -235,7 +239,7 @@ function fetchMetrics() {
     var holdincluded = document.getElementsByName('holdincluded')[0]?.value || '';
 
     var params = new URLSearchParams({
-        menu: '{$MODULE_NAME}',
+        menu: moduleName,
         rawmode: 'yes',
         action: 'get_metrics',
         date_start: date_start,
@@ -359,4 +363,5 @@ function renderDashboard(data) {
 document.addEventListener("DOMContentLoaded", function() {
     fetchMetrics();
 });
+{/literal}
 </script>
