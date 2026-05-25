@@ -376,6 +376,7 @@ function renderDashboard(data) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { position: 'bottom' }
             }
@@ -407,6 +408,7 @@ function renderDashboard(data) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 x: { stacked: false },
                 y: { 
@@ -434,7 +436,7 @@ function renderDashboard(data) {
             tdAgent.innerText = ev.name + " (" + ev.number + ")";
             
             var tdTime = document.createElement('td');
-            tdTime.innerText = ev.fecha_inicio;
+            tdTime.innerText = ev.event_time;
             
             var tdEvent = document.createElement('td');
             tdEvent.innerText = translateEventType(ev.event_type);
