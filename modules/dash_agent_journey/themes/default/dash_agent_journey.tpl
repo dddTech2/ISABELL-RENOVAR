@@ -207,7 +207,9 @@
     <div class="dash-main">
         <div class="chart-container">
             <h3>Distribución de Actividad</h3>
-            <canvas id="activityChart"></canvas>
+            <div style="position: relative; height: 350px; width: 100%;">
+                <canvas id="activityChart"></canvas>
+            </div>
         </div>
 
         <div class="agent-stats">
@@ -228,7 +230,9 @@
     
     <div class="chart-container">
         <h3>Comparación de Agentes (Minutos)</h3>
-        <canvas id="agentCompareChart" height="100"></canvas>
+        <div style="position: relative; height: 350px; width: 100%;">
+            <canvas id="agentCompareChart"></canvas>
+        </div>
     </div>
 
     <div class="event-log-container">
