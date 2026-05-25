@@ -1483,6 +1483,24 @@ class PaloSantoConsola
                 $reporte['statuscount']['finished'] = $reporte['statuscount']['success'] - $iNumLlamadasAtendidas;
                 ksort($reporte['statuscount']);
             }
+
+            // Check Asterisk active channels to detect agents in manual/non-dialer calls
+            if (!empty($reporte['agents'])) {
+                $activeChannels = $this->_obtenerCanalesActivosAsterisk();
+                foreach ($reporte['agents'] as $sAgente => &$agent) {
+                    if ($agent['status'] == 'oncall') {
+                        continue;
+                    }
+                    if ($agent['status'] == 'online' || $agent['status'] == 'paused') {
+                        $callInfo = $this->_detectarLlamadaActivaAgente($agent, $activeChannels);
+                        if ($callInfo !== FALSE) {
+                            $agent['status'] = 'oncall';
+                            $agent['callinfo'] = $callInfo;
+                        }
+                    }
+                }
+            }
+
             return $reporte;
         } catch (Exception $e) {
             $this->errMsg = '(internal) '.__METHOD__.': '.$e->getMessage();
@@ -2129,6 +2147,103 @@ class PaloSantoConsola
             return FALSE;
         }
     }
+
+    private function _obtenerCanalesActivosAsterisk()
+    {
+        $output = shell_exec("asterisk -rx 'core show channels concise'");
+        $channels = array();
+        if (empty($output)) {
+            return $channels;
+        }
+
+        $lines = explode("\n", trim($output));
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) {
+                continue;
+            }
+            $fields = explode("!", $line);
+            if (count($fields) >= 12) {
+                $channels[] = array(
+                    'channel'      => $fields[0],
+                    'context'      => $fields[1],
+                    'exten'        => $fields[2],
+                    'state'        => $fields[4],
+                    'application'  => $fields[5],
+                    'data'         => $fields[6],
+                    'callerid'     => $fields[7],
+                    'duration'     => (int)$fields[8],
+                    'peerchannel'  => $fields[10],
+                    'uniqueid'     => $fields[11]
+                );
+            }
+        }
+        return $channels;
+    }
+
+    private function _detectarLlamadaActivaAgente($agent, $activeChannels)
+    {
+        $identifiers = array();
+        if (!empty($agent['extension'])) {
+            $identifiers[] = $agent['extension'];
+        }
+        if (!empty($agent['channel'])) {
+            $identifiers[] = $agent['channel'];
+        }
+        if (!empty($agent['agentchannel'])) {
+            $identifiers[] = $agent['agentchannel'];
+            $parts = explode('/', $agent['agentchannel']);
+            if (count($parts) > 1) {
+                $identifiers[] = $parts[1];
+            }
+        }
+        $identifiers = array_unique(array_filter($identifiers));
+
+        foreach ($activeChannels as $chan) {
+            foreach ($identifiers as $id) {
+                $escapedId = preg_quote($id, '/');
+                if (ctype_digit($id)) {
+                    $pattern = '/^(PJSIP|SIP|IAX2|Local)\/' . $escapedId . '(-|@|\/|$)/i';
+                } else {
+                    $pattern = '/^' . $escapedId . '(-|@|\/|$)/i';
+                }
+
+                if (preg_match($pattern, $chan['channel']) || preg_match($pattern, $chan['peerchannel'])) {
+                    $callNumber = $chan['exten'];
+                    if (empty($callNumber) || $callNumber == 's') {
+                        $callNumber = $chan['callerid'];
+                    }
+                    if (preg_match('/<(\d+)>/', $callNumber, $matches)) {
+                        $callNumber = $matches[1];
+                    }
+
+                    $trunk = '-';
+                    if (!empty($chan['peerchannel'])) {
+                        $trunkParts = explode('-', $chan['peerchannel']);
+                        $trunk = $trunkParts[0];
+                    }
+
+                    $linkstart = date('Y-m-d H:i:s', time() - $chan['duration']);
+
+                    return array(
+                        'callstatus'   => 'Up',
+                        'calltype'     => 'manual',
+                        'campaign_id'  => NULL,
+                        'callid'       => 0,
+                        'callnumber'   => $callNumber,
+                        'queuenumber'  => NULL,
+                        'dialstart'    => $linkstart,
+                        'dialend'      => $linkstart,
+                        'queuestart'   => NULL,
+                        'linkstart'    => $linkstart,
+                        'trunk'        => $trunk,
+                    );
+                }
+            }
+        }
+        return FALSE;
+    }
+
 
 }
 
