@@ -166,12 +166,7 @@ function showDashboard($pDB, $smarty, $module_name, $local_templates_dir)
 
     $html = $smarty->fetch("$local_templates_dir/dash_agent_journey.tpl");
 
-    $oGrid = new paloSantoGrid($smarty);
-    $oGrid->setTitle(_tr('Dash Agent Journey'));
-    $oGrid->showFilter($htmlFilter);
-    $oGrid->customHTML($html);
-
-    return $oGrid->fetchGrid();
+    return $html;
 }
 
 function getMetricsJSON($pDB, $module_name) {
