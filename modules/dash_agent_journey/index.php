@@ -279,7 +279,8 @@ function calculateMetrics($recordset) {
         "agentStats" => $agentStats,
         "bestAgent" => $bestAgent,
         "worstAgent" => $worstAgent,
-        "raw_events" => count($recordset)
+        "raw_events" => count($recordset),
+        "recent_events" => array_slice($recordset, -100) // Last 100 events
     );
 }
 ?>
