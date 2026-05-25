@@ -88,7 +88,7 @@
 /* Main Content Area */
 .dash-main {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
     margin-bottom: 20px;
 }
@@ -228,9 +228,14 @@
                 <div class="subtext" id="agt-out-sub">Totales Marcadas</div>
             </div>
             <div class="card orange">
-                <h3>Desviación TMO</h3>
+                <h3>Tiempo Medio Operación (TMO)</h3>
                 <div class="value" id="agt-tmo">0 min</div>
                 <div class="subtext" id="agt-tmo-sub">vs Campaña</div>
+            </div>
+            <div class="card red">
+                <h3>Tiempo Total Logueado</h3>
+                <div class="value" id="agt-total-login">0 min</div>
+                <div class="subtext">Turno Actual</div>
             </div>
         </div>
         
@@ -245,6 +250,12 @@
                 <h3>Resultados de Marcación (Combinados)</h3>
                 <div style="position: relative; height: 300px; width: 100%;">
                     <canvas id="agtStatusChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Distribución de Pausas (Asesor)</h3>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="agtBreakChart"></canvas>
                 </div>
             </div>
         </div>
@@ -379,6 +390,8 @@ function renderDashboard(data, isAgentFiltered) {
         
         var diff = a.tmo - parseFloat(globalTMO);
         document.getElementById('agt-tmo-sub').innerText = (diff > 0 ? '+'+diff.toFixed(1) : diff.toFixed(1)) + ' min vs Campaña';
+        
+        document.getElementById('agt-total-login').innerText = formatMinutes(a.login_time) + ' min';
 
         var ctxAgtTime = document.getElementById('agtTimeChart').getContext('2d');
         charts['agtTime'] = new Chart(ctxAgtTime, {
@@ -411,6 +424,24 @@ function renderDashboard(data, isAgentFiltered) {
                         (a.campaign_statuses['Congestion']||0) + (a.manual_statuses['Congestion']||0)
                     ],
                     backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+        
+        var agtBt = a.break_types || {};
+        var agtBNames = Object.keys(agtBt);
+        var agtBValues = agtBNames.map(k => parseFloat(formatMinutes(agtBt[k].duration)));
+        
+        var ctxAgtBrk = document.getElementById('agtBreakChart').getContext('2d');
+        charts['agtBreak'] = new Chart(ctxAgtBrk, {
+            type: 'bar',
+            data: {
+                labels: agtBNames.length ? agtBNames : ['Sin Datos'],
+                datasets: [{
+                    label: 'Tiempo en Pausa (Min)',
+                    data: agtBValues.length ? agtBValues : [0],
+                    backgroundColor: '#fd7e14'
                 }]
             },
             options: { responsive: true, maintainAspectRatio: false }

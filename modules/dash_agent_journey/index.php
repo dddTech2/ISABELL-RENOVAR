@@ -251,8 +251,9 @@ function calculateMetrics($recordset) {
                 $status = ucfirst(strtolower(trim($m[1]))); // e.g., "Success", "Busy"
                 
                 // Convert common statuses to our standard bins
-                if (in_array($status, ['Busy', 'Congestion', 'Failed', 'Success', 'No answer'])) {
-                    if ($status == 'No answer') $status = 'Failed';
+                if (in_array(strtolower($status), ['busy', 'congestion', 'failed', 'success', 'no answer', 'answered'])) {
+                    if (strtolower($status) == 'no answer') $status = 'Failed';
+                    if (strtolower($status) == 'answered') $status = 'Success';
                 } else {
                     $status = 'Unknown';
                 }
