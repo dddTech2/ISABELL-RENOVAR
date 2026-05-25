@@ -165,11 +165,41 @@ class paloSantoAgentJourney
                 AND calls.start_time BETWEEN ? AND ?
                 $agentFilter";
 
+        // Manual outgoing call events from Asterisk CDR
+        $sqlManualOutgoing = "
+            SELECT agent.id, agent.number, agent.name,
+                cdr.calldate AS event_time,
+                'MANUAL_OUTGOING' AS event_type,
+                CONCAT(cdr.dst, ' (', cdr.disposition, ')') AS event_detail,
+                cdr.billsec AS duration
+            FROM asteriskcdrdb.cdr cdr
+            JOIN agent ON cdr.src = agent.number
+            WHERE cdr.calldate BETWEEN ? AND ?
+                AND cdr.uniqueid NOT IN (SELECT uniqueid FROM calls WHERE uniqueid IS NOT NULL)
+                AND cdr.uniqueid NOT IN (SELECT uniqueid FROM call_entry WHERE uniqueid IS NOT NULL)
+                AND cdr.dcontext != 'from-queue'
+                $agentFilter";
+
+        // Manual incoming call events from Asterisk CDR
+        $sqlManualIncoming = "
+            SELECT agent.id, agent.number, agent.name,
+                cdr.calldate AS event_time,
+                'MANUAL_INCOMING' AS event_type,
+                CONCAT(cdr.src, ' (', cdr.disposition, ')') AS event_detail,
+                cdr.billsec AS duration
+            FROM asteriskcdrdb.cdr cdr
+            JOIN agent ON cdr.dst = agent.number
+            WHERE cdr.calldate BETWEEN ? AND ?
+                AND cdr.uniqueid NOT IN (SELECT uniqueid FROM calls WHERE uniqueid IS NOT NULL)
+                AND cdr.uniqueid NOT IN (SELECT uniqueid FROM call_entry WHERE uniqueid IS NOT NULL)
+                AND cdr.dcontext != 'from-queue'
+                $agentFilter";
+
         // Combine all queries with UNION
-        $sqlFull = "($sqlLogin) UNION ALL ($sqlLogout) UNION ALL ($sqlBreak) UNION ALL ($sqlIncoming) UNION ALL ($sqlOutgoing) ORDER BY event_time ASC";
+        $sqlFull = "($sqlLogin) UNION ALL ($sqlLogout) UNION ALL ($sqlBreak) UNION ALL ($sqlIncoming) UNION ALL ($sqlOutgoing) UNION ALL ($sqlManualOutgoing) UNION ALL ($sqlManualIncoming) ORDER BY event_time ASC";
 
         // Build parameters array (each query needs date range + optional agent)
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 7; $i++) {
             $params[] = $sFechaInicio;
             $params[] = $sFechaFin;
             if ($idAgent !== NULL) {

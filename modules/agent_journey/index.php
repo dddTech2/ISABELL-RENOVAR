@@ -188,6 +188,8 @@ function listadoAgentJourney($pDB, $smarty, $module_name, $local_templates_dir)
         'BREAK' => _tr('Break'),
         'INCOMING_CALL' => _tr('Incoming Call'),
         'OUTGOING_CALL' => _tr('Outgoing Call'),
+        'MANUAL_INCOMING' => _tr('Manual Incoming'),
+        'MANUAL_OUTGOING' => _tr('Manual Outgoing'),
     );
 
     foreach ($recordSlice as $tupla) {
