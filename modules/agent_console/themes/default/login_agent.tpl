@@ -295,6 +295,43 @@ $(document).ready(function() {
             }
         }
     });
+
+    // Global paste handler to route pasted number to WebPhone input field
+    $(document).on('paste', function(e) {
+        var $numInput = $('#webphone-number');
+        if ($numInput.length === 0 || $numInput.prop('disabled')) {
+            return;
+        }
+
+        // Allow standard paste if focused on another input/textarea
+        var activeEl = document.activeElement;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT' || activeEl.isContentEditable)) {
+            if (activeEl.id !== 'webphone-number') {
+                return;
+            }
+        }
+
+        var clipboardData = e.originalEvent ? e.originalEvent.clipboardData : e.clipboardData;
+        if (clipboardData) {
+            var pastedText = clipboardData.getData('text');
+            if (pastedText) {
+                $numInput.val(pastedText.trim());
+                $numInput.focus();
+                e.preventDefault();
+            }
+        }
+    });
+
+    // Global Escape key handler to hangup/cancel calls
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
+            var phoneState = WebPhone.getState();
+            if (phoneState && phoneState.callState !== 'idle') {
+                WebPhone.hangup();
+                e.preventDefault();
+            }
+        }
+    });
 });
 </script>
 {/literal}
