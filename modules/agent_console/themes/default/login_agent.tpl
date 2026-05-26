@@ -41,7 +41,10 @@
 {* Columna izquierda: WebPhone *}
 <div id="new-webphone-wrapper" style="width: 280px; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-radius: 4px;">
     <div class="webphone-panel" style="margin: 0; border: none;">
-        <div class="webphone-header">WebPhone</div>
+        <div class="webphone-header">
+            <span>WebPhone</span>
+            <button type="button" id="webphone-btn-pip" class="webphone-pip-icon-btn" title="Flotar WebPhone (Picture-in-Picture)" style="display: none;">⧉</button>
+        </div>
         <div id="webphone-status" class="webphone-status webphone-unregistered">
             <span class="status-indicator"></span>
             <span class="status-text">Conectando...</span>
@@ -330,6 +333,96 @@ $(document).ready(function() {
                 WebPhone.hangup();
                 e.preventDefault();
             }
+        }
+    });
+
+    // Check if Document Picture-in-Picture is supported
+    if ('documentPictureInPicture' in window) {
+        $('#webphone-btn-pip').show();
+    }
+
+    $('#webphone-btn-pip').on('click', async function() {
+        if (!('documentPictureInPicture' in window)) {
+            return;
+        }
+
+        if (window.pipWindow) {
+            window.pipWindow.focus();
+            return;
+        }
+
+        try {
+            const pipWindow = await window.documentPictureInPicture.requestWindow({
+                width: 280,
+                height: 380
+            });
+            window.pipWindow = pipWindow;
+
+            const $webphone = $('.webphone-panel');
+            const $originalParent = $webphone.parent();
+
+            pipWindow.document.body.append($webphone[0]);
+            pipWindow.document.body.style.margin = '0';
+            pipWindow.document.body.style.padding = '0';
+            pipWindow.document.body.style.overflow = 'hidden';
+            pipWindow.document.body.style.backgroundColor = '#f5f5f5';
+
+            // Copy styles
+            [...document.styleSheets].forEach((styleSheet) => {
+                try {
+                    const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+                    const style = document.createElement('style');
+                    style.textContent = cssRules;
+                    pipWindow.document.head.appendChild(style);
+                } catch (e) {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.type = styleSheet.type || 'text/css';
+                    link.media = styleSheet.media.mediaText;
+                    link.href = styleSheet.href;
+                    pipWindow.document.head.appendChild(link);
+                }
+            });
+
+            // Hide PiP button inside PiP window
+            $(pipWindow.document.body).find('#webphone-btn-pip').hide();
+
+            // Bind shortcuts inside the PiP document
+            $(pipWindow.document).on('keydown', function(e) {
+                if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
+                    var phoneState = WebPhone.getState();
+                    if (phoneState && phoneState.callState !== 'idle') {
+                        WebPhone.hangup();
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            $(pipWindow.document).on('paste', function(e) {
+                var $numInput = $(pipWindow.document).find('#webphone-number');
+                if ($numInput.length === 0 || $numInput.prop('disabled')) {
+                    return;
+                }
+
+                var clipboardData = e.originalEvent ? e.originalEvent.clipboardData : e.clipboardData;
+                if (clipboardData) {
+                    var pastedText = clipboardData.getData('text');
+                    if (pastedText) {
+                        $numInput.val(pastedText.trim());
+                        $numInput.focus();
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            pipWindow.addEventListener("pagehide", (event) => {
+                window.pipWindow = null;
+                $originalParent.append($webphone[0]);
+                $('#webphone-btn-pip').show();
+            });
+
+        } catch (err) {
+            console.error('Failed to open PiP window:', err);
         }
     });
 });

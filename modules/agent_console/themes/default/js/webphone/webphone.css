@@ -553,3 +553,24 @@
     border-color: #007bff;
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
+
+
+/* Picture-in-Picture float button */
+.webphone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.webphone-pip-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    color: #666;
+    transition: color 0.2s;
+    line-height: 1;
+}
+.webphone-pip-icon-btn:hover {
+    color: #5cb85c;
+}
