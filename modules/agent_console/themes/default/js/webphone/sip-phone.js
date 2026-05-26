@@ -5,6 +5,10 @@
  */
 
 var WebPhone = (function() {
+    function $(selector) {
+        var context = (window.pipWindow && !window.pipWindow.closed) ? window.pipWindow.document : document;
+        return window.jQuery(selector, context);
+    }
     var userAgent = null;
     var registerer = null;
     var currentSession = null;
@@ -1052,6 +1056,7 @@ var WebPhone = (function() {
         toggleMute: toggleMute,
         sendDTMF: sendDTMF,
         setMute: setMute,
+        getAudioElements: function() { return audioElements; },
         isRegistered: function() { return state.registered; },
         getState: function() { return state; },
         isAutoAnswer: function() { return state.autoAnswer; }

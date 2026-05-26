@@ -358,9 +358,14 @@ $(document).ready(function() {
             }
         });
 
+        var $wp = function(selector) {
+            var context = (window.pipWindow && !window.pipWindow.closed) ? window.pipWindow.document : document;
+            return $(selector, context);
+        };
+
         // Bind UI events
         $('#webphone-btn-call').on('click', function() {
-            var number = $('#webphone-number').val().trim();
+            var number = $wp('#webphone-number').val().trim();
             if (number) {
                 WebPhone.call(number);
             }
@@ -504,6 +509,13 @@ $(document).ready(function() {
                 const $originalParent = $webphone.parent();
 
                 pipWindow.document.body.append($webphone[0]);
+
+                // Move audio elements to PiP window body to prevent background throttling
+                if (typeof WebPhone !== 'undefined' && WebPhone.getAudioElements) {
+                    const audios = WebPhone.getAudioElements();
+                    if (audios.remote) pipWindow.document.body.append(audios.remote);
+                    if (audios.local) pipWindow.document.body.append(audios.local);
+                }
                 pipWindow.document.body.style.margin = '0';
                 pipWindow.document.body.style.padding = '0';
                 pipWindow.document.body.style.overflow = 'hidden';
@@ -560,6 +572,13 @@ $(document).ready(function() {
                 pipWindow.addEventListener("pagehide", (event) => {
                     window.pipWindow = null;
                     $originalParent.append($webphone[0]);
+
+                    // Restore audio elements to main body on PiP close
+                    if (typeof WebPhone !== 'undefined' && WebPhone.getAudioElements) {
+                        const audios = WebPhone.getAudioElements();
+                        if (audios.remote) document.body.append(audios.remote);
+                        if (audios.local) document.body.append(audios.local);
+                    }
                     $('#webphone-btn-pip').show();
                 });
 
