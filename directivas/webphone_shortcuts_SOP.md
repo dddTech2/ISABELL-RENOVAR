@@ -33,7 +33,16 @@
 - El script debe buscar la sección de código donde se asocian otros eventos del WebPhone (por ejemplo, después de los eventos de clic del WebPhone o cerca del listener de keydown de DTMF) e insertar limpiamente el código JS.
 - Ejecutar el script y validar que los archivos finales queden correctamente formados.
 
+### 3. Recuperación del Foco en Estado Ocioso (Idle)
+- Cuando el estado de la llamada pasa a no ocioso (ej. `calling`, `connected`), el campo `#webphone-number` se deshabilita, lo que hace que pierda el foco (blur) automáticamente en el navegador.
+- Al colgar o cancelarse la llamada (`idle`), el campo se habilita nuevamente, pero no recupera el foco por sí solo, impidiendo que el usuario vuelva a presionar Enter de inmediato para reintentar la llamada.
+- En `sip-phone.js` dentro del caso `idle` en `updateUI()`:
+  - Verificar que el usuario no esté enfocado escribiendo en otro input o textarea (para no interrumpir su trabajo en otros formularios).
+  - Si no está escribiendo en otro lado, aplicar `.focus()` al elemento `#webphone-number` para que pueda presionar Enter y marcar/reintentar la llamada inmediatamente.
+
 ## Restricciones y Trampas Conocidas
+- **Pérdida de Foco por Input Deshabilitado:** Deshabilitar un input remueve el foco de forma nativa. Al rehabilitarlo en el estado `idle`, se debe restaurar el foco programáticamente a `#webphone-number` sólo si el foco activo actual (`document.activeElement`) no pertenece a otro campo editable o formulario de la consola del agente.
 - **Evitar Colisiones de Pegado:** Si el agente está en medio de llenar un formulario de la consola o el campo de contraseña en el login, el pegado global NO debe robarse el texto ni asignarlo al WebPhone. El chequeo de `document.activeElement` es obligatorio.
 - **Evitar Colisiones de Escape:** Si hay elementos modales nativos que se cierran con Escape, verificar que no interfiera negativamente, aunque la llamada tiene prioridad de colgado si no está ociosa.
 - **Compatibilidad de Navegadores:** Usar `e.originalEvent.clipboardData` preferiblemente para jQuery, con caída a `e.clipboardData`.
+

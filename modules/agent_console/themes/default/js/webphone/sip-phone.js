@@ -266,6 +266,11 @@ var WebPhone = (function() {
                 $muteBtn.hide();
                 setMute(false); // Reset mute state when idle
                 $('#webphone-number').prop('disabled', false);
+                var activeEl = document.activeElement;
+                var isTypingElsewhere = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable) && activeEl.id !== 'webphone-number';
+                if (!isTypingElsewhere) {
+                    $('#webphone-number').focus();
+                }
                 stopRingtoneSound();
                 break;
             case 'calling':
