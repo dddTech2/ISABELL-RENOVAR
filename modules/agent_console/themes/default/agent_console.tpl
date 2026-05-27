@@ -177,6 +177,7 @@
                         <button id="webphone-btn-mute" class="webphone-btn webphone-btn-mute" style="display:none;">Silenciar</button>
                         <button id="webphone-btn-answer" class="webphone-btn webphone-btn-answer" style="display:none;">Contestar</button>
                         <button id="webphone-btn-reconnect" class="webphone-btn webphone-btn-reconnect" style="display:none;">Reconectar</button>
+                        <button id="webphone-btn-gestion" class="webphone-btn webphone-btn-gestion" style="display:none;">Gestión</button>
                     </div>
                 </div>
             </div>
@@ -385,6 +386,28 @@ $(document).ready(function() {
 
         $('#webphone-btn-reconnect').on('click', function() {
             WebPhone.reconnect();
+        });
+
+        $('#webphone-btn-gestion').on('click', function() {
+            var $gestionQuickBtn = window.jQuery('.btn-quickbreak').filter(function() {
+                var text = window.jQuery(this).text().toUpperCase();
+                return text.indexOf('GESTION') !== -1 || text.indexOf('GESTIÓN') !== -1;
+            });
+            if ($gestionQuickBtn.length === 0) {
+                console.warn('[WebPhone] No se encontró descanso de GESTIÓN configurado');
+                return;
+            }
+            var breakid = $gestionQuickBtn.data('breakid');
+            if (typeof estadoCliente !== 'undefined' && estadoCliente.break_id != null) {
+                if (estadoCliente.break_id == breakid) {
+                    if (typeof do_unbreak === 'function') do_unbreak();
+                } else {
+                    if (typeof do_unbreak === 'function') do_unbreak();
+                }
+            } else {
+                window.jQuery('#break_select').val(breakid);
+                if (typeof do_break === 'function') do_break();
+            }
         });
 
         // Auto-answer toggle

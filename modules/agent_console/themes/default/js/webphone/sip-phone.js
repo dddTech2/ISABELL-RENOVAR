@@ -241,18 +241,38 @@ var WebPhone = (function() {
         // Remove all call-related classes
         $status.removeClass('webphone-calling webphone-ringing-incoming webphone-connected');
 
+        var $gestionBtn = $('#webphone-btn-gestion');
         if (state.authFailed) {
             $status.removeClass('webphone-registered webphone-unregistered').addClass('webphone-auth-failed');
             $statusText.text('Error de autenticacion');
+            $gestionBtn.hide();
         } else if (state.lastCallError) {
             $status.removeClass('webphone-registered webphone-connected').addClass('webphone-unregistered');
             $statusText.text(state.lastCallError);
+            $gestionBtn.hide();
         } else if (state.registered) {
             $status.removeClass('webphone-unregistered webphone-auth-failed').addClass('webphone-registered');
             $statusText.text('Registrado');
+            $gestionBtn.show();
+            
+            // Sync active state based on global estadoCliente if available
+            if (typeof estadoCliente !== 'undefined' && estadoCliente.break_id != null) {
+                var $gestionQuickBtn = window.jQuery('.btn-quickbreak').filter(function() {
+                    var text = window.jQuery(this).text().toUpperCase();
+                    return text.indexOf('GESTION') !== -1 || text.indexOf('GESTIÓN') !== -1;
+                });
+                if ($gestionQuickBtn.length && $gestionQuickBtn.data('breakid') == estadoCliente.break_id) {
+                    $gestionBtn.addClass('active').text('Fin Gestión');
+                } else {
+                    $gestionBtn.removeClass('active').text('Gestión');
+                }
+            } else {
+                $gestionBtn.removeClass('active').text('Gestión');
+            }
         } else {
             $status.removeClass('webphone-registered webphone-auth-failed').addClass('webphone-unregistered');
             $statusText.text('No registrado');
+            $gestionBtn.hide();
         }
 
         // Show reconnect button only on auth failure

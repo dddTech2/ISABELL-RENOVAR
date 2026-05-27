@@ -574,3 +574,17 @@
 .webphone-pip-icon-btn:hover {
     color: #5cb85c;
 }
+
+/* Gestión Break Button Styles */
+.webphone-btn-gestion {
+    background: #ff7675;
+    color: white;
+}
+.webphone-btn-gestion:hover:not(:disabled) {
+    background: #ee5253;
+}
+.webphone-btn-gestion.active {
+    background: #d63031 !important;
+    color: white !important;
+    animation: break-pulse 1.5s infinite;
+}

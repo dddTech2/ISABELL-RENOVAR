@@ -361,6 +361,21 @@ function initialize_client_state(nuevoEstado)
             }
         });
     }
+
+    // WebPhone Gestión break button initialization
+    var context = (window.pipWindow && !window.pipWindow.closed) ? window.pipWindow.document : document;
+    var $gestionBtn = $('#webphone-btn-gestion', context);
+    if ($gestionBtn.length) {
+        var $gestionQuickBtn = $('.btn-quickbreak').filter(function() {
+            var text = $(this).text().toUpperCase();
+            return text.indexOf('GESTION') !== -1 || text.indexOf('GESTIÓN') !== -1;
+        });
+        if ($gestionQuickBtn.length && $gestionQuickBtn.data('breakid') == estadoCliente.break_id) {
+            $gestionBtn.addClass('active').text('Fin Gestión');
+        } else {
+            $gestionBtn.removeClass('active').text('Gestión');
+        }
+    }
 }
 
 // Inicializar el cronómetro con el valor de segundos indicado
@@ -1011,6 +1026,19 @@ function manejarRespuestaStatus(respuesta)
 					$btn.prop('disabled', true);
 				}
 			});
+
+			// Sync WebPhone Gestión break button
+			var context = (window.pipWindow && !window.pipWindow.closed) ? window.pipWindow.document : document;
+			var $gestionBtn = $('#webphone-btn-gestion', context);
+			if ($gestionBtn.length) {
+				var $gestionQuickBtn = $('.btn-quickbreak').filter(function() {
+					var text = $(this).text().toUpperCase();
+					return text.indexOf('GESTION') !== -1 || text.indexOf('GESTIÓN') !== -1;
+				});
+				if ($gestionQuickBtn.length && $gestionQuickBtn.data('breakid') == respuesta[i].break_id) {
+					$gestionBtn.addClass('active').text('Fin Gestión');
+				}
+			}
 			break;
 		case 'breakexit':
 			// El agente ha salido del break
@@ -1020,6 +1048,10 @@ function manejarRespuestaStatus(respuesta)
 				.addClass('issabel-callcenter-boton-break')
 				.children('span').text(respuesta[i].txt_btn_break);
 			$('.btn-quickbreak').removeClass('active-break').prop('disabled', false);
+
+			// Sync WebPhone Gestión break button
+			var context = (window.pipWindow && !window.pipWindow.closed) ? window.pipWindow.document : document;
+			$('#webphone-btn-gestion', context).removeClass('active').text('Gestión');
 			break;
 		case 'holdenter':
 			estadoCliente.onhold = true;
