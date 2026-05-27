@@ -382,7 +382,7 @@ var WebPhone = (function() {
                     bundlePolicy: 'balanced',
                     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
                 },
-                iceGatheringTimeout: 500
+                iceGatheringTimeout: 2000
             },
             displayName: config.extension,
             authorizationUsername: config.extension,

@@ -510,6 +510,47 @@ $(document).ready(function() {
 
                 pipWindow.document.body.append($webphone[0]);
 
+                // Monkey patch WebRTC and audio APIs to execute in the context of the active PiP window
+                // This prevents background tab throttling/delays when the parent window is inactive
+                if (pipWindow.navigator && pipWindow.navigator.mediaDevices) {
+                    window.__originalGetUserMedia = navigator.mediaDevices.getUserMedia;
+                    navigator.mediaDevices.getUserMedia = function(constraints) {
+                        if (window.pipWindow && !window.pipWindow.closed && window.pipWindow.navigator && window.pipWindow.navigator.mediaDevices) {
+                            console.log('[WebPhone] Redirecting getUserMedia to PiP window context');
+                            return window.pipWindow.navigator.mediaDevices.getUserMedia(constraints);
+                        }
+                        return window.__originalGetUserMedia.call(navigator.mediaDevices, constraints);
+                    };
+                }
+
+                if (pipWindow.RTCPeerConnection) {
+                    window.__originalRTCPeerConnection = window.RTCPeerConnection;
+                    window.RTCPeerConnection = function(config) {
+                        if (window.pipWindow && !window.pipWindow.closed && window.pipWindow.RTCPeerConnection) {
+                            console.log('[WebPhone] Redirecting RTCPeerConnection to PiP window context');
+                            return new window.pipWindow.RTCPeerConnection(config);
+                        }
+                        return new window.__originalRTCPeerConnection(config);
+                    };
+                    window.RTCPeerConnection.prototype = window.__originalRTCPeerConnection.prototype;
+                }
+
+                const AudioCtxClass = pipWindow.AudioContext || pipWindow.webkitAudioContext;
+                if (AudioCtxClass) {
+                    window.__originalAudioContext = window.AudioContext;
+                    window.__originalWebkitAudioContext = window.webkitAudioContext;
+                    window.AudioContext = function() {
+                        if (window.pipWindow && !window.pipWindow.closed) {
+                            console.log('[WebPhone] Redirecting AudioContext to PiP window context');
+                            return new AudioCtxClass();
+                        }
+                        return new window.__originalAudioContext();
+                    };
+                    if (window.webkitAudioContext) {
+                        window.webkitAudioContext = window.AudioContext;
+                    }
+                }
+
                 // Move audio elements to PiP window body to prevent background throttling
                 if (typeof WebPhone !== 'undefined' && WebPhone.getAudioElements) {
                     const audios = WebPhone.getAudioElements();
@@ -572,6 +613,24 @@ $(document).ready(function() {
                 pipWindow.addEventListener("pagehide", (event) => {
                     window.pipWindow = null;
                     $originalParent.append($webphone[0]);
+
+                    // Restore WebRTC and AudioContext APIs
+                    if (window.__originalGetUserMedia) {
+                        navigator.mediaDevices.getUserMedia = window.__originalGetUserMedia;
+                        delete window.__originalGetUserMedia;
+                    }
+                    if (window.__originalRTCPeerConnection) {
+                        window.RTCPeerConnection = window.__originalRTCPeerConnection;
+                        delete window.__originalRTCPeerConnection;
+                    }
+                    if (window.__originalAudioContext) {
+                        window.AudioContext = window.__originalAudioContext;
+                        delete window.__originalAudioContext;
+                    }
+                    if (window.__originalWebkitAudioContext) {
+                        window.webkitAudioContext = window.__originalWebkitAudioContext;
+                        delete window.__originalWebkitAudioContext;
+                    }
 
                     // Restore audio elements to main body on PiP close
                     if (typeof WebPhone !== 'undefined' && WebPhone.getAudioElements) {
