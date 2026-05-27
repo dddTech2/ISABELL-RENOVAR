@@ -28,7 +28,7 @@
 {* Atributos de la campaña elegida *}
 
 <div class="flex-container">
-    <table class="campaign-table" border="1">
+    <table class="campaign-table">
         <tr>
             <th colspan="3" class="table-header">Campaign Configuration</th>
         </tr>
@@ -42,7 +42,7 @@
         </tr>
     </table>
 
-    <table class="campaign-table" border="1">
+    <table class="campaign-table">
         <tr>
             <th colspan="2" class="table-header">Dates and Times</th>
         </tr>
@@ -62,7 +62,7 @@
 </div>
 
 <div class="flex-container">
-    <table class="campaign-table" border="1">
+    <table class="campaign-table">
         <tr>
             <th colspan="3" class="table-header">Campaign Counters</th>
         </tr>
@@ -76,7 +76,7 @@
         </tr>
     </table>
 
-    <table class="campaign-table" border="1">
+    <table class="campaign-table">
         <tr>
             <th colspan="3" class="table-header">Call Duration Statistics</th>
         </tr>
@@ -93,7 +93,7 @@
 
 <div class="flex-container">
     {literal}{{#if outgoing }}{/literal}
-    <table class="campaign-table-outgoing" border="1">
+    <table class="campaign-table-outgoing">
         <tr>
             <th colspan="4" class="table-header">Outgoing Call Details</th>
         </tr>
@@ -123,7 +123,7 @@
         </tr>
     </table>
     {literal}{{else}}{/literal}
-    <table class="campaign-table" border="1">
+    <table class="campaign-table">
         <tr>
             <th colspan="3" class="table-header">Incoming Call Details</th>
         </tr>
@@ -161,7 +161,7 @@
             <table style="table-layout: fixed; width: 100%;">
                 {literal}{{#view tagName="tbody"}}
                 {{#each llamadasMarcando}}
-                <tr style="background-color:#00e7ffa6" {{bindAttr class="reciente"}}>
+                <tr class="dialing-call-row" {{bindAttr class="reciente"}}>
                     <td width="20%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{estado}}</td>
                     <td width="30%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{numero}}</td>
                     <td width="30%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{troncal}}</td>

@@ -796,26 +796,26 @@ function agentColor(status, canal) {
 setTimeout(() => {
 
   if (status.includes('Busy') || status.includes('Ocupado') || status.includes('Occupé') || status.includes('Meşgul') || status.includes('Занят')) {
-    color = 'yellow';
-  } else if (status.includes('On break') || status.includes('En descanso') || status.includes('En pause') || status.includes('На перерыве') || status.includes('Molada')) {
-    color = 'orange';
+    color = '#fef7e0'; // Soft pastel yellow/amber
+  } else if (status.includes('On break') || status.includes('En descanso') || status.includes('En pause') || status.includes('На перерыве') || status.includes('Molada') || status.includes('descanso')) {
+    color = '#fff0e6'; // Soft pastel orange
   } else {
     switch (status) {
       case 'Ringing':
-        color = '#a6db14';
+        color = '#e8f0fe'; // Soft light blue
         break;
       case 'Free':
       case 'Libre':
-      case 'Свободен':
+      case 'Свобоden':
       case 'Boşta':
-        color = '#01D50A';
+        color = '#e6f4ea'; // Soft pastel green
         break;
       case 'Busy':
       case 'Ocupado':
       case 'Occupé':
       case 'Занят':
       case 'Meşgul':
-        color = 'yellow';
+        color = '#fef7e0'; // Soft pastel yellow/amber
         break;
       case 'Unavailable':
       case 'Logged out':
@@ -823,10 +823,10 @@ setTimeout(() => {
       case 'Déconnecté':
       case 'Вышел':
       case 'Yok':
-        color = '#f33';
+        color = '#fce8e6'; // Soft pastel red
         break;
       default:
-        color = 'white';
+        color = '#ffffff';
         break;
     }
   }
@@ -843,22 +843,22 @@ function agentUpdateColor(status, canal) {
   let statusImage;
 
   if (status.includes('Busy') || status.includes('Ocupado') || status.includes('Occupé') || status.includes('Meşgul') || status.includes('Занят')) {
-    color = 'yellow';
+    color = '#fef7e0'; // Soft pastel yellow/amber
     statusImage = '<img src="/modules/' + module_name + '/images/agent-busy.png" alt="Ocupado" style="padding-right:1px;"/>';
-  } else if (status.includes('On break') || status.includes('En descanso') || status.includes('En pause') || status.includes('На перерыве') || status.includes('Molada')) {
-    color = 'orange';
+  } else if (status.includes('On break') || status.includes('En descanso') || status.includes('En pause') || status.includes('На перерыве') || status.includes('Molada') || status.includes('descanso')) {
+    color = '#fff0e6'; // Soft pastel orange
     statusImage = '<img src="/modules/' + module_name + '/images/agent-break.png" alt="En Break" style="padding-right:1px;"/>';
   } else {
     switch (status) {
       case 'Ringing':
-        color = '#a6db14';
+        color = '#e8f0fe'; // Soft light blue
         statusImage = '<img src="/modules/' + module_name + '/images/agent-ringing.gif" alt="Desconectado" style="padding-right:1px;"/>';
         break;
       case 'Free':
       case 'Libre':
-      case 'Свободен':
+      case 'Свобоden':
       case 'Boşta':
-        color = '#01D50A';
+        color = '#e6f4ea'; // Soft pastel green
         statusImage = '<img src="/modules/' + module_name + '/images/agent-available.png" alt="Disponible" style="padding-right:1px;"/>';
         break;
       case 'Busy':
@@ -866,7 +866,7 @@ function agentUpdateColor(status, canal) {
       case 'Occupé':
       case 'Занят':
       case 'Meşgul':
-        color = 'yellow';
+        color = '#fef7e0'; // Soft pastel yellow/amber
         statusImage = '<img src="/modules/' + module_name + '/images/agent-busy.png" alt="Ocupado" style="padding-right:1px;"/>';
         break;
       case 'Logged out':
@@ -874,11 +874,11 @@ function agentUpdateColor(status, canal) {
       case 'Déconnecté':
       case 'Вышел':
       case 'Yok':
-        color = '#f33';
+        color = '#fce8e6'; // Soft pastel red
         statusImage = '<img src="/modules/' + module_name + '/images/agent-disconected.png" alt="Desconectado" style="padding-right:1px;"/>';
         break;
       default:
-        color = 'white';
+        color = '#ffffff';
         statusImage = '';
         break;
     }
