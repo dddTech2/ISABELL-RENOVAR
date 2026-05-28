@@ -174,6 +174,49 @@
     </td>
     <td width="65%" style="vertical-align: top;">
         <b>{$ETIQUETA_AGENTES}:</b>
+        {literal}
+        <!-- Resumen de Agentes -->
+        <div class="summary-wrapper">
+            <div class="summary-card">
+                <span class="summary-num">{{resumenAgentes.total}}</span>
+                <span class="summary-lbl">Total</span>
+            </div>
+            <div class="summary-card status-free">
+                <span class="summary-num">{{resumenAgentes.libre}}</span>
+                <span class="summary-lbl">Libres</span>
+            </div>
+            <div class="summary-card status-busy">
+                <span class="summary-num">{{resumenAgentes.ocupado}}</span>
+                <span class="summary-lbl">Ocupados</span>
+            </div>
+            <div class="summary-card status-break">
+                <span class="summary-num">{{resumenAgentes.descanso}}</span>
+                <span class="summary-lbl">Descanso</span>
+            </div>
+            <div class="summary-card status-offline">
+                <span class="summary-num">{{resumenAgentes.nologon}}</span>
+                <span class="summary-lbl">No logon</span>
+            </div>
+        </div>
+
+        <!-- Filtros de Agentes -->
+        <div class="filters-wrapper">
+            <div class="filter-item">
+                <label>Estado:</label>
+                {{view Ember.Select
+                    contentBinding="App.estadosFiltro"
+                    valueBinding="filtroEstado"
+                    class="filter-select" }}
+            </div>
+            <div class="filter-item">
+                <label>Prefijo Extensión:</label>
+                {{view Ember.TextField
+                    valueBinding="filtroExtension"
+                    placeholder="Ej. 20"
+                    class="filter-input" }}
+            </div>
+        </div>
+        {/literal}
         <table class="titulo" style="table-layout: fixed; width: 100%;">
             <tr>
                 <td width="35%" nowrap="nowrap">{$ETIQUETA_AGENTE}</td>
@@ -186,7 +229,7 @@
         <div class="llamadas agent-table-wrapper" {literal}{{bindAttr style="alturaLlamada"}}{/literal}>
             <table style="table-layout: fixed; width: 100%;">
                 {literal}{{#view tagName="tbody"}}
-                {{#each agentes}}
+                {{#each agentesFiltrados}}
                 <tr  {{bindAttr class="canal"}} {{bindAttr data-agent="canal" data-status="estado"}}>
                     <td width="35%" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{nombre}}">{{nombre}}</td>
                     <td width="15%" nowrap="nowrap"><div class="trAgent">{{image}}{{estado}}</div></td>

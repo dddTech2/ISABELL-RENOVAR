@@ -35,13 +35,22 @@
   - **IMPORTANTE:** Definir `overflow-y: auto !important;` en `div.llamadas` para mantener habilitado el scroll vertical y evitar que la lista de agentes u otros registros se corten.
 - **Clase de Llamadas Marcando:**
   - Añadir una clase `.dialing-call-row` con un color de fondo pastel azul `#e8f0fe` para eliminar el color cyan chillón del código HTML.
+- **Estilos de Filtros y Resumen (Cards):**
+  - Añadir clases para el contenedor de resumen `.summary-wrapper`, tarjetas `.summary-card`, números `.summary-num` y etiquetas `.summary-lbl` con bordes izquierdos de color acentuado según el estado.
+  - Añadir estilos para los controles del filtro `.filters-wrapper`, select `.filter-select` y textfield `.filter-input`.
 
-### 2. Limpieza de Plantilla (`informacion_campania.tpl`)
-- Quitar todos los atributos `border="1"` en las etiquetas `<table>` del archivo `informacion_campania.tpl`.
-- Reemplazar el estilo inline `style="background-color:#00e7ffa6"` por la clase CSS `.dialing-call-row` en la fila de llamadas marcando.
+### 2. Plantilla HTML (`informacion_campania.tpl`)
+- Quitar todos los atributos `border="1"` en las etiquetas `<table>`.
+- Reemplazar el estilo inline `style="background-color:#00e7ffa6"` por la clase CSS `.dialing-call-row`.
+- **Panel de Resumen y Filtros:** [NUEVO] Insertar antes de la tabla de agentes el bloque de resumen (`summary-card` para Total, Libres, Ocupados, Descanso, No logon) y la barra de filtros (Select de estado y TextField de prefijo de extensión).
+- **Iterar sobre Filtrados:** [NUEVO] Cambiar `{{#each agentes}}` por `{{#each agentesFiltrados}}` para reflejar la reactividad de los filtros.
 
-### 3. Suavizado de Colores de Alerta en JS (`javascript.js`)
-- En `modules/campaign_monitoring/themes/default/js/javascript.js`, cambiar los colores de estado en las funciones `agentColor` y `agentUpdateColor`:
+### 3. Lógica de Filtros, Resumen y Optimización de Renderizado (`javascript.js`)
+- **Evitar saltos de Scroll (Flicker):** [NUEVO] En `sortAgentsByStatus()`, verificar si el orden ordenado de canales difiere del orden actual. Si no hay cambios, no limpiar la lista para evitar re-renderizados (flicker). Si cambia, guardar `scrollTop`, limpiar/llenar y restaurar `scrollTop` en el siguiente ciclo de Ember (`Ember.Run.next`).
+- **Resumen y Contadores de Estados:** [NUEVO] Definir la propiedad computada `resumenAgentes` en `App.CampaignDetailsController` para contar dinámicamente cuántos agentes están en cada estado.
+- **Filtros Reactivos:** [NUEVO] Definir las propiedades `filtroEstado` y `filtroExtension`, y la propiedad computada `agentesFiltrados` para filtrar en tiempo real por el estado elegido (Todos, Libre, Ocupado, En descanso, No logon) y por el inicio/prefijo del número de extensión.
+- **Suavizado de Colores de Alerta:**
+  - En `javascript.js`, cambiar los colores de estado en las funciones `agentColor` y `agentUpdateColor` a tonos pastel suaves.
   - **Ringing:** Cambiar de `#a6db14` a `#e8f0fe` (azul suave/claro).
   - **Libre/Disponible:** Cambiar de `#01D50A` a `#e6f4ea` (verde pastel).
   - **Ocupado/Busy:** Cambiar de `yellow` a `#fef7e0` (amarillo/ámbar pastel).

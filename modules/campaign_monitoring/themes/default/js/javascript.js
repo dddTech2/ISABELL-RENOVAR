@@ -207,6 +207,8 @@ $(document).ready(function() {
 		respuesta:			null
 	});
 	
+	App.estadosFiltro = ['Todos', 'Libre', 'Ocupado', 'En descanso', 'No logon'];
+
 	App.CampaignDetailsController = Ember.ObjectController.extend({
 		estadoClienteHash:	null,		
 		longPoll:			null,	// Objeto de POST largo
@@ -218,6 +220,102 @@ $(document).ready(function() {
 		agentes:			null,
 		registroVisible: false,
 		registro:			null,
+		filtroEstado: 'Todos',
+		filtroExtension: '',
+
+		resumenAgentes: function() {
+			var agentes = this.get('agentes') || [];
+			var total = agentes.length;
+			var libre = 0;
+			var ocupado = 0;
+			var descanso = 0;
+			var nologon = 0;
+
+			agentes.forEach(function(agent) {
+				var statusLower = (agent.get('estado') || '').toLowerCase();
+				var isLoggedOut = statusLower.indexOf('no logon') !== -1 || 
+				                  statusLower.indexOf('logged out') !== -1 || 
+				                  statusLower.indexOf('no logoneado') !== -1 ||
+				                  statusLower.indexOf('déconnecté') !== -1;
+				var isFree = statusLower.indexOf('libre') !== -1 || 
+				             statusLower.indexOf('free') !== -1 || 
+				             statusLower.indexOf('boşta') !== -1;
+				var isBusy = statusLower.indexOf('ocupado') !== -1 || 
+				             statusLower.indexOf('busy') !== -1 || 
+				             statusLower.indexOf('oncall') !== -1 ||
+				             statusLower.indexOf('on call') !== -1;
+				var isBreak = statusLower.indexOf('break') !== -1 || 
+				              statusLower.indexOf('descanso') !== -1 || 
+				              statusLower.indexOf('pause') !== -1 || 
+				              statusLower.indexOf('paused') !== -1;
+
+				if (isLoggedOut) nologon++;
+				else if (isBusy) ocupado++;
+				else if (isBreak) descanso++;
+				else if (isFree) libre++;
+			});
+
+			return {
+				total: total,
+				libre: libre,
+				ocupado: ocupado,
+				descanso: descanso,
+				nologon: nologon
+			};
+		}.property('agentes.@each.estado'),
+
+		agentesFiltrados: function() {
+			var estado = this.get('filtroEstado');
+			var extPrefix = this.get('filtroExtension');
+			var agentes = this.get('agentes');
+			if (!agentes) return [];
+
+			return agentes.filter(function(agent) {
+				// 1. Filtrar por estado
+				if (estado !== 'Todos') {
+					var agentStatus = agent.get('estado') || '';
+					var statusLower = agentStatus.toLowerCase();
+					
+					if (estado === 'No logon') {
+						var isLoggedOut = statusLower.indexOf('no logon') !== -1 || 
+						                  statusLower.indexOf('logged out') !== -1 || 
+						                  statusLower.indexOf('no logoneado') !== -1 ||
+						                  statusLower.indexOf('déconnecté') !== -1;
+						if (!isLoggedOut) return false;
+					} else if (estado === 'Libre') {
+						var isFree = statusLower.indexOf('libre') !== -1 || 
+						             statusLower.indexOf('free') !== -1 || 
+						             statusLower.indexOf('boşta') !== -1;
+						if (!isFree) return false;
+					} else if (estado === 'Ocupado') {
+						var isBusy = statusLower.indexOf('ocupado') !== -1 || 
+						             statusLower.indexOf('busy') !== -1 || 
+						             statusLower.indexOf('oncall') !== -1 ||
+						             statusLower.indexOf('on call') !== -1;
+						if (!isBusy) return false;
+					} else if (estado === 'En descanso') {
+						var isBreak = statusLower.indexOf('break') !== -1 || 
+						              statusLower.indexOf('descanso') !== -1 || 
+						              statusLower.indexOf('pause') !== -1 || 
+						              statusLower.indexOf('paused') !== -1;
+						if (!isBreak) return false;
+					}
+				}
+
+				// 2. Filtrar por prefijo de extension
+				if (extPrefix && extPrefix.trim() !== '') {
+					var prefix = extPrefix.trim();
+					var canal = agent.get('canal') || '';
+					var matches = canal.match(/(?:PJSIP|SIP|IAX2|Local)\/(\d+)/i);
+					var ext = matches ? matches[1] : '';
+					if (ext.indexOf(prefix) !== 0) {
+						return false;
+					}
+				}
+
+				return true;
+			});
+		}.property('agentes.@each.estado', 'agentes.@each.canal', 'filtroEstado', 'filtroExtension'),
 		alturaLlamada: function() {
 			return this.get('registroVisible') ? 'height: 180px;' : 'height: 400px;';
 		}.property('registroVisible'),
@@ -526,7 +624,7 @@ $(document).ready(function() {
 		},
 		// Sort agents: offline (logged out) agents at the bottom
 		sortAgentsByStatus: function() {
-			var offlineStatuses = ['Logged out', 'No Logoneado', 'Déconnecté', 'Не в системе', 'Oturumu Kapalı'];
+			var offlineStatuses = ['Logged out', 'No Logoneado', 'Déconnecté', 'Не в системе', 'Oturumu Kapalı', 'No logon'];
 			var self = this;
 			var sortedAgents = this.agentes.toArray().sort(function(a, b) {
 				var aOffline = offlineStatuses.indexOf(a.get('estado')) !== -1;
@@ -535,11 +633,37 @@ $(document).ready(function() {
 				if (!aOffline && bOffline) return -1;
 				return 0;
 			});
+
+			var orderChanged = false;
+			if (this.agentes.length !== sortedAgents.length) {
+				orderChanged = true;
+			} else {
+				for (var i = 0; i < sortedAgents.length; i++) {
+					if (this.agentes.objectAt(i) !== sortedAgents[i]) {
+						orderChanged = true;
+						break;
+					}
+				}
+			}
+
+			if (!orderChanged) {
+				this.agentes.forEach(function(agent) {
+					agentColor(agent.get('estado'), agent.get('canal'));
+				});
+				return;
+			}
+
+			var container = $('.agent-table-wrapper');
+			var scrollTop = container.scrollTop();
+
 			this.agentes.clear();
 			sortedAgents.forEach(function(agent) {
 				self.agentes.pushObject(agent);
-				// Re-apply color styling after re-adding
 				agentColor(agent.get('estado'), agent.get('canal'));
+			});
+
+			Ember.run.next(function() {
+				container.scrollTop(scrollTop);
 			});
 		},
 		actions: {
