@@ -267,5 +267,6 @@
   <a href="#" id="btnUnbreakAgent">🔓 Finalizar Descanso</a>
   <a href="#" id="btnForceLoginAgent">🔑 Iniciar Sesión</a>
   <a href="#" id="btnSpyAgent">👂 Escuchar Llamada</a>
+  <a href="#" id="btnReregisterWebphone" style="display: none;">🔄 Re-registrar WebPhone</a>
 </div>
 </div>

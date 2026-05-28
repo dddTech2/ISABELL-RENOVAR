@@ -1007,6 +1007,13 @@ function manejarRespuestaStatus(respuesta)
 		}
 
 		switch (respuesta[i].event) {
+		case 'force-webphone-register':
+			if (typeof WebPhone !== 'undefined') {
+				WebPhone.reconnect();
+			} else {
+				window.location.reload();
+			}
+			break;
 		case 'logged-out':
 			// El refresco debería conducir a la página de login
 			window.open('index.php?menu=' + module_name, "_self");

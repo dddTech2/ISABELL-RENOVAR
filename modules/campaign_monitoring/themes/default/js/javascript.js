@@ -804,8 +804,10 @@ $(document).ready(function() {
 		              statusLower.indexOf('oncall') !== -1 || 
 		              statusLower.indexOf('on call') !== -1 || 
 		              statusLower.indexOf('occupé') !== -1;
+
+		var hasPhoneOff = statusLower.indexOf('phone off') !== -1 || statusLower.indexOf('phoneoff') !== -1;
 		
-		if (hasPaused || hasLoggedOut || hasBusy) {
+		if (hasPaused || hasLoggedOut || hasBusy || hasPhoneOff) {
 			if (hasPaused) {
 				$('#btnUnbreakAgent').show().text('🔓 Finalizar Descanso');
 			} else {
@@ -827,6 +829,12 @@ $(document).ready(function() {
 				}
 			} else {
 				$('#btnSpyAgent').hide();
+			}
+			
+			if (hasPhoneOff) {
+				$('#btnReregisterWebphone').show().text('🔄 Re-registrar WebPhone');
+			} else {
+				$('#btnReregisterWebphone').hide();
 			}
 			
 			$('#agentContextMenu').css({
@@ -911,6 +919,31 @@ $(document).ready(function() {
 					alert('Error al escuchar llamada: ' + response.message);
 				} else {
 					alert('Llamada de escucha iniciada hacia su extensión.');
+				}
+			}, 'json');
+		}
+	});
+
+	$(document).on('click', '#btnReregisterWebphone', function(e) {
+		e.preventDefault();
+		var agentChannel = $('#agentContextMenu').data('agentChannel');
+		if (agentChannel) {
+			var btn = $(this);
+			btn.text('Procesando...');
+			
+			$.post('index.php', {
+				menu: module_name,
+				rawmode: 'yes',
+				action: 'reregisterWebphone',
+				agentchannel: agentChannel
+			}, function(response) {
+				$('#agentContextMenu').fadeOut(100);
+				btn.text('🔄 Re-registrar WebPhone');
+				
+				if (response.status !== 'success') {
+					alert('Error al re-registrar: ' + response.message);
+				} else {
+					alert('Se envió la señal de re-registro al WebPhone.');
 				}
 			}, 'json');
 		}

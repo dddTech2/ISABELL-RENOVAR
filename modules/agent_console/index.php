@@ -1781,6 +1781,18 @@ function manejarSesionActiva_checkStatus($module_name, $smarty,
             count($respuestaEventos) <= 0 && count($respuesta) <= 0
             && time() - $iTimestampInicio <  $iTimeoutPoll) {
 
+            // Check for force-webphone-register flag
+            if (!empty($sExtension)) {
+                $flagFile = "/tmp/webphone_register_" . $sExtension . ".flag";
+                if (file_exists($flagFile)) {
+                    @unlink($flagFile);
+                    $respuesta[] = array(
+                        'event' => 'force-webphone-register'
+                    );
+                    break;
+                }
+            }
+
             $listaEventos = $oPaloConsola->esperarEventoSesionActiva();
             if (is_null($listaEventos)) {
                 // Ocurrió una excepción al esperar eventos

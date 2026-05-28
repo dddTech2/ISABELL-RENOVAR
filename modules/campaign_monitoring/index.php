@@ -58,6 +58,9 @@ function _moduleContent(&$smarty, $module_name)
     case 'forceLoginAgent':
         $sContenido = manejarMonitoreo_forceLoginAgent($module_name, $smarty, $local_templates_dir);
         break;
+    case 'reregisterWebphone':
+        $sContenido = manejarMonitoreo_reregisterWebphone($module_name, $smarty, $local_templates_dir);
+        break;
     case 'spyAgent':
         $sContenido = manejarMonitoreo_spyAgent($module_name, $smarty, $local_templates_dir);
         break;
@@ -1009,6 +1012,45 @@ function manejarMonitoreo_forceLoginAgent($module_name, $smarty, $sDirLocalPlant
 }
 
 
+
+function manejarMonitoreo_reregisterWebphone($module_name, $smarty, $sDirLocalPlantillas)
+{
+    $respuesta = array(
+        'status'    =>  'success',
+        'message'   =>  '(no message)',
+    );
+
+    $sAgentChannel = getParameter('agentchannel');
+    if (is_null($sAgentChannel) || $sAgentChannel == '') {
+        $respuesta['status'] = 'error';
+        $respuesta['message'] = 'Canal de agente no válido';
+    } else {
+        $agentExt = null;
+        if (preg_match('/(?:Agent|SIP|PJSIP|IAX2)\/(\d+)/i', $sAgentChannel, $matches)) {
+            $agentExt = $matches[1];
+        } elseif (preg_match('/^(\d+)$/', $sAgentChannel, $matches)) {
+            $agentExt = $matches[1];
+        }
+
+        if (is_null($agentExt)) {
+            $respuesta['status'] = 'error';
+            $respuesta['message'] = 'No se pudo obtener la extensión del agente del canal: ' . $sAgentChannel;
+        } else {
+            $flagFile = "/tmp/webphone_register_" . $agentExt . ".flag";
+            if (@file_put_contents($flagFile, "1") === FALSE) {
+                $respuesta['status'] = 'error';
+                $respuesta['message'] = 'No se pudo crear la señal de re-registro';
+            } else {
+                $respuesta['status'] = 'success';
+                $respuesta['message'] = 'Señal enviada a la extensión ' . $agentExt;
+            }
+        }
+    }
+
+    $json = new Services_JSON();
+    Header('Content-Type: application/json');
+    return $json->encode($respuesta);
+}
 
 function manejarMonitoreo_spyAgent($module_name, $smarty, $sDirLocalPlantillas)
 {
