@@ -394,8 +394,10 @@ var WebPhone = (function() {
                 server: wsServer,
                 traceSip: false,
                 connectionTimeout: 5,
-                reconnectionAttempts: 0,
-                reconnectionTimeout: 0
+                keepAliveInterval: 15,
+                keepAliveDebounce: 10,
+                reconnectionAttempts: 10,
+                reconnectionTimeout: 5
             },
             sessionDescriptionHandlerFactoryOptions: {
                 peerConnectionConfiguration: {
@@ -426,6 +428,7 @@ var WebPhone = (function() {
 
             userAgent.transport.onConnect = function() {
                 log('WebSocket connected');
+                registerAttempts = 0; // Reset attempts on successful connection
                 if (!state.authFailed) {
                     register();
                 }
@@ -1062,6 +1065,17 @@ var WebPhone = (function() {
             log('getSenders is not supported on peerConnection');
         }
     }
+
+    // Handle tab visibility change to recover connection if throttled
+    window.jQuery(document).on('visibilitychange', function() {
+        if (!document.hidden) {
+            log('Tab became visible. Checking connection status...');
+            if (userAgent && !state.registered && !state.authFailed) {
+                log('WebPhone is not registered. Forcing reconnect...');
+                reconnect();
+            }
+        }
+    });
 
     // Public API
     return {
