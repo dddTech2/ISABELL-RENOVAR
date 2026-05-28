@@ -225,6 +225,19 @@ $(document).ready(function() {
 
 		resumenAgentes: function() {
 			var agentes = this.get('agentes') || [];
+			var extPrefix = this.get('filtroExtension');
+
+			// Filtrar agentes por el prefijo de la extensión
+			if (extPrefix && extPrefix.trim() !== '') {
+				var prefix = extPrefix.trim();
+				agentes = agentes.filter(function(agent) {
+					var canal = agent.get('canal') || '';
+					var matches = canal.match(/(?:PJSIP|SIP|IAX2|Local)\/(\d+)/i);
+					var ext = matches ? matches[1] : '';
+					return ext.indexOf(prefix) === 0;
+				});
+			}
+
 			var total = agentes.length;
 			var libre = 0;
 			var ocupado = 0;
@@ -262,7 +275,7 @@ $(document).ready(function() {
 				descanso: descanso,
 				nologon: nologon
 			};
-		}.property('agentes.@each.estado'),
+		}.property('agentes.@each.estado', 'filtroExtension'),
 
 		agentesFiltrados: function() {
 			var estado = this.get('filtroEstado');

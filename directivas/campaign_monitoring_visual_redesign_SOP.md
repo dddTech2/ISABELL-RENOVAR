@@ -47,7 +47,7 @@
 
 ### 3. Lógica de Filtros, Resumen y Optimización de Renderizado (`javascript.js`)
 - **Evitar saltos de Scroll (Flicker):** [NUEVO] En `sortAgentsByStatus()`, verificar si el orden ordenado de canales difiere del orden actual. Si no hay cambios, no limpiar la lista para evitar re-renderizados (flicker). Si cambia, guardar `scrollTop`, limpiar/llenar y restaurar `scrollTop` en el siguiente ciclo de Ember (`Ember.Run.next`).
-- **Resumen y Contadores de Estados:** [NUEVO] Definir la propiedad computada `resumenAgentes` en `App.CampaignDetailsController` para contar dinámicamente cuántos agentes están en cada estado.
+- **Resumen y Contadores de Estados:** [NUEVO] Definir la propiedad computada `resumenAgentes` en `App.CampaignDetailsController` para contar dinámicamente cuántos agentes están en cada estado (filtrando por `filtroExtension` para que se actualice según la búsqueda del coordinador).
 - **Filtros Reactivos:** [NUEVO] Definir las propiedades `filtroEstado` y `filtroExtension`, y la propiedad computada `agentesFiltrados` para filtrar en tiempo real por el estado elegido (Todos, Libre, Ocupado, En descanso, No logon) y por el inicio/prefijo del número de extensión.
 - **Suavizado de Colores de Alerta:**
   - En `javascript.js`, cambiar los colores de estado en las funciones `agentColor` y `agentUpdateColor` a tonos pastel suaves.
