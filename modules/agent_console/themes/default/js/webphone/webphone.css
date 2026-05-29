@@ -588,3 +588,13 @@
     color: white !important;
     animation: break-pulse 1.5s infinite;
 }
+
+
+/* Loading state for quick breaks */
+.btn-quickbreak.state-loading {
+    background: #ffc107 !important;
+    color: #212529 !important;
+    border-color: #d39e00 !important;
+    cursor: wait !important;
+    opacity: 0.85;
+}

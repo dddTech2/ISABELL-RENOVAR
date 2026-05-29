@@ -723,29 +723,69 @@ function login_estado_ocioso()
 
 function do_break()
 {
+	// Optimistic UI: Disable all break buttons and show loading state
+	var breakid = $('#break_select').val();
+	$('.btn-quickbreak').prop('disabled', true);
+	$('#btn_togglebreak').button('disable').children('span').text('Pausando...');
+	
+	// Disable WebPhone gestion button if it is a GESTION break
+	var context = (window.pipWindow && !window.pipWindow.closed) ? window.pipWindow.document : document;
+	var $gestionBtn = $('#webphone-btn-gestion', context);
+	
+	var $gestionQuickBtn = $('.btn-quickbreak').filter(function() {
+		var text = $(this).text().toUpperCase();
+		return text.indexOf('GESTION') !== -1 || text.indexOf('GESTIÓN') !== -1;
+	});
+	if ($gestionQuickBtn.length && $gestionQuickBtn.data('breakid') == breakid) {
+		if ($gestionBtn.length) {
+			$gestionBtn.prop('disabled', true).text('Procesando...');
+		}
+		$gestionQuickBtn.addClass('active-break state-loading');
+	}
+
 	$.post('index.php?menu=' + module_name + '&rawmode=yes', {
 		menu:		module_name,
 		rawmode:	'yes',
 		action:		'break',
-		breakid:	$('#break_select').val()
+		breakid:	breakid
 	},
 	function (respuesta) {
 		verificar_error_session(respuesta);
         if (respuesta['action'] == 'error') {
         	mostrar_mensaje_error(respuesta['message']);
+        	
+        	// Restore buttons on error
+        	$('.btn-quickbreak').removeClass('active-break state-loading').prop('disabled', false);
+        	$('#btn_togglebreak').button('enable').children('span').text('Descanso');
+        	if ($gestionBtn.length) {
+        		$gestionBtn.prop('disabled', false).text('Gestión');
+        	}
         }
-
-        // El cambio de estado de la interfaz se delega a la revisión
-        // periódica del estado del agente.
-        // TODO: definir evento agentbreakenter y agentbreakexit
 	}, 'json')
 	.fail(function() {
 		mostrar_mensaje_error('Failed to connect to server to run request!');
+		
+    	// Restore buttons on fail
+    	$('.btn-quickbreak').removeClass('active-break state-loading').prop('disabled', false);
+    	$('#btn_togglebreak').button('enable').children('span').text('Descanso');
+    	if ($gestionBtn.length) {
+    		$gestionBtn.prop('disabled', false).text('Gestión');
+    	}
 	});
 }
 
 function do_unbreak()
 {
+	// Optimistic UI: disable toggle break button
+	$('#btn_togglebreak').button('disable').children('span').text('Quitando...');
+	
+	// Disable WebPhone gestion button if exists
+	var context = (window.pipWindow && !window.pipWindow.closed) ? window.pipWindow.document : document;
+	var $gestionBtn = $('#webphone-btn-gestion', context);
+	if ($gestionBtn.length) {
+		$gestionBtn.prop('disabled', true).text('Procesando...');
+	}
+
 	// Botón está en estado de quitar break
     $.post('index.php?menu=' + module_name + '&rawmode=yes', {
 		menu:		module_name,
@@ -756,14 +796,22 @@ function do_unbreak()
 		verificar_error_session(respuesta);
         if (respuesta['action'] == 'error') {
         	mostrar_mensaje_error(respuesta['message']);
+        	
+        	// Restore buttons on error
+        	$('#btn_togglebreak').button('enable').children('span').text('Fin Descanso');
+        	if ($gestionBtn.length) {
+        		$gestionBtn.prop('disabled', false).text('Fin Gestión');
+        	}
         }
-
-        // El cambio de estado de la interfaz se delega a la revisión
-        // periódica del estado del agente.
-        // TODO: definir evento agentbreakenter y agentbreakexit
 	}, 'json')
 	.fail(function() {
 		mostrar_mensaje_error('Failed to connect to server to run request!');
+		
+    	// Restore buttons on fail
+    	$('#btn_togglebreak').button('enable').children('span').text('Fin Descanso');
+    	if ($gestionBtn.length) {
+    		$gestionBtn.prop('disabled', false).text('Fin Gestión');
+    	}
 	});
 }
 
@@ -1025,7 +1073,8 @@ function manejarRespuestaStatus(respuesta)
 				.removeClass('issabel-callcenter-boton-break')
 				.addClass('issabel-callcenter-boton-unbreak')
 				.children('span').text(respuesta[i].txt_btn_break);
-			$('.btn-quickbreak').each(function() {
+			$('#btn_togglebreak').button('enable'); // Ensure it is enabled!
+			$('.btn-quickbreak').removeClass('state-loading').each(function() {
 				var $btn = $(this);
 				if ($btn.data('breakid') == respuesta[i].break_id) {
 					$btn.addClass('active-break').prop('disabled', true);
@@ -1043,7 +1092,9 @@ function manejarRespuestaStatus(respuesta)
 					return text.indexOf('GESTION') !== -1 || text.indexOf('GESTIÓN') !== -1;
 				});
 				if ($gestionQuickBtn.length && $gestionQuickBtn.data('breakid') == respuesta[i].break_id) {
-					$gestionBtn.addClass('active').text('Fin Gestión');
+					$gestionBtn.addClass('active').text('Fin Gestión').prop('disabled', false);
+				} else {
+					$gestionBtn.removeClass('active').text('Gestión').prop('disabled', false);
 				}
 			}
 			break;
@@ -1054,11 +1105,12 @@ function manejarRespuestaStatus(respuesta)
 				.removeClass('issabel-callcenter-boton-unbreak')
 				.addClass('issabel-callcenter-boton-break')
 				.children('span').text(respuesta[i].txt_btn_break);
-			$('.btn-quickbreak').removeClass('active-break').prop('disabled', false);
+			$('#btn_togglebreak').button('enable'); // Ensure it is enabled!
+			$('.btn-quickbreak').removeClass('active-break state-loading').prop('disabled', false);
 
 			// Sync WebPhone Gestión break button
 			var context = (window.pipWindow && !window.pipWindow.closed) ? window.pipWindow.document : document;
-			$('#webphone-btn-gestion', context).removeClass('active').text('Gestión');
+			$('#webphone-btn-gestion', context).removeClass('active').text('Gestión').prop('disabled', false);
 			break;
 		case 'holdenter':
 			estadoCliente.onhold = true;
