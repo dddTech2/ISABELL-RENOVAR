@@ -111,5 +111,11 @@ $arrLangModule = array(
     "Load Contacts for Campaign" => "Cargar Contactos para Campaña",
     "Available uploaders" => "Cargadores disponibles",
     "Options for" => "Opciones para",
+    "Duplicate" => "Duplicar",
+    "Duplicate Campaign" => "Duplicar Campaña",
+    "New Campaign Name" => "Nuevo Nombre de la Campaña",
+    "Please select a campaign to duplicate" => "Por favor seleccione una campaña para duplicar",
+    "Campaign duplicated successfully" => "Campaña duplicada exitosamente",
+    "Error when duplicating the Campaign" => "Error al duplicar la campaña",
 );
 ?>

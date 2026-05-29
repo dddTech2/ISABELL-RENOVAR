@@ -78,6 +78,9 @@ function _moduleContent(&$smarty, $module_name)
     case 'load_contacts':
         $contenidoModulo = loadCampaignContacts($pDB, $smarty, $module_name, $local_templates_dir);
         break;
+    case 'duplicate_campaign':
+        $contenidoModulo = duplicateCampaign($pDB, $smarty, $module_name, $local_templates_dir);
+        break;
     case 'list_campaign':
     default:
         $contenidoModulo = listCampaign($pDB, $smarty, $module_name, $local_templates_dir);
@@ -122,6 +125,16 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
                 $smarty->assign("mb_title", _tr('Desactivate Error'));
                 $smarty->assign("mb_message", _tr('Error when desactivating the Campaign').': '.$oCampaign->errMsg);
             }
+        }
+    }
+    // Interceptar duplicación de campaña
+    if (isset($_POST['duplicate'])) {
+        if (!is_null($id_campaign)) {
+            Header("Location: ?menu=$module_name&action=duplicate_campaign&id_campaign=$id_campaign");
+            return '';
+        } else {
+            $smarty->assign("mb_title", _tr("Validation Error"));
+            $smarty->assign("mb_message", _tr("Please select a campaign to duplicate"));
         }
     }
 
@@ -201,6 +214,7 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
         'activate'      =>  _tr('Activate'),
         'deactivate'    =>  _tr('Desactivate'),
     ), null, 'change_status');
+    $oGrid->addSubmitAction('duplicate', _tr('Duplicate'));
     $oGrid->deleteList('Are you sure you wish to delete campaign?', 'delete', _tr('Delete'));
     $oGrid->setData($arrData);
     $oGrid->showFilter($smarty->fetch("$local_templates_dir/filter-list-campaign.tpl"));
@@ -909,6 +923,104 @@ function displayCampaignCSV($pDB, $smarty, $module_name, $local_templates_dir)
     }
 
     return $sDatosCSV;
+}
+
+function duplicateCampaign($pDB, $smarty, $module_name, $local_templates_dir)
+{
+    $id_campaign = (isset($_REQUEST['id_campaign']) && ctype_digit($_REQUEST['id_campaign']))
+        ? (int)$_REQUEST['id_campaign'] : NULL;
+    if (is_null($id_campaign)) {
+        Header("Location: ?menu=$module_name");
+        return '';
+    }
+
+    if (isset($_POST['cancel'])) {
+        Header("Location: ?menu=$module_name");
+        return '';
+    }
+
+    $oCamp = new paloSantoCampaignCC($pDB);
+    $arrCampaign = $oCamp->getCampaigns(null, null, $id_campaign);
+    if (!is_array($arrCampaign) || count($arrCampaign) == 0) {
+        $smarty->assign("mb_title", _tr('Unable to read campaign'));
+        $smarty->assign("mb_message", _tr('Cannot read campaign').' - '.$oCamp->errMsg);
+        return '';
+    }
+
+    $original_name = $arrCampaign[0]['name'];
+    $new_name = '';
+
+    if (isset($_POST['save_duplicate'])) {
+        $new_name = isset($_POST['new_name']) ? trim($_POST['new_name']) : '';
+        if ($new_name == '') {
+            $smarty->assign("mb_title", _tr("Validation Error"));
+            $smarty->assign("mb_message", _tr("Name Campaign can't be empty"));
+        } else {
+            // Check if name already exists
+            $tupla = $pDB->getFirstRowQuery(
+                'SELECT COUNT(*) AS N FROM campaign WHERE name = ?', TRUE, array($new_name));
+            if (is_array($tupla) && $tupla['N'] > 0) {
+                $smarty->assign("mb_title", _tr("Validation Error"));
+                $smarty->assign("mb_message", _tr("Name Campaign already exists"));
+            } else {
+                // Perform duplication in database
+                $pDB->beginTransaction();
+                $bExito = TRUE;
+
+                // 1. Create campaign copy
+                // Select details from original campaign, insert with new name
+                $sSQLDuplicate = <<<SQL_DUP
+INSERT INTO campaign (
+    name, max_canales, retries, trunk, context, queue,
+    datetime_init, datetime_end, daytime_init, daytime_end, script, id_url, id_url2, id_url3, estatus
+)
+SELECT ?, max_canales, retries, trunk, context, queue,
+       datetime_init, datetime_end, daytime_init, daytime_end, script, id_url, id_url2, id_url3, 'I'
+FROM campaign WHERE id = ?
+SQL_DUP;
+                if ($pDB->genQuery($sSQLDuplicate, array($new_name, $id_campaign))) {
+                    $new_campaign_id = $pDB->getLastInsertId();
+                    if ($new_campaign_id !== FALSE) {
+                        // 2. Duplicate campaign forms
+                        $sSQLForms = <<<SQL_FORMS
+INSERT INTO campaign_form (id_campaign, id_form)
+SELECT ?, id_form FROM campaign_form WHERE id_campaign = ?
+SQL_FORMS;
+                        if (!$pDB->genQuery($sSQLForms, array($new_campaign_id, $id_campaign))) {
+                            $bExito = FALSE;
+                        }
+                    } else {
+                        $bExito = FALSE;
+                    }
+                } else {
+                    $bExito = FALSE;
+                }
+
+                if ($bExito) {
+                    $pDB->commit();
+                    Header("Location: ?menu=$module_name");
+                    return '';
+                } else {
+                    $pDB->rollBack();
+                    $smarty->assign("mb_title", _tr("Error"));
+                    $smarty->assign("mb_message", _tr("Error when duplicating the Campaign").": ".$pDB->errMsg);
+                }
+            }
+        }
+    }
+
+    $smarty->assign('id_campaign', $id_campaign);
+    $smarty->assign('original_name', $original_name);
+    $smarty->assign('new_name', $new_name);
+    $smarty->assign('icon', 'images/kfaxview.png');
+    $smarty->assign('title', _tr("Duplicate Campaign"));
+    $smarty->assign('SAVE', _tr("Save"));
+    $smarty->assign('CANCEL', _tr("Cancel"));
+    $smarty->assign('NEW_NAME_LABEL', _tr("New Campaign Name"));
+    $smarty->assign('ORIGINAL_NAME_LABEL', _tr("Name Campaign"));
+    $smarty->assign('FRAMEWORK_TIENE_TITULO_MODULO', existeSoporteTituloFramework());
+
+    return $smarty->fetch("$local_templates_dir/duplicate.tpl");
 }
 
 ?>
