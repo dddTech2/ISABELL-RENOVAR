@@ -24,11 +24,15 @@
         <div class="form-row">
           <div class="form-group half-width">
             <label>{$fecha_ini.LABEL} <span class="required">*</span></label>
-            {$fecha_ini.INPUT}
+            <div class="date-input-container">
+              {$fecha_ini.INPUT}
+            </div>
           </div>
           <div class="form-group half-width">
             <label>{$fecha_fin.LABEL} <span class="required">*</span></label>
-            {$fecha_fin.INPUT}
+            <div class="date-input-container">
+              {$fecha_fin.INPUT}
+            </div>
           </div>
         </div>
 
@@ -174,6 +178,40 @@
 .duplicate-card select:focus {
     border-color: #3182ce;
     box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+}
+
+/* Specific styling for Date picker input + icon */
+.date-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.date-input-container input[type="text"] {
+    width: 100% !important;
+    padding-right: 40px !important; /* Space for the calendar icon trigger */
+}
+
+/* Target the jQuery datepicker image trigger and force its dimensions */
+.date-input-container img.ui-datepicker-trigger,
+.duplicate-card img.ui-datepicker-trigger {
+    position: absolute;
+    right: 12px;
+    width: 18px !important;
+    height: 18px !important;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.date-input-container img.ui-datepicker-trigger:hover,
+.duplicate-card img.ui-datepicker-trigger:hover {
+    opacity: 1.0;
 }
 
 .time-select-container {
