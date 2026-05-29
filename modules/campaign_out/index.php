@@ -927,6 +927,8 @@ function displayCampaignCSV($pDB, $smarty, $module_name, $local_templates_dir)
 
 function duplicateCampaign($pDB, $smarty, $module_name, $local_templates_dir)
 {
+    require_once "libs/paloSantoQueue.class.php";
+
     $id_campaign = (isset($_REQUEST['id_campaign']) && ctype_digit($_REQUEST['id_campaign']))
         ? (int)$_REQUEST['id_campaign'] : NULL;
     if (is_null($id_campaign)) {
@@ -948,62 +950,151 @@ function duplicateCampaign($pDB, $smarty, $module_name, $local_templates_dir)
     }
 
     $original_name = $arrCampaign[0]['name'];
-    $new_name = '';
+
+    // Obtener y conectarse a base de datos de FreePBX
+    $pConfig = new paloConfig("/etc", "amportal.conf", "=", "[[:space:]]*=[[:space:]]*");
+    $arrConfig = $pConfig->leer_configuracion(false);
+    $dsn = $arrConfig['AMPDBENGINE']['valor'] . "://" .
+        $arrConfig['AMPDBUSER']['valor'] . ":" .
+        $arrConfig['AMPDBPASS']['valor'] . "@" .
+        $arrConfig['AMPDBHOST']['valor'] . "/asterisk";
+    $oDB = new paloDB($dsn);
+
+    // Leer las colas que se han definido en FreePBX, y quitar las usadas en campañas entrantes
+    $arrDataQueues = array();
+    $oQueue = new paloQueue($oDB);
+    $arrQueues = $oQueue->getQueue();
+    if (is_array($arrQueues)) {
+        $query_call_entry = "SELECT queue FROM queue_call_entry WHERE estatus = 'A'";
+        $arr_call_entry = $pDB->fetchTable($query_call_entry);
+        $colasEntrantes = array();
+        foreach ($arr_call_entry as $row) $colasEntrantes[] = $row[0];
+        foreach($arrQueues as $rowQueue) {
+            if (!in_array($rowQueue[0], $colasEntrantes))
+                $arrDataQueues[$rowQueue[0]] = $rowQueue[1];
+        }
+    }
+
+    // Generar campos de formulario
+    $formCampos = getFormCampaign(array(), $arrDataQueues, array(), array(), array());
+    $oForm = new paloForm($smarty, $formCampos);
+
+    // Si es primera carga, inicializar $_POST con valores de la campaña original
+    if (!isset($_POST['save_duplicate'])) {
+        $_POST['nombre']       = '';
+        $_POST['fecha_ini']    = date('d M Y', strtotime($arrCampaign[0]['datetime_init']));
+        $_POST['fecha_fin']    = date('d M Y', strtotime($arrCampaign[0]['datetime_end']));
+        $arrDateTimeInit = explode(":", $arrCampaign[0]['daytime_init']);
+        $arrDateTimeEnd  = explode(":", $arrCampaign[0]['daytime_end']);
+        $_POST['hora_ini_HH']  = isset($arrDateTimeInit[0]) ? $arrDateTimeInit[0] : "00";
+        $_POST['hora_ini_MM']  = isset($arrDateTimeInit[1]) ? $arrDateTimeInit[1] : "00";
+        $_POST['hora_fin_HH']  = isset($arrDateTimeEnd[0]) ? $arrDateTimeEnd[0] : "00";
+        $_POST['hora_fin_MM']  = isset($arrDateTimeEnd[1]) ? $arrDateTimeEnd[1] : "00";
+        $_POST['reintentos']   = $arrCampaign[0]['retries'];
+        $_POST['queue']        = $arrCampaign[0]['queue'];
+    }
 
     if (isset($_POST['save_duplicate'])) {
-        $new_name = isset($_POST['new_name']) ? trim($_POST['new_name']) : '';
-        if ($new_name == '') {
+        if (!$oForm->validateForm($_POST)) {
             $smarty->assign("mb_title", _tr("Validation Error"));
-            $smarty->assign("mb_message", _tr("Name Campaign can't be empty"));
+            $arrErrores = $oForm->arrErroresValidacion;
+            $strErrorMsg = "<b>"._tr('The following fields contain errors').":</b><br/>";
+            if (is_array($arrErrores) && count($arrErrores) > 0) {
+                foreach ($arrErrores as $k => $v) {
+                    $strErrorMsg .= "$k, ";
+                }
+            }
+            $smarty->assign("mb_message", $strErrorMsg);
+        } elseif ((int)$_POST['reintentos'] <= 0) {
+            $smarty->assign("mb_title", _tr("Validation Error"));
+            $smarty->assign("mb_message", _tr('Campaign must allow at least one call retry'));
         } else {
-            // Check if name already exists
-            $tupla = $pDB->getFirstRowQuery(
-                'SELECT COUNT(*) AS N FROM campaign WHERE name = ?', TRUE, array($new_name));
-            if (is_array($tupla) && $tupla['N'] > 0) {
-                $smarty->assign("mb_title", _tr("Validation Error"));
-                $smarty->assign("mb_message", _tr("Name Campaign already exists"));
-            } else {
-                // Perform duplication in database
-                $pDB->beginTransaction();
-                $bExito = TRUE;
+            $new_name = isset($_POST['nombre']) ? trim($_POST['nombre']) : '';
+            $time_ini = $_POST['hora_ini_HH'].":".$_POST['hora_ini_MM'];
+            $time_fin = $_POST['hora_fin_HH'].":".$_POST['hora_fin_MM'];
+            $iFechaIni = strtotime($_POST['fecha_ini']);
+            $iFechaFin = strtotime($_POST['fecha_fin']);
+            $iHoraIni =  strtotime($time_ini);
+            $iHoraFin =  strtotime($time_fin);
 
-                // 1. Create campaign copy
-                // Select details from original campaign, insert with new name
-                $sSQLDuplicate = <<<SQL_DUP
+            if ($iFechaIni == -1 || $iFechaIni === FALSE) {
+                $smarty->assign("mb_title", _tr("Validation Error"));
+                $smarty->assign("mb_message", _tr('Unable to parse start date specification'));
+            } elseif ($iFechaFin == -1 || $iFechaFin === FALSE) {
+                $smarty->assign("mb_title", _tr("Validation Error"));
+                $smarty->assign("mb_message", _tr('Unable to parse end date specification'));
+            } elseif ($iHoraIni == -1 || $iHoraIni === FALSE) {
+                $smarty->assign("mb_title", _tr("Validation Error"));
+                $smarty->assign("mb_message", _tr('Unable to parse start time specification'));
+            } elseif ($iHoraFin == -1 || $iHoraFin === FALSE) {
+                $smarty->assign("mb_title", _tr("Validation Error"));
+                $smarty->assign("mb_message", _tr('Unable to parse end time specification'));
+            } elseif ($iFechaIni > $iFechaFin) {
+                $smarty->assign("mb_title", _tr("Validation Error"));
+                $smarty->assign("mb_message", _tr('Start Date must be greater than End Date'));
+            } elseif ($iFechaIni == $iFechaFin && $iHoraIni >= $iHoraFin) {
+                $smarty->assign("mb_title", _tr("Validation Error"));
+                $smarty->assign("mb_message", _tr('Start Time must be greater than End Time'));
+            } else {
+                // Check if name already exists
+                $tupla = $pDB->getFirstRowQuery(
+                    'SELECT COUNT(*) AS N FROM campaign WHERE name = ?', TRUE, array($new_name));
+                if (is_array($tupla) && $tupla['N'] > 0) {
+                    $smarty->assign("mb_title", _tr("Validation Error"));
+                    $smarty->assign("mb_message", _tr("Name Campaign already exists"));
+                } else {
+                    // Perform duplication in database
+                    $pDB->beginTransaction();
+                    $bExito = TRUE;
+
+                    // 1. Create campaign copy
+                    $sSQLDuplicate = <<<SQL_DUP
 INSERT INTO campaign (
     name, max_canales, retries, trunk, context, queue,
     datetime_init, datetime_end, daytime_init, daytime_end, script, id_url, id_url2, id_url3, estatus
 )
-SELECT ?, max_canales, retries, trunk, context, queue,
-       datetime_init, datetime_end, daytime_init, daytime_end, script, id_url, id_url2, id_url3, 'I'
+SELECT ?, max_canales, ?, trunk, context, ?,
+       ?, ?, ?, ?, script, id_url, id_url2, id_url3, 'I'
 FROM campaign WHERE id = ?
 SQL_DUP;
-                if ($pDB->genQuery($sSQLDuplicate, array($new_name, $id_campaign))) {
-                    $new_campaign_id = $pDB->getLastInsertId();
-                    if ($new_campaign_id !== FALSE) {
-                        // 2. Duplicate campaign forms
-                        $sSQLForms = <<<SQL_FORMS
+                    $paramSQL = array(
+                        $new_name,
+                        (int)$_POST['reintentos'],
+                        $_POST['queue'],
+                        date('Y-m-d', $iFechaIni),
+                        date('Y-m-d', $iFechaFin),
+                        $time_ini,
+                        $time_fin,
+                        $id_campaign
+                    );
+
+                    if ($pDB->genQuery($sSQLDuplicate, $paramSQL)) {
+                        $new_campaign_id = $pDB->getLastInsertId();
+                        if ($new_campaign_id !== FALSE) {
+                            // 2. Duplicate campaign forms
+                            $sSQLForms = <<<SQL_FORMS
 INSERT INTO campaign_form (id_campaign, id_form)
 SELECT ?, id_form FROM campaign_form WHERE id_campaign = ?
 SQL_FORMS;
-                        if (!$pDB->genQuery($sSQLForms, array($new_campaign_id, $id_campaign))) {
+                            if (!$pDB->genQuery($sSQLForms, array($new_campaign_id, $id_campaign))) {
+                                $bExito = FALSE;
+                            }
+                        } else {
                             $bExito = FALSE;
                         }
                     } else {
                         $bExito = FALSE;
                     }
-                } else {
-                    $bExito = FALSE;
-                }
 
-                if ($bExito) {
-                    $pDB->commit();
-                    Header("Location: ?menu=$module_name");
-                    return '';
-                } else {
-                    $pDB->rollBack();
-                    $smarty->assign("mb_title", _tr("Error"));
-                    $smarty->assign("mb_message", _tr("Error when duplicating the Campaign").": ".$pDB->errMsg);
+                    if ($bExito) {
+                        $pDB->commit();
+                        Header("Location: ?menu=$module_name");
+                        return '';
+                    } else {
+                        $pDB->rollBack();
+                        $smarty->assign("mb_title", _tr("Error"));
+                        $smarty->assign("mb_message", _tr("Error when duplicating the Campaign").": ".$pDB->errMsg);
+                    }
                 }
             }
         }
@@ -1011,16 +1102,17 @@ SQL_FORMS;
 
     $smarty->assign('id_campaign', $id_campaign);
     $smarty->assign('original_name', $original_name);
-    $smarty->assign('new_name', $new_name);
     $smarty->assign('icon', 'images/kfaxview.png');
     $smarty->assign('title', _tr("Duplicate Campaign"));
     $smarty->assign('SAVE', _tr("Save"));
     $smarty->assign('CANCEL', _tr("Cancel"));
-    $smarty->assign('NEW_NAME_LABEL', _tr("New Campaign Name"));
-    $smarty->assign('ORIGINAL_NAME_LABEL', _tr("Name Campaign"));
     $smarty->assign('FRAMEWORK_TIENE_TITULO_MODULO', existeSoporteTituloFramework());
 
-    return $smarty->fetch("$local_templates_dir/duplicate.tpl");
+    return $oForm->fetchForm(
+        "$local_templates_dir/duplicate.tpl",
+        _tr("Duplicate Campaign"),
+        $_POST
+    );
 }
 
 ?>
