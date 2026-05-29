@@ -20,7 +20,8 @@
 ## Lógica y Pasos
 
 ### 1. Modificación de `sip-phone.js` (Configuración de Transport)
-- Agregar las opciones `keepAliveInterval: 15`, `keepAliveDebounce: 10`, `reconnectionAttempts: 10` y `reconnectionTimeout: 5` al objeto `transportOptions` en `createUserAgent()`.
+- Agregar las opciones `keepAliveInterval: 15`, `keepAliveDebounce: 10`, `reconnectionAttempts: 10` y `reconnectionDelay: 5` (en lugar del obsoleto `reconnectionTimeout`) al objeto `transportOptions` en `createUserAgent()`.
+- Agregar `logLevel: 'warn'` al objeto principal de configuración del `UserAgent` para evitar el volcado de configuración verbose en la consola del navegador.
 
 ### 2. Reiniciar Contador de Intentos de Registro
 - En la función de callback `userAgent.transport.onConnect`, establecer `registerAttempts = 0` antes de invocar `register()`.
@@ -30,4 +31,6 @@
 - Si `document.hidden` es falso, verificar si existe `userAgent` y el estado no es `registered` ni `authFailed`. En ese caso, invocar `reconnect()`.
 
 ## Restricciones y Trampas Conocidas
+- **Deprecación de reconnectionTimeout:** En versiones modernas de SIP.js (>= 0.16.0), el parámetro de espera de reconexión pasó a llamarse `reconnectionDelay`. El uso de `reconnectionTimeout` genera advertencias en consola.
 - **Bloqueos por Fail2ban:** Mantener `maxRegisterAttempts = 1` para respuestas de credenciales incorrectas (401/403) para evitar bloqueos por fuerza bruta, pero permitir reconexiones en caídas de red normales reiniciando el contador únicamente al lograr un handshake exitoso de WebSocket (`onConnect`).
+

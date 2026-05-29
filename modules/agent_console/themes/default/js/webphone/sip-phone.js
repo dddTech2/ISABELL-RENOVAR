@@ -397,7 +397,7 @@ var WebPhone = (function() {
                 keepAliveInterval: 15,
                 keepAliveDebounce: 10,
                 reconnectionAttempts: 10,
-                reconnectionTimeout: 5
+                reconnectionDelay: 5
             },
             sessionDescriptionHandlerFactoryOptions: {
                 peerConnectionConfiguration: {
@@ -415,6 +415,7 @@ var WebPhone = (function() {
             autoStop: true,
             register: false,
             noAnswerTimeout: 60,
+            logLevel: 'warn',
             contactParams: { transport: 'wss' },
             delegate: {
                 onInvite: function(session) {
