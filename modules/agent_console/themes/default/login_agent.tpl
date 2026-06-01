@@ -49,6 +49,14 @@
             <span class="status-indicator"></span>
             <span class="status-text">Conectando...</span>
         </div>
+        <!-- Contenedor para llamada retenida -->
+        <div id="webphone-held-info" class="webphone-held-info" style="display: none;">
+            <span class="held-text">Retenida: <span id="webphone-held-number"></span></span>
+            <div class="held-actions">
+                <button type="button" id="webphone-btn-resume-held" class="webphone-held-btn" title="Recuperar llamada">⎋ Recuperar</button>
+                <button type="button" id="webphone-btn-hangup-held" class="webphone-held-btn hangup" title="Colgar retenida">❌</button>
+            </div>
+        </div>
         <div class="webphone-autoanswer-row">
             <label class="webphone-toggle">
                 <input type="checkbox" id="webphone-autoanswer" />
@@ -58,6 +66,12 @@
         </div>
         <div class="webphone-number-row">
             <input type="text" id="webphone-number" placeholder="Numero a marcar" />
+        </div>
+        <!-- Fila para transferencia ciega -->
+        <div id="webphone-transfer-row" class="webphone-transfer-row" style="display: none;">
+            <input type="text" id="webphone-transfer-number" placeholder="Número/Ext. a transferir" />
+            <button type="button" id="webphone-btn-do-transfer" class="webphone-btn webphone-btn-call">Enviar</button>
+            <button type="button" id="webphone-btn-cancel-transfer" class="webphone-btn webphone-btn-hangup">X</button>
         </div>
         <div id="webphone-dialpad" class="webphone-dialpad" style="display: none;">
             <div class="dialpad-row">
@@ -84,9 +98,12 @@
         <div class="webphone-buttons">
             <button id="webphone-btn-call" class="webphone-btn webphone-btn-call">Llamar</button>
             <button id="webphone-btn-hangup" class="webphone-btn webphone-btn-hangup" style="display:none;">Colgar</button>
+            <button id="webphone-btn-hold" class="webphone-btn webphone-btn-hold" style="display:none;">Hold</button>
+            <button id="webphone-btn-transfer" class="webphone-btn webphone-btn-transfer" style="display:none;">Transferir</button>
             <button id="webphone-btn-mute" class="webphone-btn webphone-btn-mute" style="display:none;">Silenciar</button>
             <button id="webphone-btn-answer" class="webphone-btn webphone-btn-answer" style="display:none;">Contestar</button>
             <button id="webphone-btn-reconnect" class="webphone-btn webphone-btn-reconnect" style="display:none;">Reconectar</button>
+            <button id="webphone-btn-gestion" class="webphone-btn webphone-btn-gestion" style="display:none;">Gestión</button>
         </div>
     </div>
 </div>
@@ -247,6 +264,48 @@ $(document).ready(function() {
 
     $('#webphone-btn-reconnect').on('click', function() {
         WebPhone.reconnect();
+    });
+
+    // Eventos para Hold y Transferencia
+    $('#webphone-btn-hold').on('click', function() {
+        WebPhone.toggleHold();
+    });
+
+    $('#webphone-btn-transfer').on('click', function() {
+        var phoneState = WebPhone.getState();
+        if (phoneState.heldSession && phoneState.callState === 'connected') {
+            // Transferencia atendida (conectar la retenida con la activa)
+            WebPhone.transfer();
+        } else {
+            // Alternar fila de transferencia ciega
+            var $row = $wp('#webphone-transfer-row');
+            if ($row.is(':visible')) {
+                $row.hide();
+            } else {
+                $row.css('display', 'flex');
+                $wp('#webphone-transfer-number').val('').focus();
+            }
+        }
+    });
+
+    $('#webphone-btn-do-transfer').on('click', function() {
+        var target = $wp('#webphone-transfer-number').val().trim();
+        if (target) {
+            WebPhone.transfer(target);
+            $wp('#webphone-transfer-row').hide();
+        }
+    });
+
+    $('#webphone-btn-cancel-transfer').on('click', function() {
+        $wp('#webphone-transfer-row').hide();
+    });
+
+    $('#webphone-btn-resume-held').on('click', function() {
+        WebPhone.resume();
+    });
+
+    $('#webphone-btn-hangup-held').on('click', function() {
+        WebPhone.hangupHeld();
     });
 
     // Auto-answer toggle
