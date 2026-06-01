@@ -19,7 +19,7 @@
 - **Configuración de llamada:** Añadir la opción `earlyMedia: true` en `InviterOptions` al crear la sesión saliente para habilitar el procesamiento inmediato de SDP provisionales en SIP.js.
 - **Registro del Delegate del SDH:** Registrar el callback `onSessionDescriptionHandler(sdh, provisional)` en el delegado de la sesión inmediatamente después de crearla.
 - **Asignación temprana:** Invocar a `attachMedia(sdh)` dentro de `onSessionDescriptionHandler` para enganchar el listener del evento `track` del `RTCPeerConnection` antes de que la sesión cambie de estado a `Established`.
-- **Apagado del timbre artificial:** En `attachMedia()`, si se detecta que se recibe un track de audio remoto, invocar inmediatamente `stopRingtoneSound()` para apagar el pitido de espera simulado y permitir escuchar el audio de la troncal.
+- **Apagado del timbre artificial:** En `attachMedia()`, si se detecta que se recibe un track de audio remoto, solo invocar `stopRingtoneSound()` si la llamada ya se encuentra en estado `'connected'`. Durante el estado `'calling'` (Early Media), se debe mantener sonando el timbre artificial local por si el navegador bloquea el autoplay del audio remoto.
 
 ### 2. Control y Mapeo de Códigos de Error SIP
 - **Callback onReject:** Pasar un objeto `requestDelegate` con el método `onReject(response)` al realizar la llamada (`invite()`).
@@ -48,3 +48,4 @@
 - **Código 487 (Request Terminated):** Siempre se genera cuando el emisor cancela la llamada. Debe ignorarse para que no aparezca como un error.
 - **Interrupción de Temporizador:** Al realizar una nueva llamada, se debe limpiar `state.lastCallError` inmediatamente para borrar cualquier mensaje de error previo de la pantalla, así como reiniciar `state.isVoicemail = false`.
 - **Configuración de Asterisk Requerida:** Para que esta detección en pantalla funcione, el dialplan de Asterisk debe estar configurado para inyectar la cabecera en el canal SIP antes de enviar la llamada al Buzón (ej: `PJSIP_HEADER(add,X-Voicemail)=yes`).
+- **Políticas de Autoplay en el Navegador (Early Media):** No detener el timbre local (`stopRingtoneSound()`) inmediatamente al recibir el track remoto si la llamada aún no se ha establecido (estado `'calling'`). Si el navegador del agente bloquea el autoplay del audio remoto antes de que haya interacción del usuario, silenciar el timbre local prematuramente causará que el agente no escuche ningún sonido de marcación (solo un único pitido inicial y luego silencio). En su lugar, mantener el timbre local sonando hasta que el estado cambie a `'connected'`.

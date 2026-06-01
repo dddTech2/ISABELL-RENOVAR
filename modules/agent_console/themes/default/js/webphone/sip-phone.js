@@ -860,7 +860,15 @@ var WebPhone = (function() {
             pc._mediaAttached = true;
             pc.addEventListener('track', function(event) {
                 log('pc ontrack event received, kind: ' + event.track.kind);
-                stopRingtoneSound(); // Stop ringtone when remote audio track starts
+                // Only stop ringtone when the call is actually established (connected).
+                // During 'calling' state, this is early media (183 Session Progress) from
+                // the carrier. Keep the local ringtone playing in case the browser blocks
+                // autoplay of the remote stream (Chrome/Firefox autoplay policy).
+                if (state.callState === 'connected') {
+                    stopRingtoneSound();
+                } else {
+                    log('Early media track received (state: ' + state.callState + '), keeping local ringtone');
+                }
                 if (event.streams && event.streams[0]) {
                     setRemoteStream(event.streams[0]);
                 } else {
@@ -876,7 +884,12 @@ var WebPhone = (function() {
         pc.getReceivers().forEach(function(receiver) {
             if (receiver.track) {
                 log('Found existing receiver track: ' + receiver.track.kind);
-                stopRingtoneSound(); // Stop ringtone if we already have receiver tracks
+                // Same logic: only stop ringtone if call is connected, not during early media
+                if (state.callState === 'connected') {
+                    stopRingtoneSound();
+                } else {
+                    log('Existing receiver track found (state: ' + state.callState + '), keeping local ringtone');
+                }
                 if (!remoteStream) {
                     remoteStream = new MediaStream();
                 }
