@@ -598,3 +598,99 @@
     cursor: wait !important;
     opacity: 0.85;
 }
+
+/* ============================================ 
+   HOLD & TRANSFER STYLES
+   ============================================ */
+.webphone-btn-hold {
+    background: #17a2b8;
+    color: white;
+}
+
+.webphone-btn-hold:hover:not(:disabled) {
+    background: #138496;
+}
+
+.webphone-btn-hold.holding {
+    background: #ffc107;
+    color: #212529;
+}
+
+.webphone-btn-hold.holding:hover:not(:disabled) {
+    background: #e0a800;
+}
+
+.webphone-btn-transfer {
+    background: #6f42c1;
+    color: white;
+}
+
+.webphone-btn-transfer:hover:not(:disabled) {
+    background: #5a32a3;
+}
+
+.webphone-held-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e2f0d9;
+    color: #385723;
+    border: 1px solid #c5e0b4;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.webphone-held-info .held-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.webphone-held-btn {
+    background: #385723;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 3px 6px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.webphone-held-btn.hangup {
+    background: #c00000;
+}
+
+.webphone-held-btn:hover {
+    opacity: 0.9;
+}
+
+.webphone-transfer-row {
+    display: none;
+    margin-bottom: 10px;
+    gap: 5px;
+    width: 100%;
+}
+
+.webphone-transfer-row input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.webphone-transfer-row input:focus {
+    outline: none;
+    border-color: #6f42c1;
+}
+
+.webphone-transfer-row button {
+    padding: 6px 10px;
+    font-size: 11px;
+    box-sizing: border-box;
+}

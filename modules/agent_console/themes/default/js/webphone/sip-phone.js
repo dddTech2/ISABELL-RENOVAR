@@ -12,6 +12,7 @@ var WebPhone = (function() {
     var userAgent = null;
     var registerer = null;
     var currentSession = null;
+    var heldSession = null;
     var registerAttempts = 0;
     var maxRegisterAttempts = 1;
     var config = {
@@ -238,8 +239,24 @@ var WebPhone = (function() {
         var $dialpad = $('#webphone-dialpad');
         var $statusText = $status.find('.status-text');
 
+        // Nuevos selectores para Hold y Transferencia
+        var $holdBtn = $('#webphone-btn-hold');
+        var $transferBtn = $('#webphone-btn-transfer');
+        var $transferRow = $('#webphone-transfer-row');
+        var $heldInfo = $('#webphone-held-info');
+        var $heldNumber = $('#webphone-held-number');
+
         // Remove all call-related classes
         $status.removeClass('webphone-calling webphone-ringing-incoming webphone-connected');
+
+        // Control del panel de llamada retenida (Hold)
+        if (heldSession) {
+            var heldNum = (heldSession.remoteIdentity && heldSession.remoteIdentity.uri && heldSession.remoteIdentity.uri.user) || 'Desconocido';
+            $heldNumber.text(heldNum);
+            $heldInfo.css('display', 'flex');
+        } else {
+            $heldInfo.hide();
+        }
 
         var $gestionBtn = $('#webphone-btn-gestion');
         if (state.authFailed) {
@@ -288,6 +305,9 @@ var WebPhone = (function() {
                 $hangupBtn.hide();
                 $answerBtn.hide();
                 $muteBtn.hide();
+                $holdBtn.hide();
+                $transferBtn.hide();
+                $transferRow.hide();
                 setMute(false); // Reset mute state when idle
                 $('#webphone-number').prop('disabled', false);
                 var activeEl = document.activeElement;
@@ -302,6 +322,9 @@ var WebPhone = (function() {
                 $hangupBtn.show().prop('disabled', false);
                 $answerBtn.hide();
                 $muteBtn.hide();
+                $holdBtn.hide();
+                $transferBtn.hide();
+                $transferRow.hide();
                 setMute(false); // Reset mute state when dialing
                 $('#webphone-number').prop('disabled', true);
                 $status.addClass('webphone-calling');
@@ -313,6 +336,9 @@ var WebPhone = (function() {
                 $hangupBtn.show().prop('disabled', false);
                 $answerBtn.show().prop('disabled', false);
                 $muteBtn.hide();
+                $holdBtn.hide();
+                $transferBtn.hide();
+                $transferRow.hide();
                 setMute(false); // Reset mute state when ringing
                 $('#webphone-number').prop('disabled', true);
                 $status.addClass('webphone-ringing-incoming');
@@ -324,6 +350,18 @@ var WebPhone = (function() {
                 $hangupBtn.show().prop('disabled', false);
                 $answerBtn.hide();
                 $muteBtn.show().prop('disabled', false);
+
+                // Control de los botones de Hold y Transferencia en estado conectado
+                if (heldSession) {
+                    // Si hay una llamada retenida, no se muestra Hold directo (se maneja alternando),
+                    // pero se muestra Transferir para realizar transferencia atendida.
+                    $holdBtn.hide();
+                    $transferBtn.show().text('Transferir').prop('disabled', false);
+                } else {
+                    $holdBtn.show().text('Hold').removeClass('holding').prop('disabled', false);
+                    $transferBtn.show().text('Transferir').prop('disabled', false);
+                }
+
                 $('#webphone-number').prop('disabled', true);
                 $status.addClass('webphone-connected');
                 if (state.isVoicemail) {
@@ -547,6 +585,55 @@ var WebPhone = (function() {
         return 0;
     }
 
+    function bindSessionEvents(session, direction) {
+        session.delegate = {
+            onSessionDescriptionHandler: function(sdh, provisional) {
+                log(direction + ' SessionDescriptionHandler created. Provisional: ' + provisional);
+                attachMedia(sdh, session);
+            }
+        };
+
+        session.stateChange.addListener(function(newState) {
+            log(direction + ' session state changed: ' + newState);
+            switch(newState) {
+                case SIP.SessionState.Established:
+                    if (session === currentSession) {
+                        if (direction === 'Incoming' && autoAnswerTimeout) {
+                            clearTimeout(autoAnswerTimeout);
+                            autoAnswerTimeout = null;
+                        }
+                        updateCallState('connected');
+                        attachMedia(undefined, session);
+                    }
+                    break;
+                case SIP.SessionState.Terminated:
+                    log(direction + ' call terminated');
+                    if (direction === 'Incoming' && autoAnswerTimeout) {
+                        clearTimeout(autoAnswerTimeout);
+                        autoAnswerTimeout = null;
+                    }
+                    stopRingtoneSound();
+                    
+                    if (session === currentSession) {
+                        currentSession = null;
+                        
+                        // Auto-resume held session if it exists when active call is hung up
+                        if (heldSession) {
+                            log('Active call terminated. Auto-resuming held session.');
+                            resume();
+                        } else {
+                            updateCallState('idle');
+                        }
+                    } else if (session === heldSession) {
+                        log('Held call terminated');
+                        heldSession = null;
+                        updateUI();
+                    }
+                    break;
+            }
+        });
+    }
+
     function handleIncomingCall(session) {
         log('Incoming call from: ' + session.remoteIdentity.uri.user);
         
@@ -560,39 +647,8 @@ var WebPhone = (function() {
         }
         
         currentSession = session;
-        currentSession.delegate = {
-            onSessionDescriptionHandler: function(sdh, provisional) {
-                log('Incoming SessionDescriptionHandler created. Provisional: ' + provisional);
-                attachMedia(sdh);
-            }
-        };
         updateCallState('ringing');
-
-        session.stateChange.addListener(function(newState) {
-            log('Incoming session state: ' + newState);
-            switch(newState) {
-                case SIP.SessionState.Established:
-                    // Clear auto-answer timeout if call was answered manually
-                    if (autoAnswerTimeout) {
-                        clearTimeout(autoAnswerTimeout);
-                        autoAnswerTimeout = null;
-                    }
-                    updateCallState('connected');
-                    attachMedia();
-                    break;
-                case SIP.SessionState.Terminated:
-                    log('Incoming call terminated');
-                    // Clear auto-answer timeout
-                    if (autoAnswerTimeout) {
-                        clearTimeout(autoAnswerTimeout);
-                        autoAnswerTimeout = null;
-                    }
-                    stopRingtoneSound();
-                    currentSession = null;
-                    updateCallState('idle');
-                    break;
-            }
-        });
+        bindSessionEvents(currentSession, 'Incoming');
         
         // Trigger auto-answer if enabled
         triggerAutoAnswer();
@@ -739,28 +795,7 @@ var WebPhone = (function() {
         };
 
         currentSession = new SIP.Inviter(userAgent, target, inviterOptions);
-        currentSession.delegate = {
-            onSessionDescriptionHandler: function(sdh, provisional) {
-                log('Outgoing SessionDescriptionHandler created. Provisional: ' + provisional);
-                attachMedia(sdh);
-            }
-        };
-
-        currentSession.stateChange.addListener(function(newState) {
-            log('Outgoing session state: ' + newState);
-            switch(newState) {
-                case SIP.SessionState.Established:
-                    updateCallState('connected');
-                    attachMedia();
-                    break;
-                case SIP.SessionState.Terminated:
-                    log('Outgoing call terminated');
-                    stopRingtoneSound();
-                    currentSession = null;
-                    updateCallState('idle');
-                    break;
-            }
-        });
+        bindSessionEvents(currentSession, 'Outgoing');
 
         var inviteOptions = {
             requestDelegate: {
@@ -825,10 +860,11 @@ var WebPhone = (function() {
         });
     }
 
-    function attachMedia(sdh) {
-        if (!currentSession) return;
+    function attachMedia(sdh, session) {
+        var activeSession = session || currentSession;
+        if (!activeSession) return;
 
-        var handler = sdh || currentSession.sessionDescriptionHandler;
+        var handler = sdh || activeSession.sessionDescriptionHandler;
         if (!handler) {
             log('No sessionDescriptionHandler available');
             return;
@@ -906,6 +942,10 @@ var WebPhone = (function() {
         log('Disconnecting...');
 
         stopRingtoneSound();
+
+        if (heldSession) {
+            hangupHeld();
+        }
 
         if (currentSession) {
             hangup();
@@ -1080,6 +1120,159 @@ var WebPhone = (function() {
         }
     }
 
+    function toggleHold() {
+        if (currentSession) {
+            hold();
+        }
+    }
+
+    function hold() {
+        if (!currentSession) {
+            log('No active call to hold');
+            return;
+        }
+
+        var sessionToHold = currentSession;
+        log('Holding active call with: ' + (sessionToHold.remoteIdentity && sessionToHold.remoteIdentity.uri && sessionToHold.remoteIdentity.uri.user));
+
+        sessionToHold.sessionDescriptionHandlerOptionsReInvite = {
+            constraints: {
+                audio: true,
+                video: false
+            },
+            hold: true
+        };
+        
+        sessionToHold.invite().then(function() {
+            log('Hold invite sent successfully');
+        }).catch(function(e) {
+            log('Hold invite failed: ' + e.message);
+        });
+
+        heldSession = sessionToHold;
+        currentSession = null;
+        updateCallState('idle');
+    }
+
+    function resume() {
+        if (!heldSession) {
+            log('No call in hold to resume');
+            return;
+        }
+
+        var sessionToResume = heldSession;
+        log('Resuming call with: ' + (sessionToResume.remoteIdentity && sessionToResume.remoteIdentity.uri && sessionToResume.remoteIdentity.uri.user));
+
+        // If there is an active call, hold it first (automatic swap)
+        if (currentSession) {
+            var activeSession = currentSession;
+            log('Holding current active call before resuming: ' + (activeSession.remoteIdentity && activeSession.remoteIdentity.uri && activeSession.remoteIdentity.uri.user));
+            activeSession.sessionDescriptionHandlerOptionsReInvite = {
+                constraints: {
+                    audio: true,
+                    video: false
+                },
+                hold: true
+            };
+            activeSession.invite().catch(function(e) {
+                log('Hold of active call failed: ' + e.message);
+            });
+            
+            heldSession = activeSession;
+        } else {
+            heldSession = null;
+        }
+
+        sessionToResume.sessionDescriptionHandlerOptionsReInvite = {
+            constraints: {
+                audio: true,
+                video: false
+            },
+            hold: false
+        };
+
+        sessionToResume.invite().then(function() {
+            log('Resume invite sent successfully');
+        }).catch(function(e) {
+            log('Resume invite failed: ' + e.message);
+        });
+
+        currentSession = sessionToResume;
+        updateCallState('connected');
+        attachMedia(undefined, currentSession);
+    }
+
+    function hangupHeld() {
+        if (!heldSession) {
+            log('No held call to hangup');
+            return;
+        }
+
+        log('Hanging up held call...');
+        try {
+            if (heldSession.bye) {
+                heldSession.bye().catch(function(e) {
+                    log('Bye error on held call: ' + e.message);
+                });
+            } else if (heldSession.cancel) {
+                heldSession.cancel().catch(function(e) {
+                    log('Cancel error on held call: ' + e.message);
+                });
+            }
+        } catch (e) {
+            log('Exception hanging up held call: ' + e.message);
+        }
+
+        heldSession = null;
+        updateUI();
+    }
+
+    function transfer(target) {
+        if (heldSession && currentSession) {
+            log('Attended transfer triggered: bridging held session and active session');
+            heldSession.refer(currentSession).then(function() {
+                log('Attended transfer refer sent, hanging up both sessions');
+                var activeToBye = currentSession;
+                var heldToBye = heldSession;
+                heldSession = null;
+                currentSession = null;
+                if (heldToBye) heldToBye.bye().catch(function() {});
+                if (activeToBye) activeToBye.bye().catch(function() {});
+                updateCallState('idle');
+            }).catch(function(e) {
+                log('Attended transfer failed: ' + e.message);
+            });
+        } else if (target) {
+            var sessionToTransfer = currentSession || heldSession;
+            if (!sessionToTransfer) {
+                log('No session to transfer');
+                return;
+            }
+
+            log('Blind transfer triggered to: ' + target);
+            var targetURI = SIP.UserAgent.makeURI('sip:' + target + '@' + config.domain);
+            if (!targetURI) {
+                log('Invalid transfer target URI');
+                return;
+            }
+
+            sessionToTransfer.refer(targetURI).then(function() {
+                log('Blind transfer refer sent successfully, hanging up local session');
+                if (sessionToTransfer === currentSession) {
+                    currentSession.bye().catch(function() {});
+                    currentSession = null;
+                    updateCallState('idle');
+                } else {
+                    heldSession.bye().catch(function() {});
+                    heldSession = null;
+                    updateUI();
+                }
+            }).catch(function(e) {
+                log('Blind transfer failed: ' + e.message);
+            });
+        }
+    }
+
     // Handle tab visibility change to recover connection if throttled
     window.jQuery(document).on('visibilitychange', function() {
         if (!document.hidden) {
@@ -1104,9 +1297,18 @@ var WebPhone = (function() {
         toggleMute: toggleMute,
         sendDTMF: sendDTMF,
         setMute: setMute,
+        toggleHold: toggleHold,
+        hold: hold,
+        resume: resume,
+        hangupHeld: hangupHeld,
+        transfer: transfer,
         getAudioElements: function() { return audioElements; },
         isRegistered: function() { return state.registered; },
-        getState: function() { return state; },
+        getState: function() {
+            var s = Object.assign({}, state);
+            s.heldSession = heldSession;
+            return s;
+        },
         isAutoAnswer: function() { return state.autoAnswer; }
     };
 })();
