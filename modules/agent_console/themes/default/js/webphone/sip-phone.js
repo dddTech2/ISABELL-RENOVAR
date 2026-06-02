@@ -28,6 +28,7 @@ var WebPhone = (function() {
         remote: null,
         local: null
     };
+    var earlyMediaReceived = false; // Track if provider sent early media (183)
     var state = {
         registered: false,
         callState: 'idle', // idle, calling, ringing, connected
@@ -802,6 +803,7 @@ var WebPhone = (function() {
         log('Calling: ' + number);
         state.lastCallError = ''; // Clear previous error
         state.isVoicemail = false; // Reset voicemail flag
+        earlyMediaReceived = false; // Reset early media flag for new call
 
         var target = SIP.UserAgent.makeURI('sip:' + number + '@' + config.domain);
         if (!target) {
@@ -923,14 +925,24 @@ var WebPhone = (function() {
             pc._mediaAttached = true;
             pc.addEventListener('track', function(event) {
                 log('pc ontrack event received, kind: ' + event.track.kind);
-                // Only stop ringtone when the call is actually established (connected).
-                // During 'calling' state, this is early media (183 Session Progress) from
-                // the carrier. Keep the local ringtone playing in case the browser blocks
-                // autoplay of the remote stream (Chrome/Firefox autoplay policy).
                 if (state.callState === 'connected') {
+                    // Call established: stop local ringtone, let remote audio play
                     stopRingtoneSound();
+                    remoteAudio.muted = false;
+                } else if (state.callState === 'calling') {
+                    // Early media (183 Session Progress) from provider:
+                    // Stop our synthetic local tone and let the provider's ringback play.
+                    // This avoids the double-beep where both the local tone and provider
+                    // ringback sound simultaneously.
+                    if (!earlyMediaReceived) {
+                        earlyMediaReceived = true;
+                        log('Early media received from provider — stopping local ringback tone, using provider audio');
+                        stopRingtoneSound();
+                        remoteAudio.muted = false;
+                    }
                 } else {
-                    log('Early media track received (state: ' + state.callState + '), keeping local ringtone');
+                    log('Track received in state: ' + state.callState);
+                    remoteAudio.muted = false;
                 }
                 if (event.streams && event.streams[0]) {
                     setRemoteStream(event.streams[0]);
@@ -942,16 +954,19 @@ var WebPhone = (function() {
             });
         }
 
-        // Also check if receivers already have tracks
+        // Also check if receivers already have tracks (call already has early media)
         var remoteStream = null;
         pc.getReceivers().forEach(function(receiver) {
             if (receiver.track) {
                 log('Found existing receiver track: ' + receiver.track.kind);
-                // Same logic: only stop ringtone if call is connected, not during early media
                 if (state.callState === 'connected') {
                     stopRingtoneSound();
-                } else {
-                    log('Existing receiver track found (state: ' + state.callState + '), keeping local ringtone');
+                    remoteAudio.muted = false;
+                } else if (state.callState === 'calling' && !earlyMediaReceived) {
+                    earlyMediaReceived = true;
+                    log('Existing early media track — stopping local ringback, using provider audio');
+                    stopRingtoneSound();
+                    remoteAudio.muted = false;
                 }
                 if (!remoteStream) {
                     remoteStream = new MediaStream();

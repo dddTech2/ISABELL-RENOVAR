@@ -32,4 +32,8 @@
 ## Restricciones y Trampas Conocidas
 - **Deshabilitación visual y de interacción:** Asegurar que tanto el checkbox como el contenedor label impidan la interacción visual únicamente cuando el input esté deshabilitado, para evitar confusión en el agente.
 - **Políticas de Autoplay de los Navegadores:** El agente debe haber interactuado previamente con la consola (por ejemplo, al hacer clic en el formulario de login o ingresar extensión) para que el `AudioContext` funcione y reproduzca el sonido de llamada entrante.
+- **DOBLE PITIDO EN LLAMADAS SALIENTES (Early Media):** Con `earlyMedia: true` en las opciones del `Inviter`, cuando el proveedor envía un **183 Session Progress**, el track de audio remoto llega al navegador **antes** de que la llamada se establezca (estado `connected`). Si en ese momento el script sigue reproduciendo el tono sintético local (`playRingtoneSound('outgoing')`), ambos sonidos se escuchan simultáneamente — el del proveedor y el generado por el script — confundiendo al agente.
+  - **Nota: NO seguir manteniendo el tono local mientras llega early media del proveedor.** En su lugar, detectar la llegada del primer track en estado `calling` (evento `ontrack` del PeerConnection) y **detener inmediatamente** el tono local con `stopRingtoneSound()`, dejando que el audio del proveedor tome el control.
+  - Usar el flag `earlyMediaReceived` (booleano) para evitar llamar `stopRingtoneSound()` múltiples veces por cada track (audio + video). Resetear este flag a `false` al inicio de cada nueva llamada saliente.
+  - Si el proveedor **no envía early media** (ningún `ontrack` en estado `calling`), el tono local sigue sonando como fallback hasta que la llamada se establezca o sea rechazada. Esto es el comportamiento deseado.
 
