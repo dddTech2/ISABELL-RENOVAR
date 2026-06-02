@@ -384,7 +384,28 @@ var WebPhone = (function() {
         if (!isConsole) {
             $gestionBtn.hide();
         }
+
+        // === Layout dinámico de botones según visibilidad ===
+        // CSS no puede detectar display:none de hermanos; lo manejamos en JS.
+        var gestionVisible = $gestionBtn.is(':visible');
+        var answerVisible  = $answerBtn.is(':visible');
+
+        // LLAMAR: full width cuando Gestión oculta (login), mitad cuando Gestión visible (consola)
+        $callBtn.css('grid-column', gestionVisible ? 'span 1' : 'span 2');
+
+        // COLGAR:
+        //   - Ringing (Contestar visible): span 1 para quedar junto a Contestar
+        //   - Calling con Gestión visible: span 1 para quedar junto a Gestión
+        //   - Connected (sin Contestar): span 2 (botón principal de acción)
+        if (answerVisible) {
+            $hangupBtn.css('grid-column', 'span 1');
+        } else if (state.callState === 'calling' && gestionVisible) {
+            $hangupBtn.css('grid-column', 'span 1');
+        } else {
+            $hangupBtn.css('grid-column', 'span 2');
+        }
     }
+
 
     function init(cfg, cbs) {
         config = Object.assign(config, cfg);

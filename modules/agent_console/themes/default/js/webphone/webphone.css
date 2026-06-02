@@ -41,6 +41,7 @@
     width: 280px;
     margin-left: 10px;
     height: 380pt;
+    overflow-y: auto;
     position: relative !important;
     z-index: 10;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -320,12 +321,10 @@
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     grid-gap: 8px;
-    column-gap: 8px;
-    grid-gap: 8px;
-    grid-gap: 8px;
-    column-gap: 8px;
     row-gap: 8px;
     grid-row-gap: 8px;
+    column-gap: 8px;
+    grid-column-gap: 8px;
     width: 100%;
 }
 
@@ -352,23 +351,15 @@
 }
 
 /* Grid layout rules for softphone buttons */
+/* NOTE: grid-column for #webphone-btn-call and #webphone-btn-hangup
+   are set DYNAMICALLY by sip-phone.js updateUI() based on the call state
+   and the visibility of the Gestion button. Do NOT add static span rules here. */
+
 #webphone-btn-reconnect {
     grid-column: span 2;
 }
 
-#webphone-btn-hangup {
-    grid-column: span 2;
-}
-
-#webphone-btn-answer {
-    grid-column: span 1;
-}
-
-/* When answer button is visible side-by-side with hangup button */
-#webphone-btn-answer:not([style*="display: none"]):not([style*="display:none"]) ~ #webphone-btn-hangup {
-    grid-column: span 1;
-}
-
+#webphone-btn-answer,
 #webphone-btn-hold,
 #webphone-btn-transfer,
 #webphone-btn-mute,
