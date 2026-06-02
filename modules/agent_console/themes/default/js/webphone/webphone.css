@@ -318,13 +318,16 @@
 .webphone-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    column-gap: 8px;
+    grid-column-gap: 8px;
+    row-gap: 8px;
+    grid-row-gap: 8px;
     width: 100%;
 }
 
 .webphone-btn {
     width: 100%;
-    margin: 0;
+    margin: 0 !important; /* Espaciado vertical garantizado */
     padding: 8px 10px;
     border: none;
     border-radius: 3px;

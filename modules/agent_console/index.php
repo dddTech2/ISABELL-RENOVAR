@@ -105,9 +105,9 @@ function _getSipPassword($extension) {
 // Helper: inject webphone CSS/JS includes via PHP (bypasses Smarty cache)
 function _webphone_includes_html() {
     $base = 'modules/agent_console/themes/default/js/webphone';
-    return '<link rel="stylesheet" href="' . $base . '/webphone.css?v=3" />' . "\n"
+    return '<link rel="stylesheet" href="' . $base . '/webphone.css?v=4" />' . "\n"
          . '<script type="text/javascript" src="' . $base . '/sip-0.20.0.min.js"></script>' . "\n"
-         . '<script type="text/javascript" src="' . $base . '/sip-phone.js?v=3"></script>' . "\n";
+         . '<script type="text/javascript" src="' . $base . '/sip-phone.js?v=4"></script>' . "\n";
 }
 // =========================================================================
 

@@ -378,6 +378,12 @@ var WebPhone = (function() {
         } else {
             $dialpad.hide();
         }
+
+        // Garantizar que el botón de gestión NUNCA se muestre fuera de la consola de agente
+        var isConsole = $('#issabel-callcenter-area-principal').length > 0;
+        if (!isConsole) {
+            $gestionBtn.hide();
+        }
     }
 
     function init(cfg, cbs) {
