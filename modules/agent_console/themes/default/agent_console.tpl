@@ -31,9 +31,9 @@
 {/foreach}
 
 {* WebPhone includes *}
-<link rel="stylesheet" href="modules/agent_console/themes/default/js/webphone/webphone.css?v=4" />
+<link rel="stylesheet" href="modules/agent_console/themes/default/js/webphone/webphone.css?v=5" />
 <script type="text/javascript" src="modules/agent_console/themes/default/js/webphone/sip-0.20.0.min.js"></script>
-<script type="text/javascript" src="modules/agent_console/themes/default/js/webphone/sip-phone.js?v=4"></script>
+<script type="text/javascript" src="modules/agent_console/themes/default/js/webphone/sip-phone.js?v=5"></script>
 
 {* Este DIV se usa para mostrar los mensajes de éxito *}
 <div
