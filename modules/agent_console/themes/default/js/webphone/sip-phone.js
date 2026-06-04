@@ -1292,6 +1292,13 @@ var WebPhone = (function() {
         });
 
         currentSession = sessionToResume;
+        
+        var resumedNum = (sessionToResume.remoteIdentity && sessionToResume.remoteIdentity.uri && sessionToResume.remoteIdentity.uri.user) || 'Desconocido';
+        if (sessionToResume.remoteIdentity && sessionToResume.remoteIdentity.displayName && sessionToResume.remoteIdentity.displayName !== resumedNum) {
+            resumedNum = sessionToResume.remoteIdentity.displayName + ' (' + resumedNum + ')';
+        }
+        state.activeNumber = resumedNum;
+
         updateCallState('connected');
         attachMedia(undefined, currentSession);
     }

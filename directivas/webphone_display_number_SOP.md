@@ -46,6 +46,9 @@
   - Si existe un `session.remoteIdentity.displayName` diferente al usuario, combinar ambos (ej: `Nombre (Número)`).
   - Guardar este valor en `state.activeNumber`.
 - Donde el estado de la llamada cambie a `connected` (a través de `updateCallState('connected')` o interceptando el cambio), establecer `state.callStartTime = Date.now();` para iniciar el contador.
+- En la función `resume()`:
+  - Extraer la identidad de `sessionToResume` (número y display name) de la misma forma que en `handleIncomingCall`.
+  - Asignar este valor a `state.activeNumber` antes de llamar a `updateCallState('connected')` para garantizar que la pantalla muestre el número real con el que se está conversando.
 
 ## Restricciones y Trampas Conocidas
 - **Consistencia en Plantillas:** Las plantillas de la consola de agente (`agent_console.tpl` y `login_agent.tpl`) comparten la misma estructura HTML del WebPhone. Toda modificación en la estructura del panel de WebPhone debe aplicarse en ambos archivos.
