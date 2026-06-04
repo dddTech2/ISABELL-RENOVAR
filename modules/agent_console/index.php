@@ -105,9 +105,9 @@ function _getSipPassword($extension) {
 // Helper: inject webphone CSS/JS includes via PHP (bypasses Smarty cache)
 function _webphone_includes_html() {
     $base = 'modules/agent_console/themes/default/js/webphone';
-    return '<link rel="stylesheet" href="' . $base . '/webphone.css?v=8" />' . "\n"
+    return '<link rel="stylesheet" href="' . $base . '/webphone.css?v=9" />' . "\n"
          . '<script type="text/javascript" src="' . $base . '/sip-0.20.0.min.js"></script>' . "\n"
-         . '<script type="text/javascript" src="' . $base . '/sip-phone.js?v=8"></script>' . "\n";
+         . '<script type="text/javascript" src="' . $base . '/sip-phone.js?v=9"></script>' . "\n";
 }
 // =========================================================================
 
@@ -154,6 +154,11 @@ function _webphone_includes_html() {
         !is_array($_SESSION['callcenter']) ||
         !isset($_SESSION['callcenter']['estado_consola']))
         $_SESSION['callcenter'] = generarEstadoInicial();
+
+    // Allow extensions directory AJAX loading regardless of console state
+    if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'getExtensionsList') {
+        return manejarSesionActiva_getExtensionsList($module_name, $smarty, $sDirLocalPlantillas, null, null);
+    }
 
     /* Al iniciar la sesión del agente, se asignan las variables elastix_agent_user y elastix_extension  */
     if ($_SESSION['callcenter']['estado_consola'] == 'logged-in') {

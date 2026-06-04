@@ -19,7 +19,8 @@
 ## Lógica y Pasos
 
 ### 1. Backend PHP (`modules/agent_console/index.php`)
-- Definir la acción AJAX `manejarSesionActiva_getExtensionsList`.
+- Interceptar la petición de `action=getExtensionsList` en `_moduleContent` (antes de la verificación del estado de sesión) para permitir que funcione en la pantalla de login.
+- Definir la función `manejarSesionActiva_getExtensionsList`.
 - En esta función:
   - Liberar la sesión (`session_commit()`) para evitar bloquear otras peticiones paralelas.
   - Conectar a la base de datos de Asterisk y obtener la lista de extensiones (`SELECT id, description, tech FROM devices ORDER BY id ASC`).
