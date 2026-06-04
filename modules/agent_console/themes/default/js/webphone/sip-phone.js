@@ -739,6 +739,12 @@ var WebPhone = (function() {
             return;
         }
 
+        // Avoid duplicate answering attempts if already establishing or established
+        if (currentSession.state === 'Establishing' || currentSession.state === 'Established') {
+            log('Session is already establishing or established (' + currentSession.state + '). Ignoring duplicate answer call.');
+            return;
+        }
+
         log('Answering call...');
 
         var options = {
@@ -756,7 +762,10 @@ var WebPhone = (function() {
             attachMedia();
         }).catch(function(e) {
             log('Failed to answer: ' + (e.message || e));
-            updateCallState('idle');
+            // Only update state to idle if the current session is actually not establishing/established anymore
+            if (currentSession && currentSession.state !== 'Establishing' && currentSession.state !== 'Established') {
+                updateCallState('idle');
+            }
         });
     }
 
