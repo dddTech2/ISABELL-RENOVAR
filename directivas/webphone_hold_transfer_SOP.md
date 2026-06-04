@@ -6,7 +6,7 @@
 3. Permitir transferencias de llamadas:
    - **Transferencia Ciega (Blind Transfer):** Enviar la llamada activa directamente a otra extensión o número externo.
    - **Transferencia Atendida (Attended Transfer):** Conectar la llamada retenida con la llamada activa y retirar al agente de la conversación.
-4. Recuperar de forma automática la llamada retenida si la llamada activa secundaria se cuelga.
+4. Mantener la llamada retenida en espera (Hold) si la llamada activa secundaria finaliza, hasta que el agente decida recuperarla manualmente.
 
 ## Entradas y Salidas
 - **Entradas:** 
@@ -29,9 +29,9 @@
   - Si hay otra llamada activa (`currentSession`), primero ponerla en espera (Hold) y guardarla como la nueva `heldSession`.
   - Configurar las opciones de re-INVITE con `hold: false` en la sesión que estaba en espera.
   - Restablecer la sesión reanudada como `currentSession` y actualizar el estado a `connected`.
-- **Auto-recuperación (Auto-resume):**
-  - Si el agente finaliza la llamada activa secundaria (o la contraparte cuelga), el sistema debe verificar si hay una llamada en espera (`heldSession`).
-  - De ser así, debe iniciar automáticamente el proceso de reanudación (Resume) de la llamada en espera de forma inmediata sin intervención manual.
+- **Desactivación de Auto-recuperación (Keep Hold):**
+  - Si el agente finaliza la llamada activa secundaria (o la contraparte cuelga), la llamada en espera (`heldSession`) no se reanudará automáticamente.
+  - El sistema cambiará el estado de la llamada activa a `idle`, pero mantendrá visible el cuadro de llamada retenida (`#webphone-held-info`) con las opciones de "Recuperar" y "Colgar", permitiendo al agente retomar al cliente cuando él lo decida.
 
 ### 2. Control de Transferencias
 - **Transferencia Ciega (Blind Transfer):**

@@ -693,13 +693,11 @@ var WebPhone = (function() {
                     if (session === currentSession) {
                         currentSession = null;
                         
-                        // Auto-resume held session if it exists when active call is hung up
+                        // Auto-resume disabled: keep held session, update call state to idle
                         if (heldSession) {
-                            log('Active call terminated. Auto-resuming held session.');
-                            resume();
-                        } else {
-                            updateCallState('idle');
+                            log('Active call terminated. Keeping held session.');
                         }
+                        updateCallState('idle');
                     } else if (session === heldSession) {
                         log('Held call terminated');
                         heldSession = null;
