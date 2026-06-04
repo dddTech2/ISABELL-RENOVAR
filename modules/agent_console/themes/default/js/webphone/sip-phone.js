@@ -661,11 +661,62 @@ var WebPhone = (function() {
         return 0;
     }
 
+    function parseCallerIdHeader(headerValue) {
+        if (!headerValue) return null;
+        
+        var displayName = '';
+        var number = '';
+        
+        var nameMatch = headerValue.match(/"([^"]+)"/);
+        if (nameMatch) {
+            displayName = nameMatch[1].trim();
+        }
+        
+        var uriMatch = headerValue.match(/<sip:([^@>]+)/);
+        if (uriMatch) {
+            number = uriMatch[1].trim();
+        } else {
+            var uriMatch2 = headerValue.match(/sip:([^@\s;>]+)/);
+            if (uriMatch2) {
+                number = uriMatch2[1].trim();
+            }
+        }
+        
+        if (!number) return null;
+        
+        if (displayName && displayName !== number) {
+            return displayName + ' (' + number + ')';
+        }
+        return number;
+    }
+
+    function handleConnectedLineUpdate(message) {
+        if (!message) return;
+        
+        var pai = message.getHeader('P-Asserted-Identity');
+        var rpid = message.getHeader('Remote-Party-ID');
+        
+        log('Checking headers for connected line update. PAI: ' + pai + ', RPID: ' + rpid);
+        
+        var newCaller = parseCallerIdHeader(pai) || parseCallerIdHeader(rpid);
+        if (newCaller) {
+            log('Updating active number to: ' + newCaller);
+            state.activeNumber = newCaller;
+            updateUI();
+        }
+    }
+
     function bindSessionEvents(session, direction) {
         session.delegate = {
             onSessionDescriptionHandler: function(sdh, provisional) {
                 log(direction + ' SessionDescriptionHandler created. Provisional: ' + provisional);
                 attachMedia(sdh, session);
+            },
+            onInvite: function(request, response) {
+                log(direction + ' Re-INVITE received');
+                if (request && request.message) {
+                    handleConnectedLineUpdate(request.message);
+                }
             }
         };
 

@@ -49,6 +49,10 @@
 - En la función `resume()`:
   - Extraer la identidad de `sessionToResume` (número y display name) de la misma forma que en `handleIncomingCall`.
   - Asignar este valor a `state.activeNumber` antes de llamar a `updateCallState('connected')` para garantizar que la pantalla muestre el número real con el que se está conversando.
+- **Actualización de identidad al recibir transferencia (Connected Line Update):**
+  - Durante una transferencia atendida completada por Asterisk, el canal de audio existente se une con el del Cliente. Asterisk envía un re-INVITE con la cabecera `P-Asserted-Identity` o `Remote-Party-ID` actualizada con la información del Cliente.
+  - Para capturar esto, en `bindSessionEvents()`, definir `onInvite` en `session.delegate` (que responde a re-INVITEs).
+  - Analizar las cabeceras `P-Asserted-Identity` o `Remote-Party-ID` del mensaje, extraer display name y número, asignar a `state.activeNumber` y refrescar el panel con `updateUI()`.
 
 ## Restricciones y Trampas Conocidas
 - **Consistencia en Plantillas:** Las plantillas de la consola de agente (`agent_console.tpl` y `login_agent.tpl`) comparten la misma estructura HTML del WebPhone. Toda modificación en la estructura del panel de WebPhone debe aplicarse en ambos archivos.
