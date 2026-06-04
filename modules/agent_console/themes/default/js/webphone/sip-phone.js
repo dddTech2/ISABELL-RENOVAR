@@ -37,7 +37,8 @@ var WebPhone = (function() {
         lastCallError: '', // Stores temporary call rejection errors (e.g. 404, 486)
         isVoicemail: false, // Track if call was answered by a voicemail system
         muted: false, // Track mute state
-        activeNumber: '' // Active call number/identifier
+        activeNumber: '', // Active call number/identifier
+        callStartTime: null
     };
     var callbacks = {
         onRegistered: null,
@@ -50,6 +51,7 @@ var WebPhone = (function() {
     var audioContext = null;
     var ringtoneOscillator = null;
     var ringtoneGain = null;
+    var callTimerInterval = null;
     var ringtoneInterval = null;
     
     // Auto-answer timeout reference
@@ -225,6 +227,9 @@ var WebPhone = (function() {
 
     function updateCallState(newState) {
         state.callState = newState;
+        if (newState === 'connected') {
+            state.callStartTime = new Date().getTime();
+        }
         if (callbacks.onCallStateChange) {
             callbacks.onCallStateChange(newState);
         }
@@ -411,20 +416,41 @@ var WebPhone = (function() {
 
         // Show/hide call info panel based on active number
         if ($callInfo.length) {
+            var $callTimer = $callInfo.find('.call-timer');
             if (state.callState !== 'idle' && state.activeNumber) {
                 var infoLabel = 'Llamada';
                 if (state.callState === 'calling') {
                     infoLabel = 'Llamando a';
+                    $callTimer.hide();
                 } else if (state.callState === 'ringing') {
                     infoLabel = 'Llamada de';
+                    $callTimer.hide();
                 } else if (state.callState === 'connected') {
                     infoLabel = 'En llamada con';
+                    $callTimer.show();
+                    if (!callTimerInterval) {
+                        callTimerInterval = setInterval(function() {
+                            if (state.callState !== 'connected') return;
+                            var now = new Date().getTime();
+                            var diff = Math.floor((now - state.callStartTime) / 1000);
+                            var m = Math.floor(diff / 60);
+                            var s = diff % 60;
+                            m = m < 10 ? '0' + m : m;
+                            s = s < 10 ? '0' + s : s;
+                            $callTimer.text(m + ':' + s);
+                        }, 1000);
+                    }
                 }
                 $callInfo.find('.caller-id').text(infoLabel + ': ' + state.activeNumber);
                 $callInfo.addClass('active').show();
             } else {
                 $callInfo.removeClass('active').hide();
                 $callInfo.find('.caller-id').text('');
+                $callTimer.hide().text('00:00');
+                if (callTimerInterval) {
+                    clearInterval(callTimerInterval);
+                    callTimerInterval = null;
+                }
             }
         }
     }

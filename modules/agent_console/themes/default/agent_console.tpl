@@ -141,11 +141,9 @@
                     </div>
                     <div id="webphone-call-info" class="webphone-call-info" style="display: none;">
                         <div class="caller-id"></div>
+                        <div class="call-timer" style="font-size: 1.1em; font-weight: bold; margin-top: 5px; display: none;">00:00</div>
                     </div>
-                    <div id="webphone-call-info" class="webphone-call-info" style="display: none;">
-                        <div class="caller-id"></div>
-                    </div>
-                    <!-- Contenedor para llamada retenida -->
+<!-- Contenedor para llamada retenida -->
                     <div id="webphone-held-info" class="webphone-held-info" style="display: none;">
                         <span class="held-text">Retenida: <span id="webphone-held-number"></span></span>
                         <div class="held-actions">
