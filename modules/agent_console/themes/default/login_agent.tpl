@@ -69,7 +69,31 @@
             <span class="webphone-autoanswer-label">Auto-Respuesta</span>
         </div>
         <div class="webphone-number-row">
-            <input type="text" id="webphone-number" placeholder="Numero a marcar" />
+            <input type="text" id="webphone-number" placeholder="Numero a marcar" style="border-radius: 3px 0 0 3px !important;" />
+            <button type="button" id="webphone-btn-directory" class="webphone-btn-directory" title="Libreta de Extensiones">📖</button>
+        </div>
+        <!-- Panel de Libreta de Extensiones -->
+        <div id="webphone-directory-panel" class="webphone-directory-panel" style="display: none;">
+            <div class="directory-header">
+                <span>Directorio</span>
+                <button type="button" id="webphone-directory-close" class="directory-close-btn">&times;</button>
+            </div>
+            <div class="directory-search-row">
+                <input type="text" id="webphone-directory-search" placeholder="Filtrar por nombre o ext..." autocomplete="off" />
+            </div>
+            <div class="directory-list-container">
+                <div class="directory-loading">Cargando...</div>
+                <table class="directory-table" style="display: none; width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr>
+                            <th style="font-weight: bold; color: #666; font-size: 11px; padding: 6px 4px; border-bottom: 1px solid #eee;">Ext</th>
+                            <th style="font-weight: bold; color: #666; font-size: 11px; padding: 6px 4px; border-bottom: 1px solid #eee;">Nombre</th>
+                            <th style="font-weight: bold; color: #666; font-size: 11px; padding: 6px 4px; border-bottom: 1px solid #eee;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="webphone-directory-list"></tbody>
+                </table>
+            </div>
         </div>
         <!-- Fila para transferencia ciega -->
         <div id="webphone-transfer-row" class="webphone-transfer-row" style="display: none;">
@@ -201,7 +225,8 @@ var webPhoneConfig = {
     domain: window.location.hostname,
     wssServer: window.location.hostname,
     wssPort: '8089',
-    wssPath: '/ws'
+    wssPath: '/ws',
+    moduleName: '{/literal}{$MODULE_NAME}{literal}'
 };
 
 $(document).ready(function() {

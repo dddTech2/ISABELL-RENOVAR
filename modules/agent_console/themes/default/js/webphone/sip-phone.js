@@ -1385,6 +1385,97 @@ var WebPhone = (function() {
         }
     });
 
+
+    // Global Event Handlers for Extension Directory
+    $(document).ready(function() {
+        var extensionsCache = [];
+
+        $(document).on('click', '#webphone-btn-directory', function() {
+            var $panel = $('#webphone-directory-panel');
+            if ($panel.is(':visible')) {
+                $panel.slideUp(200);
+            } else {
+                $panel.slideDown(200);
+                $('#webphone-directory-search').val('').focus();
+                loadDirectoryList();
+            }
+        });
+
+        $(document).on('click', '#webphone-directory-close', function() {
+            $('#webphone-directory-panel').slideUp(200);
+        });
+
+        $(document).on('keyup', '#webphone-directory-search', function() {
+            var search = $(this).val().toLowerCase().trim();
+            filterDirectory(search);
+        });
+
+        $(document).on('click', '.directory-item-row', function() {
+            var ext = $(this).data('extension');
+            if ($('#webphone-transfer-row').is(':visible')) {
+                $('#webphone-transfer-number').val(ext).focus();
+            } else {
+                var $numInput = $('#webphone-number');
+                if (!$numInput.prop('disabled')) {
+                    $numInput.val(ext).focus();
+                }
+            }
+            $('#webphone-directory-panel').slideUp(200);
+        });
+
+        function loadDirectoryList() {
+            var $loading = $('.directory-loading');
+            var $table = $('.directory-table');
+            var $list = $('#webphone-directory-list');
+
+            $loading.show().text('Cargando extensiones...');
+            $table.hide();
+            $list.empty();
+
+            var menu = (config && config.moduleName) ? config.moduleName : 'agent_console';
+            $.getJSON('index.php?menu=' + menu + '&action=getExtensionsList', function(data) {
+                extensionsCache = data;
+                renderDirectory(data);
+                $loading.hide();
+                $table.show();
+            }).fail(function() {
+                $loading.show().text('Error al cargar extensiones');
+            });
+        }
+
+        function renderDirectory(items) {
+            var $list = $('#webphone-directory-list');
+            $list.empty();
+            if (!items || items.length === 0) {
+                $list.append('<tr><td colspan="3" style="text-align:center; color:#999;">Sin resultados</td></tr>');
+                return;
+            }
+            items.forEach(function(item) {
+                var dotClass = item.status === 'online' ? 'online' : 'offline';
+                var statusText = item.status === 'online' ? 'Disponible' : 'No disponible';
+                var row = $('<tr class="directory-item-row" data-extension="' + item.extension + '">' +
+                    '<td style="font-weight:bold; padding: 6px 4px; border-bottom: 1px solid #eee;">' + item.extension + '</td>' +
+                    '<td style="padding: 6px 4px; border-bottom: 1px solid #eee;">' + item.name + '</td>' +
+                    '<td style="white-space:nowrap; padding: 6px 4px; border-bottom: 1px solid #eee;"><span class="status-dot ' + dotClass + '"></span>' + statusText + '</td>' +
+                    '</tr>');
+                $list.append(row);
+            });
+        }
+
+        function filterDirectory(search) {
+            if (!search) {
+                renderDirectory(extensionsCache);
+                return;
+            }
+            var filtered = extensionsCache.filter(function(item) {
+                var extMatch = item.extension.indexOf(search) !== -1;
+                var nameMatch = item.name && item.name.toLowerCase().indexOf(search) !== -1;
+                return extMatch || nameMatch;
+            });
+            renderDirectory(filtered);
+        }
+    });
+
     // Public API
     return {
         init: init,

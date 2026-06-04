@@ -2449,4 +2449,66 @@ function agentConsole_timestamp_format($i)
         $i % 60);
 }
 
+
+function manejarSesionActiva_getExtensionsList($module_name, &$smarty, $sDirLocalPlantillas, $oPaloConsola, $estado, $listpanels = null)
+{
+    session_commit();
+    
+    $dsn = generarDSNSistema('asteriskuser', 'asterisk');
+    $db = new paloDB($dsn);
+    $query = "SELECT id, description, tech FROM devices ORDER BY id ASC";
+    $dbExtensions = $db->fetchTable($query, TRUE);
+    
+    $onlineExtensions = array();
+    
+    $astman = new AGI_AsteriskManager();
+    if ($astman->connect("127.0.0.1", "admin" , obtenerClaveAMIAdmin())) {
+        // Parse SIP peers
+        $rSip = $astman->Command('sip show peers');
+        if (isset($rSip['data'])) {
+            foreach (explode("\n", $rSip['data']) as $line) {
+                if (preg_match("/^\s*(\d+)\/(\d+)\s+((\d{1,3}(\.\d{1,3}){1,3})|\(Unspecified\))\s+.*?(OK|Unmonitored)/i", $line, $matches)) {
+                    $ext = $matches[1];
+                    $onlineExtensions[$ext] = true;
+                }
+            }
+        }
+        
+        // Parse PJSIP endpoints
+        $rPjsip = $astman->Command('pjsip show endpoints');
+        if (isset($rPjsip['data'])) {
+            foreach (explode("\n", $rPjsip['data']) as $line) {
+                if (preg_match("/^Endpoint:\s*(\d+)\b.*?Not\s+in\s+use|In\s+use|Ringing|Busy/i", $line, $matches)) {
+                    $ext = $matches[1];
+                    $onlineExtensions[$ext] = true;
+                }
+                if (preg_match("/^\s*Endpoint:\s*(\d+)\/(\d+)\s+(\D+)/", $line, $matches)) {
+                    $ext = $matches[1];
+                    if (strpos(strtolower($matches[3]), 'unavailable') === false) {
+                        $onlineExtensions[$ext] = true;
+                    }
+                }
+            }
+        }
+        $astman->disconnect();
+    }
+    
+    $list = array();
+    if (is_array($dbExtensions)) {
+        foreach ($dbExtensions as $row) {
+            $ext = $row['id'];
+            $list[] = array(
+                'extension' => $ext,
+                'name' => $row['description'],
+                'tech' => $row['tech'],
+                'status' => isset($onlineExtensions[$ext]) ? 'online' : 'offline'
+            );
+        }
+    }
+    
+    header('Content-Type: application/json');
+    echo json_encode($list);
+    exit();
+}
+
 ?>

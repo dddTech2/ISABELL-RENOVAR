@@ -730,3 +730,97 @@
 .webphone-call-info {
     text-align: center;
 }
+
+
+/* Directory Panel Styles */
+.webphone-btn-directory {
+    background: #eaeaea;
+    border: 1px solid #ccc;
+    border-left: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 0 3px 3px 0;
+    font-size: 14px;
+    transition: background 0.2s ease;
+    outline: none;
+}
+.webphone-btn-directory:hover {
+    background: #dddddd;
+}
+.webphone-directory-panel {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    font-size: 13px;
+    text-align: left;
+}
+.directory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+.directory-close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #999;
+    padding: 0;
+    line-height: 1;
+}
+.directory-close-btn:hover {
+    color: #333;
+}
+.directory-search-row {
+    margin-bottom: 8px;
+}
+.directory-search-row input {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+.directory-list-container {
+    max-height: 180px;
+    overflow-y: auto;
+}
+.directory-table tbody tr {
+    cursor: pointer;
+    transition: background 0.1s ease;
+}
+.directory-table tbody tr:hover {
+    background: #f5f5f5;
+}
+.directory-table tbody td {
+    padding: 6px 4px;
+    border-bottom: 1px solid #eee;
+}
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+.status-dot.online {
+    background-color: #5cb85c;
+    box-shadow: 0 0 4px #5cb85c;
+}
+.status-dot.offline {
+    background-color: #d9534f;
+}
+.directory-loading {
+    padding: 15px 0;
+    text-align: center;
+    color: #666;
+}
