@@ -82,3 +82,4 @@
 ## Restricciones y Trampas Conocidas
 - **Rendimiento de Conexión AMI:** La consulta de Peers de Asterisk vía AMI tarda fracciones de segundo. El listado no debe consultarse en cada pulsación de tecla, sino únicamente cuando el usuario abre el directorio.
 - **Seguridad en DB:** Usar sentencias preparadas o saneamiento de DSN provisto por el framework (`generarDSNSistema`).
+- **Llamadas jQuery dentro del WebPhone (Closure):** Dentro de `WebPhone`, `$` está redefinido como una función personalizada para manejar el contexto Picture-in-Picture (`window.pipWindow`). No tiene métodos estáticos como `$.getJSON`. Debe usarse `window.jQuery.getJSON` en su lugar.

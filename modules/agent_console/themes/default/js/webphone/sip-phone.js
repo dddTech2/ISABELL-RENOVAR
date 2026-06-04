@@ -1433,7 +1433,7 @@ var WebPhone = (function() {
             $list.empty();
 
             var menu = (config && config.moduleName) ? config.moduleName : 'agent_console';
-            $.getJSON('index.php?menu=' + menu + '&action=getExtensionsList', function(data) {
+            window.jQuery.getJSON('index.php?menu=' + menu + '&action=getExtensionsList', function(data) {
                 extensionsCache = data;
                 renderDirectory(data);
                 $loading.hide();
