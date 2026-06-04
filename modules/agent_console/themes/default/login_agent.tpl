@@ -49,6 +49,12 @@
             <span class="status-indicator"></span>
             <span class="status-text">Conectando...</span>
         </div>
+        <div id="webphone-call-info" class="webphone-call-info" style="display: none;">
+            <div class="caller-id"></div>
+        </div>
+        <div id="webphone-call-info" class="webphone-call-info" style="display: none;">
+            <div class="caller-id"></div>
+        </div>
         <!-- Contenedor para llamada retenida -->
         <div id="webphone-held-info" class="webphone-held-info" style="display: none;">
             <span class="held-text">Retenida: <span id="webphone-held-number"></span></span>

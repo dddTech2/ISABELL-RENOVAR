@@ -36,7 +36,8 @@ var WebPhone = (function() {
         autoAnswer: false,
         lastCallError: '', // Stores temporary call rejection errors (e.g. 404, 486)
         isVoicemail: false, // Track if call was answered by a voicemail system
-        muted: false // Track mute state
+        muted: false, // Track mute state
+        activeNumber: '' // Active call number/identifier
     };
     var callbacks = {
         onRegistered: null,
@@ -239,6 +240,7 @@ var WebPhone = (function() {
         var $muteBtn = $('#webphone-btn-mute');
         var $dialpad = $('#webphone-dialpad');
         var $statusText = $status.find('.status-text');
+        var $callInfo = $('#webphone-call-info');
 
         // Nuevos selectores para Hold y Transferencia
         var $holdBtn = $('#webphone-btn-hold');
@@ -317,6 +319,7 @@ var WebPhone = (function() {
                     $('#webphone-number').focus();
                 }
                 stopRingtoneSound();
+                state.activeNumber = ''; // Clear active number
                 break;
             case 'calling':
                 $callBtn.hide();
@@ -404,6 +407,25 @@ var WebPhone = (function() {
             $hangupBtn.css('grid-column', 'span 1');
         } else {
             $hangupBtn.css('grid-column', 'span 2');
+        }
+
+        // Show/hide call info panel based on active number
+        if ($callInfo.length) {
+            if (state.callState !== 'idle' && state.activeNumber) {
+                var infoLabel = 'Llamada';
+                if (state.callState === 'calling') {
+                    infoLabel = 'Llamando a';
+                } else if (state.callState === 'ringing') {
+                    infoLabel = 'Llamada de';
+                } else if (state.callState === 'connected') {
+                    infoLabel = 'En llamada con';
+                }
+                $callInfo.find('.caller-id').text(infoLabel + ': ' + state.activeNumber);
+                $callInfo.addClass('active').show();
+            } else {
+                $callInfo.removeClass('active').hide();
+                $callInfo.find('.caller-id').text('');
+            }
         }
     }
 
@@ -663,7 +685,12 @@ var WebPhone = (function() {
     }
 
     function handleIncomingCall(session) {
-        log('Incoming call from: ' + session.remoteIdentity.uri.user);
+        var caller = session.remoteIdentity.uri.user;
+        if (session.remoteIdentity.displayName && session.remoteIdentity.displayName !== caller) {
+            caller = session.remoteIdentity.displayName + ' (' + caller + ')';
+        }
+        log('Incoming call from: ' + caller);
+        state.activeNumber = caller;
         
         // If there's already an active session, reject the new call
         if (currentSession) {
@@ -804,6 +831,7 @@ var WebPhone = (function() {
         state.lastCallError = ''; // Clear previous error
         state.isVoicemail = false; // Reset voicemail flag
         earlyMediaReceived = false; // Reset early media flag for new call
+        state.activeNumber = number; // Set active call number
 
         var target = SIP.UserAgent.makeURI('sip:' + number + '@' + config.domain);
         if (!target) {

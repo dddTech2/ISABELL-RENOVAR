@@ -416,6 +416,7 @@
     border: 1px solid #ddd;
     border-radius: 3px;
     display: none;
+    text-align: center;
 }
 
 .webphone-call-info.active {
@@ -724,4 +725,8 @@
     padding: 6px 10px;
     font-size: 11px;
     box-sizing: border-box;
+}
+
+.webphone-call-info {
+    text-align: center;
 }
