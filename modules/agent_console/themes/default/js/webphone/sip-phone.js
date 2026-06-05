@@ -11,6 +11,7 @@ var WebPhone = (function() {
     }
     var userAgent = null;
     var registerer = null;
+    var broadcastChannel = null;
     var currentSession = null;
     var heldSession = null;
     var registerAttempts = 0;
@@ -38,7 +39,8 @@ var WebPhone = (function() {
         isVoicemail: false, // Track if call was answered by a voicemail system
         muted: false, // Track mute state
         activeNumber: '', // Active call number/identifier
-        callStartTime: null
+        callStartTime: null,
+        takenOver: false
     };
     var callbacks = {
         onRegistered: null,
@@ -268,8 +270,12 @@ var WebPhone = (function() {
 
         var $gestionBtn = $('#webphone-btn-gestion');
         if (state.authFailed) {
-            $status.removeClass('webphone-registered webphone-unregistered').addClass('webphone-auth-failed');
+            $status.removeClass('webphone-registered webphone-unregistered webphone-taken-over').addClass('webphone-auth-failed');
             $statusText.text('Error de autenticacion');
+            $gestionBtn.hide();
+        } else if (state.takenOver) {
+            $status.removeClass('webphone-registered webphone-unregistered webphone-auth-failed').addClass('webphone-taken-over');
+            $statusText.text('Abierto en otra pestaña');
             $gestionBtn.hide();
         } else if (state.lastCallError) {
             $status.removeClass('webphone-registered webphone-connected').addClass('webphone-unregistered');
@@ -300,8 +306,8 @@ var WebPhone = (function() {
             $gestionBtn.hide();
         }
 
-        // Show reconnect button only on auth failure
-        if (state.authFailed) {
+        // Show reconnect button on auth failure or takeover
+        if (state.authFailed || state.takenOver) {
             $reconnectBtn.show();
         } else {
             $reconnectBtn.hide();
@@ -309,7 +315,7 @@ var WebPhone = (function() {
 
         switch(state.callState) {
             case 'idle':
-                $callBtn.show().prop('disabled', !state.registered);
+                $callBtn.show().prop('disabled', !state.registered || state.takenOver);
                 $hangupBtn.hide();
                 $answerBtn.hide();
                 $muteBtn.hide();
@@ -461,6 +467,7 @@ var WebPhone = (function() {
         callbacks = Object.assign(callbacks, cbs);
         registerAttempts = 0;
         state.authFailed = false;
+        state.takenOver = false;
 
         log('Initializing WebPhone for extension: ' + config.extension);
 
@@ -468,6 +475,24 @@ var WebPhone = (function() {
             log('ERROR: SIP.js library not loaded');
             if (callbacks.onError) callbacks.onError('SIP.js library not loaded');
             return false;
+        }
+
+        if (window.BroadcastChannel) {
+            if (broadcastChannel) {
+                try { broadcastChannel.close(); } catch(e) {}
+            }
+            broadcastChannel = new window.BroadcastChannel('issabel_webphone_' + config.extension);
+            broadcastChannel.onmessage = function(event) {
+                if (event.data === 'takeover') {
+                    log('Received takeover message from another tab. Disconnecting WebPhone in this tab...');
+                    state.takenOver = true;
+                    disconnect();
+                }
+            };
+            
+            // Claim registration for this tab by broadcasting takeover
+            log('Sending takeover message to other tabs on initialization...');
+            broadcastChannel.postMessage('takeover');
         }
 
         createAudioElements();
@@ -575,7 +600,7 @@ var WebPhone = (function() {
         
         // Update status text with error
         var $status = $('#webphone-status');
-        $status.removeClass('webphone-registered webphone-unregistered').addClass('webphone-auth-failed');
+        $status.removeClass('webphone-registered webphone-unregistered webphone-taken-over').addClass('webphone-auth-failed');
         $status.find('.status-text').text('Error: ' + msg);
     }
 
@@ -1447,7 +1472,7 @@ var WebPhone = (function() {
 
     // Start a watchdog interval to ensure registration is maintained
     setInterval(function() {
-        if (!state.registered && !state.authFailed && state.callState === 'idle' && userAgent) {
+        if (!state.registered && !state.authFailed && !state.takenOver && state.callState === 'idle' && userAgent) {
             log('Watchdog: WebPhone is not registered. Attempting auto-reconnection...');
             reconnect();
         }

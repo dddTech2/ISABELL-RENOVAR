@@ -149,6 +149,17 @@
     background: #f0ad4e;
 }
 
+.webphone-taken-over {
+    background: #fcf8e3;
+    color: #8a6d3b;
+    border: 1px solid #f0ad4e;
+}
+
+.webphone-taken-over .status-indicator {
+    background: #f0ad4e;
+    box-shadow: 0 0 6px #f0ad4e;
+}
+
 .webphone-calling {
     background: #fff3cd !important;
     color: #856404 !important;
