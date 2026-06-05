@@ -84,3 +84,5 @@
 - **Rendimiento de Conexión AMI:** La consulta de Peers de Asterisk vía AMI tarda fracciones de segundo. El listado no debe consultarse en cada pulsación de tecla, sino únicamente cuando el usuario abre el directorio.
 - **Seguridad en DB:** Usar sentencias preparadas o saneamiento de DSN provisto por el framework (`generarDSNSistema`).
 - **Llamadas jQuery dentro del WebPhone (Closure):** Dentro de `WebPhone`, `$` está redefinido como una función personalizada para manejar el contexto Picture-in-Picture (`window.pipWindow`). No tiene métodos estáticos como `$.getJSON`. Debe usarse `window.jQuery.getJSON` en su lugar.
+- **Doble Inclusión de Scripts en agent_console.tpl:** Evitar incluir manualmente `sip-phone.js`, `sip-0.20.0.min.js` o `webphone.css` dentro del archivo `agent_console.tpl` porque la función `_webphone_includes_html()` en `index.php` ya inyecta estos archivos dinámicamente antes de renderizar la plantilla. Si se incluyen dos veces, los manejadores de eventos (como el clic en `#webphone-btn-directory`) se registrarán por duplicado, lo que hace que el panel se abra y se cierre instantáneamente al presionarlo, impidiendo que se mantenga abierto.
+
