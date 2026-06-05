@@ -1165,7 +1165,18 @@ var WebPhone = (function() {
         registerAttempts = 0;
         state.authFailed = false;
         state.registered = false;
+        state.takenOver = false; // Reset takenOver state when manually reconnecting
         updateUI();
+
+        // Broadcast takeover message to other tabs to force them to disconnect
+        if (window.BroadcastChannel && broadcastChannel) {
+            log('Sending takeover message to other tabs on manual reconnect...');
+            try {
+                broadcastChannel.postMessage('takeover');
+            } catch(e) {
+                log('Failed to send takeover message: ' + e.message);
+            }
+        }
         
         if (userAgent) {
             userAgent.stop().then(function() {
