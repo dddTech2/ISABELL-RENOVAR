@@ -1,0 +1,34 @@
+<?php
+$arrLang['Coordinator Dashboard']   = 'Coordinator Dashboard';
+$arrLang['All Queues']              = 'All Queues';
+$arrLang['All Statuses']            = 'All Statuses';
+$arrLang['Online']                  = 'Available';
+$arrLang['On Call']                 = 'On Call';
+$arrLang['Paused']                  = 'Paused';
+$arrLang['Offline']                 = 'Offline';
+$arrLang['Ringing']                 = 'Ringing';
+$arrLang['Search extension']        = 'Search extension...';
+$arrLang['Shift From']              = 'Shift from';
+$arrLang['Shift To']                = 'to';
+$arrLang['Apply']                   = 'Apply';
+$arrLang['Spy']                     = 'Listen';
+$arrLang['Unbreak']                 = 'Unbreak';
+$arrLang['Force Login']             = 'Force Login';
+$arrLang['Calls Today']             = 'Calls today';
+$arrLang['Talk Time']               = 'Talk time';
+$arrLang['Break Time']              = 'Break time';
+$arrLang['Login Time']              = 'Login time';
+$arrLang['Hourly Calls']            = 'Calls per hour';
+$arrLang['Agents Online']           = 'Agents online';
+$arrLang['Agents On Call']          = 'On call';
+$arrLang['Agents Paused']           = 'Paused';
+$arrLang['Agents Offline']          = 'Offline';
+$arrLang['Error']                   = 'Error';
+$arrLang['Success']                 = 'Success';
+$arrLang['No agents found']         = 'No agents found';
+$arrLang['Loading']                 = 'Loading...';
+$arrLang['Queue']                   = 'Queue';
+$arrLang['Campaign']                = 'Campaign';
+$arrLang['Hold']                    = 'On Hold';
+$arrLang['Status']                  = 'Status';
+?>

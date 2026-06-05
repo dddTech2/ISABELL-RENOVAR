@@ -1,0 +1,34 @@
+<?php
+$arrLang['Coordinator Dashboard']   = 'Dashboard Coordinador';
+$arrLang['All Queues']              = 'Todas las Colas';
+$arrLang['All Statuses']            = 'Todos los Estados';
+$arrLang['Online']                  = 'Disponible';
+$arrLang['On Call']                 = 'En Llamada';
+$arrLang['Paused']                  = 'En Pausa';
+$arrLang['Offline']                 = 'Desconectado';
+$arrLang['Ringing']                 = 'Timbrando';
+$arrLang['Search extension']        = 'Buscar extensión...';
+$arrLang['Shift From']              = 'Turno desde';
+$arrLang['Shift To']                = 'hasta';
+$arrLang['Apply']                   = 'Aplicar';
+$arrLang['Spy']                     = 'Escuchar';
+$arrLang['Unbreak']                 = 'Despausa';
+$arrLang['Force Login']             = 'Forzar Login';
+$arrLang['Calls Today']             = 'Llamadas hoy';
+$arrLang['Talk Time']               = 'Tiempo en llamada';
+$arrLang['Break Time']              = 'Tiempo en pausa';
+$arrLang['Login Time']              = 'Tiempo logueado';
+$arrLang['Hourly Calls']            = 'Llamadas por hora';
+$arrLang['Agents Online']           = 'Agentes online';
+$arrLang['Agents On Call']          = 'En llamada';
+$arrLang['Agents Paused']           = 'En pausa';
+$arrLang['Agents Offline']          = 'Desconectados';
+$arrLang['Error']                   = 'Error';
+$arrLang['Success']                 = 'Éxito';
+$arrLang['No agents found']         = 'No se encontraron agentes';
+$arrLang['Loading']                 = 'Cargando...';
+$arrLang['Queue']                   = 'Cola';
+$arrLang['Campaign']                = 'Campaña';
+$arrLang['Hold']                    = 'En Espera';
+$arrLang['Status']                  = 'Estado';
+?>
