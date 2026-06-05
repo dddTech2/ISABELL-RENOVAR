@@ -627,7 +627,20 @@ var WebPhone = (function() {
 
         var registererOptions = {
             registrar: SIP.UserAgent.makeURI('sip:' + config.domain),
-            expires: 300
+            expires: 300,
+            requestDelegate: {
+                onReject: function(response) {
+                    var statusCode = response.message.statusCode;
+                    log('Registration rejected by server: status ' + statusCode);
+                    if (statusCode === 401 || statusCode === 403) {
+                        log('AUTH FAILURE: Stopping all retry attempts to prevent fail2ban block');
+                        showError('Contrasena incorrecta');
+                        disconnect();
+                    } else {
+                        showError('Registro fallo: ' + statusCode);
+                    }
+                }
+            }
         };
 
         registerer = new SIP.Registerer(userAgent, registererOptions);
@@ -1463,7 +1476,7 @@ var WebPhone = (function() {
     window.jQuery(document).on('visibilitychange', function() {
         if (!document.hidden) {
             log('Tab became visible. Checking connection status...');
-            if (userAgent && !state.registered && !state.authFailed) {
+            if (userAgent && !state.registered && !state.authFailed && !state.takenOver) {
                 log('WebPhone is not registered. Forcing reconnect...');
                 reconnect();
             }

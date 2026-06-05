@@ -56,10 +56,12 @@
   - Si `broadcastChannel` existe, enviar un mensaje `'takeover'` antes de iniciar la reconexión, obligando a cualquier otra pestaña a ceder el control.
   - Proceder con la recreación del UserAgent y el registro SIP normal.
 
-### 4. Restricción del Watchdog de Conexión
-- Modificar el intervalo del watchdog de conexión en `sip-phone.js` para que **no** intente reconectar automáticamente si la pestaña ha sido desplazada (`!state.takenOver` debe ser verdadero), previniendo bucles de pelea infinita por el registro entre múltiples pestañas.
+### 4. Restricción del Watchdog y Foco de Pestaña (Page Visibility)
+- Modificar tanto el watchdog (`setInterval`) como el listener de `visibilitychange` en `sip-phone.js` para que **no** fuercen la reconexión si la pestaña ha sido desplazada por takeover (`!state.takenOver` debe ser verdadero), evitando peleas infinitas por el registro entre múltiples pestañas al alternar o enfocar pestañas inactivas.
+- Configurar la propiedad `requestDelegate` con la función `onReject` al instanciar `SIP.Registerer` para interceptar de manera robusta los códigos de error del servidor (como 403 o 401) y detener los intentos para evitar bloqueos.
 
 ## Restricciones y Trampas Conocidas
 - **Nombres de Canales Únicos:** El `BroadcastChannel` debe incluir el número de extensión en el nombre del canal (ej. `issabel_webphone_1005`) para evitar que pestañas de agentes diferentes interfieran entre sí si comparten la misma red o navegador en la misma máquina física.
-- **Bucle de Pelea de Pestañas (Ping-Pong):** Si la reconexión automática del watchdog o de focus de página no respetase la bandera `takenOver`, dos pestañas entrarían en un ciclo infinito de quitarse el registro mutuamente. La bandera `takenOver` se debe limpiar estrictamente bajo acción explícita del usuario (clic en "Reconectar").
+- **Bucle de Pelea de Pestañas (Ping-Pong):** Si la reconexión automática del watchdog o de focus de página (`visibilitychange`) no respetase la bandera `takenOver`, dos pestañas entrarían en un ciclo infinito de quitarse el registro mutuamente. La bandera `takenOver` se debe limpiar estrictamente bajo acción explícita del usuario (clic en "Reconectar").
 - **Soporte de Navegador:** BroadcastChannel es ampliamente soportado en navegadores modernos. Si no está disponible en navegadores antiguos, el sistema no fallará (se envuelve en validación `if (window.BroadcastChannel)`), simplemente funcionará con el comportamiento tradicional de colisión SIP estándar.
+
