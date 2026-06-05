@@ -30,7 +30,13 @@
 - Suscribirse al evento `visibilitychange` a nivel de `document` dentro de `sip-phone.js`. 
 - Si `document.hidden` es falso, verificar si existe `userAgent` y el estado no es `registered` ni `authFailed`. En ese caso, invocar `reconnect()`.
 
+### 4. Watchdog de Conexión Activa (Intervalo Periódico)
+- Configurar un intervalo periódico (`setInterval`) cada 30 segundos en `sip-phone.js`.
+- Si `state.registered` es falso, `state.authFailed` es falso, el estado de llamada es `idle` y `userAgent` existe, ejecutar `reconnect()` de manera automática para restablecer la conexión y el registro SIP sin requerir interacción manual del usuario.
+
 ## Restricciones y Trampas Conocidas
 - **Deprecación de reconnectionTimeout:** En versiones modernas de SIP.js (>= 0.16.0), el parámetro de espera de reconexión pasó a llamarse `reconnectionDelay`. El uso de `reconnectionTimeout` genera advertencias en consola.
 - **Bloqueos por Fail2ban:** Mantener `maxRegisterAttempts = 1` para respuestas de credenciales incorrectas (401/403) para evitar bloqueos por fuerza bruta, pero permitir reconexiones en caídas de red normales reiniciando el contador únicamente al lograr un handshake exitoso de WebSocket (`onConnect`).
+- **Watchdog en llamada:** El watchdog bajo ninguna circunstancia debe gatillar la reconexión si el agente está en una llamada activa o retenida (`state.callState !== 'idle'`), para evitar colgar llamadas en curso por micro-cortes transitorios.
+
 

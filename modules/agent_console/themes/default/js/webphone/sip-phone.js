@@ -1445,6 +1445,14 @@ var WebPhone = (function() {
         }
     });
 
+    // Start a watchdog interval to ensure registration is maintained
+    setInterval(function() {
+        if (!state.registered && !state.authFailed && state.callState === 'idle' && userAgent) {
+            log('Watchdog: WebPhone is not registered. Attempting auto-reconnection...');
+            reconnect();
+        }
+    }, 30000); // Check every 30 seconds
+
 
     // Global Event Handlers for Extension Directory
     $(document).ready(function() {
