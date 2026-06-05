@@ -40,7 +40,8 @@ var WebPhone = (function() {
         muted: false, // Track mute state
         activeNumber: '', // Active call number/identifier
         callStartTime: null,
-        takenOver: false
+        takenOver: false,
+        lastConnectTime: 0
     };
     var callbacks = {
         onRegistered: null,
@@ -517,6 +518,7 @@ var WebPhone = (function() {
     }
 
     function createUserAgent() {
+        state.lastConnectTime = new Date().getTime();
         var wsServer = 'wss://' + config.wssServer + ':' + config.wssPort + config.wssPath;
         log('WebSocket Server: ' + wsServer);
 
@@ -1144,9 +1146,15 @@ var WebPhone = (function() {
         }
 
         if (registerer) {
-            registerer.unregister().catch(function(e) {
-                log('Unregister failed: ' + (e.message || e));
-            });
+            if (state.registered) {
+                registerer.unregister().catch(function(e) {
+                    log('Unregister failed: ' + (e.message || e));
+                });
+            }
+            try {
+                registerer.dispose();
+            } catch(e) {}
+            registerer = null;
         }
 
         if (userAgent) {
@@ -1161,6 +1169,7 @@ var WebPhone = (function() {
 
     function reconnect() {
         log('Reconnecting...');
+        state.lastConnectTime = new Date().getTime();
         stopRingtoneSound();
         registerAttempts = 0;
         state.authFailed = false;
@@ -1176,6 +1185,13 @@ var WebPhone = (function() {
             } catch(e) {
                 log('Failed to send takeover message: ' + e.message);
             }
+        }
+
+        if (registerer) {
+            try {
+                registerer.dispose();
+            } catch(e) {}
+            registerer = null;
         }
         
         if (userAgent) {
@@ -1487,7 +1503,8 @@ var WebPhone = (function() {
     window.jQuery(document).on('visibilitychange', function() {
         if (!document.hidden) {
             log('Tab became visible. Checking connection status...');
-            if (userAgent && !state.registered && !state.authFailed && !state.takenOver) {
+            var now = new Date().getTime();
+            if (userAgent && !state.registered && !state.authFailed && !state.takenOver && (now - state.lastConnectTime > 15000)) {
                 log('WebPhone is not registered. Forcing reconnect...');
                 reconnect();
             }
@@ -1496,7 +1513,8 @@ var WebPhone = (function() {
 
     // Start a watchdog interval to ensure registration is maintained
     setInterval(function() {
-        if (!state.registered && !state.authFailed && !state.takenOver && state.callState === 'idle' && userAgent) {
+        var now = new Date().getTime();
+        if (!state.registered && !state.authFailed && !state.takenOver && state.callState === 'idle' && userAgent && (now - state.lastConnectTime > 15000)) {
             log('Watchdog: WebPhone is not registered. Attempting auto-reconnection...');
             reconnect();
         }
