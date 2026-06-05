@@ -570,7 +570,8 @@ SELECT
     c.duration          AS duracion,
     c.uniqueid          AS uniqueid,
     c.failure_cause     AS failure_cause,
-    c.failure_cause_txt AS failure_cause_txt
+    c.failure_cause_txt AS failure_cause_txt,
+    c.retries           AS intentos
 FROM calls c
 LEFT JOIN agent a
     ON c.id_agent = a.id
@@ -598,6 +599,7 @@ SQL_LLAMADAS;
                     'Uniqueid',
                     _tr('Failure Code'),
                     _tr('Failure Cause'),
+                    _tr('Retries'),
                 ),
                 'DATA'  =>  $datosTelefonos,
             ),
