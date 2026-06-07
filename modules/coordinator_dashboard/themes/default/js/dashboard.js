@@ -33,7 +33,7 @@ var CoordDash = (function($) {
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
     function baseUrl(action) {
-        return 'index.php?menu=' + encodeURIComponent(MODULE_NAME) + '&action=' + action;
+        return 'index.php?menu=' + encodeURIComponent(MODULE_NAME) + '&action=' + action + '&rawmode=yes';
     }
 
     function escHtml(s) {
