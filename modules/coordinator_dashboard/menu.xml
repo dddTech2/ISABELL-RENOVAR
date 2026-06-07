@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+  <menulist>
+    <menuitem menuid="coordinator_dashboard" desc="Dashboard Coordinador" parent="call_center" module="yes" link="" order="5"></menuitem>
+  </menulist>
+</module>
