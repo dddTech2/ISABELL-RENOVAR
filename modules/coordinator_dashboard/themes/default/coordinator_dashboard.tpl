@@ -1,5 +1,5 @@
-{* Coordinator Dashboard — Smarty Template
-   Dark premium real-time view for call center coordinators *}
+{* Coordinator Dashboard -- Smarty Template
+   Light theme to match Issabel UI *}
 
 {* Load Inter font + Chart.js CDN *}
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,28 +26,28 @@ window.COORD_LANG        = {$LANG_JSON};
 
     {* ---- HEADER BAR ---- *}
     <div id="coord-header">
-        <div class="header-brand">⚡ Coordinador CC</div>
+        <div class="header-brand">Coordinador CC</div>
         <span id="coord-clock">00:00:00</span>
 
         <div class="kpi-chips">
             <div class="kpi-chip online">
                 <span class="kpi-dot"></span>
-                <span class="kpi-num" id="kpi-online">—</span>
+                <span class="kpi-num" id="kpi-online">-</span>
                 <span class="kpi-lbl">Online</span>
             </div>
             <div class="kpi-chip oncall">
                 <span class="kpi-dot"></span>
-                <span class="kpi-num" id="kpi-oncall">—</span>
+                <span class="kpi-num" id="kpi-oncall">-</span>
                 <span class="kpi-lbl">En Llamada</span>
             </div>
             <div class="kpi-chip paused">
                 <span class="kpi-dot"></span>
-                <span class="kpi-num" id="kpi-paused">—</span>
+                <span class="kpi-num" id="kpi-paused">-</span>
                 <span class="kpi-lbl">En Pausa</span>
             </div>
             <div class="kpi-chip offline">
                 <span class="kpi-dot"></span>
-                <span class="kpi-num" id="kpi-offline">—</span>
+                <span class="kpi-num" id="kpi-offline">-</span>
                 <span class="kpi-lbl">Desconect.</span>
             </div>
         </div>
@@ -68,15 +68,15 @@ window.COORD_LANG        = {$LANG_JSON};
         {* Status pills *}
         <div class="status-pills">
             <span class="status-pill active" data-status="all">Todos</span>
-            <span class="status-pill" data-status="online">🟢 Online</span>
-            <span class="status-pill" data-status="oncall">🔴 En llamada</span>
-            <span class="status-pill" data-status="paused">🟡 Pausa</span>
-            <span class="status-pill" data-status="offline">⚫ Desconect.</span>
+            <span class="status-pill" data-status="online">Online</span>
+            <span class="status-pill" data-status="oncall">En llamada</span>
+            <span class="status-pill" data-status="paused">Pausa</span>
+            <span class="status-pill" data-status="offline">Desconect.</span>
         </div>
 
         {* Extension prefix search *}
-        <span class="filter-label">Extensión:</span>
-        <input type="text" id="coord-ext-filter" placeholder="Ej: 40 → 4001, 4002…" maxlength="6">
+        <span class="filter-label">Extension:</span>
+        <input type="text" id="coord-ext-filter" placeholder="Ej: 40 -> 4001, 4002..." maxlength="6">
 
         {* Shift filter *}
         <div class="shift-group">
@@ -86,7 +86,7 @@ window.COORD_LANG        = {$LANG_JSON};
                 <option value="{$h|intval}">{$h}:00</option>
                 {/foreach}
             </select>
-            <span class="filter-label">—</span>
+            <span class="filter-label">-</span>
             <select id="coord-shift-to">
                 {foreach from=$HOURS_OPTIONS item=h}
                 <option value="{$h|intval}" {if $h == '23'}selected{/if}>{$h}:00</option>
@@ -97,18 +97,24 @@ window.COORD_LANG        = {$LANG_JSON};
 
     </div>
 
+    {* ---- ERROR BANNER (shows PHP errors visibly) ---- *}
+    <div id="coord-error-banner">
+        <strong></strong>
+        <pre></pre>
+    </div>
+
     {* ---- AGENT GRID ---- *}
     <div id="coord-grid">
-        <div id="coord-no-agents">Cargando agentes…</div>
+        <div id="coord-no-agents">Cargando agentes...</div>
     </div>
 
     {* ---- HOURLY CHART ---- *}
     <div id="coord-chart-section">
-        <h3>📊 Llamadas por hora (últimas 12h)</h3>
+        <h3>LLAMADAS POR HORA (ULTIMAS 12H)</h3>
         <canvas id="coord-hourly-chart"></canvas>
     </div>
 
 </div>{* end #coord-dashboard *}
 
-{* Dashboard JS — loaded last to ensure jQuery is available *}
+{* Dashboard JS -- loaded last *}
 <script src="modules/{$MODULE_NAME}/themes/default/js/dashboard.js"></script>
