@@ -1,10 +1,11 @@
 #!/bin/bash
 # Script para registrar el módulo Coordinator Dashboard en Issabel
-# Debe ejecutarse como root desde /var/www/html/issabel
+# Debe ejecutarse como root desde /var/www/html
 
 BASE="/var/www/html"
-MENU_DB="$BASE/db/menu.db"
-ACL_DB="$BASE/db/acl.db"
+DB_DIR="/var/www/db"
+MENU_DB="$DB_DIR/menu.db"
+ACL_DB="$DB_DIR/acl.db"
 
 echo "=== Registrando coordinator_dashboard en Issabel ==="
 
