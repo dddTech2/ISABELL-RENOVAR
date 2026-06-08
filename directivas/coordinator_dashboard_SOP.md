@@ -127,6 +127,8 @@ En la implementación PHP:
 
 7. **Gráfica por hora**: Query simple a `call_entry` y `calls` agrupando por `HOUR(datetime_init)`. Limitar a las últimas 12 horas.
 
+8. **Peticiones AJAX en Issabel y rawmode**: Las llamadas AJAX a los controladores PHP en módulos de Issabel (`index.php?menu=modulo&action=accion`) devolverán la página HTML completa del tema si no se incluye el parámetro `rawmode=yes` en la query string. Siempre se debe adjuntar `&rawmode=yes` en el helper de URLs del frontend (JS) para recibir respuestas JSON directas.
+
 ## Plan de Ejecución
 
 ### Fase 1: Backend PHP
