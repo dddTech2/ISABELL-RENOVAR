@@ -47,7 +47,8 @@ var WebPhone = (function() {
         onRegistered: null,
         onUnregistered: null,
         onCallStateChange: null,
-        onError: null
+        onError: null,
+        onCallRejectedBusy: null
     };
     
     // Audio context for ringtones
@@ -224,6 +225,28 @@ var WebPhone = (function() {
             ringtoneGain = null;
         }
         log('Ringtone stopped');
+    }
+
+    function playCallWaitingBeep() {
+        try {
+            var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
+            var ctx = new AudioContextClass();
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start();
+            osc.stop(ctx.currentTime + 0.25);
+        } catch (e) {
+            log('Error playing call waiting beep: ' + e.message);
+        }
     }
 
     // ============================================
@@ -809,7 +832,11 @@ var WebPhone = (function() {
         
         // If there's already an active session, reject the new call
         if (currentSession) {
-            log('Already in a call, rejecting incoming call');
+            log('Already in a call, rejecting incoming call from: ' + caller);
+            playCallWaitingBeep();
+            if (callbacks.onCallRejectedBusy) {
+                callbacks.onCallRejectedBusy(caller);
+            }
             session.reject().catch(function(e) {
                 log('Reject failed: ' + (e.message || e));
             });

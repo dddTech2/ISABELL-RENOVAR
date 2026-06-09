@@ -277,9 +277,34 @@ $(document).ready(function() {
     $('#schedule_type_campaign_end').change(function() {
     	$('#schedule_date').hide();
     });
-    $('#schedule_type_bydate').change(function() {
-    	$('#schedule_date').show();
+    // Event listener for Missed Calls tab click
+    $(document).on('click', 'a[href="#tabs-missed-calls"]', function() {
+        cargarLlamadasPerdidas();
     });
+
+    // Event listener for missed call dialback
+    $(document).on('click', '.btn-devolver-llamada', function() {
+        var phone = $(this).data('phone');
+        if (phone) {
+            var context = (window.pipWindow && !window.pipWindow.closed) ? window.pipWindow.document : document;
+            var $numInput = $('#webphone-number', context);
+            if ($numInput.length) {
+                $numInput.val(phone);
+            }
+            if (typeof WebPhone !== 'undefined' && WebPhone.call) {
+                WebPhone.call(phone);
+            } else {
+                mostrar_mensaje_error("El Webphone no está registrado o disponible.");
+            }
+        }
+    });
+
+    // Interval to refresh missed calls list every 30 seconds if visible
+    setInterval(function() {
+        if ($('#tabs-missed-calls').is(':visible')) {
+            cargarLlamadasPerdidas();
+        }
+    }, 30000);
 
     });
 
@@ -1443,4 +1468,46 @@ function abrir_url_externo3(urlopentype, url3, title, autoOpen)
             break;
         }
     }
+}
+
+function cargarLlamadasPerdidas() {
+    var $tbody = $('#missed-calls-tbody');
+    
+    // Show loading indicator
+    $tbody.html('<tr><td colspan="4" style="text-align: center; padding: 20px; color: #777;">Cargando llamadas perdidas...</td></tr>');
+    
+    $.post('index.php?menu=' + module_name + '&rawmode=yes', {
+        menu: module_name,
+        rawmode: 'yes',
+        action: 'getMissedCalls'
+    }, function(respuesta) {
+        if (respuesta.action === 'error') {
+            $tbody.html('<tr><td colspan="4" style="text-align: center; padding: 20px; color: red;">Error: ' + respuesta.message + '</td></tr>');
+            return;
+        }
+        
+        var calls = respuesta.calls;
+        if (!calls || calls.length === 0) {
+            $tbody.html('<tr><td colspan="4" style="text-align: center; padding: 20px; color: #777;">No hay llamadas perdidas hoy.</td></tr>');
+            return;
+        }
+        
+        var html = '';
+        for (var i = 0; i < calls.length; i++) {
+            var call = calls[i];
+            
+            // Format button for callback
+            var callBtn = '<button type="button" class="btn-devolver-llamada" data-phone="' + call.numero + '" style="cursor: pointer; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; background-color: #fcfcfc;">📞 Marcar</button>';
+            
+            html += '<tr style="border-bottom: 1px solid #ddd;">' +
+                    '<td style="padding: 10px; border: 1px solid #ddd;">' + call.hora + '</td>' +
+                    '<td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">' + call.numero + '</td>' +
+                    '<td style="padding: 10px; border: 1px solid #ddd;">' + call.cola + ' (' + call.campania + ')</td>' +
+                    '<td style="padding: 10px; border: 1px solid #ddd; text-align: center;">' + callBtn + '</td>' +
+                    '</tr>';
+        }
+        $tbody.html(html);
+    }, 'json').fail(function() {
+        $tbody.html('<tr><td colspan="4" style="text-align: center; padding: 20px; color: red;">Error de conexión con el servidor.</td></tr>');
+    });
 }

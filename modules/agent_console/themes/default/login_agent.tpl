@@ -263,6 +263,17 @@ $(document).ready(function() {
         },
         onCallStateChange: function(state) {
             console.log('[WebPhone] Call state:', state);
+        },
+        onCallRejectedBusy: function(caller) {
+            console.log('[WebPhone] Call rejected (busy) from:', caller);
+            $('#login_icono_espera').hide();
+            $('#login_msg_espera').text("");
+            $('#login_msg_error').text("Llamada directa perdida (Línea Ocupada): " + caller);
+            $('#login_fila_estado').show();
+            setTimeout(function() {
+                $('#login_msg_error').text("");
+                $('#login_fila_estado').hide();
+            }, 7000);
         }
     });
 

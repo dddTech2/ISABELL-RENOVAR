@@ -251,7 +251,7 @@ function manejarLogin($module_name, &$smarty, $sDirLocalPlantillas)
      * ha perdido un estado de callcenter anterior. */
     if (in_array($sAction, array('checkStatus', 'agentLogout', 'hangup',
         'break', 'unbreak', 'transfer', 'transferagent', 'confirm_contact', 'schedule',
-        'saveforms', 'updateShiftTimes'))) {
+        'saveforms', 'updateShiftTimes', 'getMissedCalls'))) {
         $json = new Services_JSON();
         Header('Content-Type: application/json');
         return $json->encode(array(
@@ -1616,6 +1616,53 @@ function manejarSesionActiva_updateShiftTimes($module_name, $smarty,
         'shift_hold_time'  => $sec_shift_hold,
         'is_hold_pause'    => $isHoldPause,
     );
+
+    $json = new Services_JSON();
+    Header('Content-Type: application/json');
+    return $json->encode($respuesta);
+}
+
+function manejarSesionActiva_getMissedCalls($module_name, $smarty,
+    $sDirLocalPlantillas, $oPaloConsola, $estado)
+{
+    $respuesta = array(
+        'action' => 'success',
+        'calls'  => array()
+    );
+
+    try {
+        $pDB = new PDO(
+            'mysql:host=localhost;dbname=call_center;charset=utf8',
+            'asterisk',
+            'asterisk'
+        );
+        $pDB->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        // Get today's start timestamp
+        $today = date('Y-m-d') . ' 00:00:00';
+
+        // Query today's abandoned calls in all active queues
+        $sql = "SELECT DISTINCT 
+                    c.datetime_entry_queue AS hora,
+                    c.callerid AS numero,
+                    qce.queue AS cola,
+                    COALESCE(camp.name, 'Cola Entrante') AS campania
+                FROM call_entry c
+                JOIN queue_call_entry qce ON c.id_queue_call_entry = qce.id
+                LEFT JOIN campaign_entry camp ON c.id_campaign = camp.id
+                WHERE c.datetime_entry_queue >= :today
+                  AND c.status = 'abandonada'
+                ORDER BY c.datetime_entry_queue DESC
+                LIMIT 50";
+
+        $stmt = $pDB->prepare($sql);
+        $stmt->execute(array(':today' => $today));
+        $respuesta['calls'] = $stmt->fetchAll(PDO::ATTR_ASSOC);
+        $pDB = null;
+    } catch (Exception $e) {
+        $respuesta['action'] = 'error';
+        $respuesta['message'] = $e->getMessage();
+    }
 
     $json = new Services_JSON();
     Header('Content-Type: application/json');

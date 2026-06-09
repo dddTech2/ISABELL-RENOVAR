@@ -103,6 +103,7 @@
     			<div id="issabel-callcenter-cejillas-contenido">
     			   <ul>
                        <li><a href="#issabel-callcenter-llamada-paneles">{$TAB_LLAMADA}</a></li>
+                       <li><a href="#tabs-missed-calls">Llamadas Perdidas</a></li>
                        {foreach from=$CUSTOM_PANELS item=HTML_PANEL}
                        <li><a href="#tabs-{$HTML_PANEL.panelname}">{$HTML_PANEL.title}</a></li>
                        {/foreach}
@@ -113,6 +114,28 @@
                             <div class="ui-layout-south"><fieldset class="ui-widget-content ui-corner-all"><legend><b>{$TAB_LLAMADA_SCRIPT}</b></legend><div id="issabel-callcenter-llamada-script">{$CONTENIDO_LLAMADA_SCRIPT}</div></fieldset></div>
                         </div>
                         <div class="ui-layout-center"><fieldset class="ui-widget-content ui-corner-all"><legend><b>{$TAB_LLAMADA_FORM}</b></legend><div id="issabel-callcenter-llamada-form">{$CONTENIDO_LLAMADA_FORMULARIO}</div></fieldset></div>
+                    </div>
+                    <div id="tabs-missed-calls">
+                        <fieldset class="ui-widget-content ui-corner-all" style="border: 1px solid #ddd; padding: 10px; margin: 5px 0;">
+                            <legend><b>Llamadas Perdidas de Hoy (Cola)</b></legend>
+                            <div id="issabel-callcenter-llamadas-perdidas-lista" style="padding: 10px; overflow-y: auto; max-height: 400px;">
+                                <table class="missed-calls-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                                    <thead>
+                                        <tr style="border-bottom: 2px solid #ccc; font-weight: bold; background-color: #f2f2f2; color: #333;">
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Hora</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Número</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Campaña/Cola</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd; text-align: center; width: 100px;">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="missed-calls-tbody">
+                                        <tr>
+                                            <td colspan="4" style="text-align: center; padding: 20px; color: #777;">No hay llamadas perdidas hoy.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </fieldset>
                     </div>
                     {foreach from=$CUSTOM_PANELS item=HTML_PANEL}
                     <div id="tabs-{$HTML_PANEL.panelname}">
@@ -396,6 +419,10 @@ $(document).ready(function() {
             },
             onCallStateChange: function(state) {
                 console.log('[WebPhone] Call state:', state);
+            },
+            onCallRejectedBusy: function(caller) {
+                console.log('[WebPhone] Call rejected (busy) from:', caller);
+                mostrar_mensaje_error("Intento de llamada directa rechazada (Línea Ocupada): " + caller);
             }
         });
 
