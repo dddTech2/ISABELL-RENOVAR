@@ -169,6 +169,7 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
         foreach($arrCampaign as $campaign) {
             $arrData[] = array(
                 "<input class=\"button\" type=\"radio\" name=\"id_campaign\" value=\"$campaign[id]\" />",
+                $campaign['id'],
                 "<a href='?menu=$module_name&amp;action=edit_campaign&amp;id_campaign=".$campaign['id']."'>".
                     htmlentities($campaign['name'], ENT_COMPAT, 'UTF-8').'</a>',
                 $campaign['datetime_init'].' - '.$campaign['datetime_end'],
@@ -193,7 +194,7 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
     $oGrid->setWidth("99%");
     $oGrid->setIcon("images/list.png");
     $oGrid->setURL($url);
-    $oGrid->setColumns(array('', _tr('Name Campaign'), _tr('Range Date'),
+    $oGrid->setColumns(array('', 'ID', _tr('Name Campaign'), _tr('Range Date'),
         _tr('Schedule per Day'), _tr('Retries'), _tr('Trunk'), _tr('Queue'),
         _tr('Total Calls'), _tr('Pending Calls'), _tr('Completed Calls'), _tr('Average Time'), _tr('Status'), _tr('Options')));
     $_POST['cbo_estado']=$sEstado;

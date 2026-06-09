@@ -103,7 +103,7 @@ SQL_SELECT_CAMPAIGNS;
             $paramSQL[] = $id_campaign;
         }
         if (count($paramWhere) > 0) $sPeticionSQL .= ' WHERE '.implode(' AND ', $paramWhere);
-        $sPeticionSQL .= ' ORDER BY c.datetime_init, c.daytime_init';
+        $sPeticionSQL .= ' ORDER BY c.id DESC';
         if (!is_null($limit)) {
         	$sPeticionSQL .= ' LIMIT ? OFFSET ?';
             $paramSQL[] = $limit; $paramSQL[] = $offset;
