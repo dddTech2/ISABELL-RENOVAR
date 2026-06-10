@@ -143,11 +143,25 @@
   <tr>
     <td width="498"  class="menudescription">
       <table width="100%" border="0" cellspacing="0" cellpadding="4" align="center">
-        <tr>
           <td class="menudescription2">
-              <div align="left"><font color="#ffffff">&nbsp;&raquo;&nbsp;{$WELCOME_AGENT}</font></div>
+              <div align="left" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                  <font color="#ffffff">&nbsp;&raquo;&nbsp;{$WELCOME_AGENT}</font>
+                  <div style="position: relative; margin-right: 10px;">
+                      <button type="button" id="login-missed-calls-btn" style="background: none; border: none; cursor: pointer; color: white; font-size: 16px; position: relative; padding: 0; outline: none; display: flex; align-items: center; justify-content: center;" title="Llamadas Perdidas Directas">
+                          🔔<span id="login-missed-calls-badge" style="position: absolute; top: -6px; right: -7px; background: #ff3b30; color: white; border-radius: 50%; padding: 0 4px; font-size: 9px; font-weight: bold; display: none; border: 1px solid white; line-height: 12px; height: 12px; min-width: 12px; text-align: center;">0</span>
+                      </button>
+                      <div id="login-missed-calls-dropdown" style="display: none; position: absolute; right: 0; top: 25px; width: 260px; background: white; border: 1px solid #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; z-index: 10000; color: #333; font-size: 12px; text-align: left; font-family: Arial, sans-serif;">
+                          <div style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: bold; background: #f5f5f5; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                              <span>Llamadas Perdidas (Extensión)</span>
+                              <button type="button" id="login-missed-calls-refresh" style="background: none; border: none; cursor: pointer; color: #0076ff; font-size: 11px; padding: 0; outline: none;">↻ Actualizar</button>
+                          </div>
+                          <div id="login-missed-calls-list" style="max-height: 180px; overflow-y: auto; padding: 4px 0;">
+                              <div style="text-align: center; color: #777; padding: 12px;">Cargando...</div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
           </td>
-        </tr>
       </table>
     </td>
   </tr>
@@ -602,6 +616,126 @@ $(document).ready(function() {
             console.error('Failed to open PiP window:', err);
         }
     });
+
+    // Missed calls dropdown toggle
+    $('#login-missed-calls-btn').on('click', function(e) {
+        e.stopPropagation();
+        $('#login-missed-calls-dropdown').toggle();
+        if ($('#login-missed-calls-dropdown').is(':visible')) {
+            loadLoginMissedCalls();
+        }
+    });
+
+    $(document).on('click', function() {
+        $('#login-missed-calls-dropdown').hide();
+    });
+
+    $('#login-missed-calls-dropdown').on('click', function(e) {
+        e.stopPropagation();
+    });
+
+    $('#login-missed-calls-refresh').on('click', function() {
+        loadLoginMissedCalls();
+    });
+
+    $(document).on('click', '.login-missed-call-dial', function() {
+        var phone = $(this).data('phone');
+        if (phone) {
+            $('#webphone-number').val(phone);
+            if (typeof WebPhone !== 'undefined' && WebPhone.call) {
+                WebPhone.call(phone);
+                $('#login-missed-calls-dropdown').hide();
+            }
+        }
+    });
+
+    function loadLoginMissedCalls() {
+        var ext = webPhoneConfig.extension;
+        if (!ext) {
+            ext = $('#input_extension_callback').val();
+        }
+        if (!ext) {
+            $('#login-missed-calls-list').html('<div style="text-align: center; color: red; padding: 12px;">Sin extensión.</div>');
+            return;
+        }
+
+        $('#login-missed-calls-list').html('<div style="text-align: center; color: #777; padding: 12px;">Cargando...</div>');
+
+        $.get('index.php?menu=' + webPhoneConfig.moduleName + '&rawmode=yes', {
+            action: 'getDirectMissedCalls',
+            extension: ext
+        }, function(res) {
+            if (res.action === 'error') {
+                $('#login-missed-calls-list').html('<div style="text-align: center; color: red; padding: 12px;">Error al cargar.</div>');
+                return;
+            }
+            var calls = res.calls;
+            if (!calls || calls.length === 0) {
+                $('#login-missed-calls-list').html('<div style="text-align: center; color: #777; padding: 12px;">No hay llamadas perdidas hoy.</div>');
+                $('#login-missed-calls-badge').hide();
+                return;
+            }
+
+            // Update badge count
+            $('#login-missed-calls-badge').text(calls.length).show();
+
+            var html = '';
+            for (var i = 0; i < calls.length; i++) {
+                var call = calls[i];
+                var statusLabel = (call.estado === 'BUSY') ? 'Ocupado' : 'Sin cont.';
+                html += '<div style="padding: 6px 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">' +
+                        '  <div>' +
+                        '    <div style="font-weight: bold; color: #111;">' + call.numero + '</div>' +
+                        '    <div style="font-size: 10px; color: #666;">' + call.hora + ' (' + statusLabel + ')</div>' +
+                        '  </div>' +
+                        '  <button type="button" class="login-missed-call-dial" data-phone="' + call.numero + '" style="background: #28a745; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px;">📞 Llamar</button>' +
+                        '</div>';
+            }
+            $('#login-missed-calls-list').html(html);
+        }, 'json').fail(function() {
+            $('#login-missed-calls-list').html('<div style="text-align: center; color: red; padding: 12px;">Error de conexión.</div>');
+        });
+    }
+
+    // Load badge count initially after 1.5s delay
+    setTimeout(function() {
+        var ext = webPhoneConfig.extension;
+        if (!ext) {
+            ext = $('#input_extension_callback').val();
+        }
+        if (ext) {
+            $.get('index.php?menu=' + webPhoneConfig.moduleName + '&rawmode=yes', {
+                action: 'getDirectMissedCalls',
+                extension: ext
+            }, function(res) {
+                if (res.action === 'success' && res.calls && res.calls.length > 0) {
+                    $('#login-missed-calls-badge').text(res.calls.length).show();
+                }
+            }, 'json');
+        }
+    }, 1500);
+
+    // Auto-refresh the badge count every 30 seconds
+    setInterval(function() {
+        var ext = webPhoneConfig.extension;
+        if (!ext) {
+            ext = $('#input_extension_callback').val();
+        }
+        if (ext && !$('#login-missed-calls-dropdown').is(':visible')) {
+            $.get('index.php?menu=' + webPhoneConfig.moduleName + '&rawmode=yes', {
+                action: 'getDirectMissedCalls',
+                extension: ext
+            }, function(res) {
+                if (res.action === 'success' && res.calls) {
+                    if (res.calls.length > 0) {
+                        $('#login-missed-calls-badge').text(res.calls.length).show();
+                    } else {
+                        $('#login-missed-calls-badge').hide();
+                    }
+                }
+            }, 'json');
+        }
+    }, 30000);
 });
 </script>
 {/literal}

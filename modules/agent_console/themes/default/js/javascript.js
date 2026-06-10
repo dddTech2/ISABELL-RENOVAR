@@ -280,6 +280,7 @@ $(document).ready(function() {
     // Event listener for Missed Calls tab click
     $(document).on('click', 'a[href="#tabs-missed-calls"]', function() {
         cargarLlamadasPerdidas();
+        cargarLlamadasPerdidasDirectas();
     });
 
     // Event listener for missed call dialback
@@ -303,6 +304,7 @@ $(document).ready(function() {
     setInterval(function() {
         if ($('#tabs-missed-calls').is(':visible')) {
             cargarLlamadasPerdidas();
+            cargarLlamadasPerdidasDirectas();
         }
     }, 30000);
 
@@ -1503,6 +1505,49 @@ function cargarLlamadasPerdidas() {
                     '<td style="padding: 10px; border: 1px solid #ddd;">' + call.hora + '</td>' +
                     '<td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">' + call.numero + '</td>' +
                     '<td style="padding: 10px; border: 1px solid #ddd;">' + call.cola + ' (' + call.campania + ')</td>' +
+                    '<td style="padding: 10px; border: 1px solid #ddd; text-align: center;">' + callBtn + '</td>' +
+                    '</tr>';
+        }
+        $tbody.html(html);
+    }, 'json').fail(function() {
+        $tbody.html('<tr><td colspan="4" style="text-align: center; padding: 20px; color: red;">Error de conexión con el servidor.</td></tr>');
+    });
+}
+
+function cargarLlamadasPerdidasDirectas() {
+    var $tbody = $('#missed-calls-directas-tbody');
+    
+    // Show loading indicator
+    $tbody.html('<tr><td colspan="4" style="text-align: center; padding: 20px; color: #777;">Cargando llamadas directas...</td></tr>');
+    
+    $.post('index.php?menu=' + module_name + '&rawmode=yes', {
+        menu: module_name,
+        rawmode: 'yes',
+        action: 'getDirectMissedCalls'
+    }, function(respuesta) {
+        if (respuesta.action === 'error') {
+            $tbody.html('<tr><td colspan="4" style="text-align: center; padding: 20px; color: red;">Error: ' + respuesta.message + '</td></tr>');
+            return;
+        }
+        
+        var calls = respuesta.calls;
+        if (!calls || calls.length === 0) {
+            $tbody.html('<tr><td colspan="4" style="text-align: center; padding: 20px; color: #777;">No hay llamadas perdidas directas hoy.</td></tr>');
+            return;
+        }
+        
+        var html = '';
+        for (var i = 0; i < calls.length; i++) {
+            var call = calls[i];
+            var statusLabel = (call.estado === 'BUSY') ? 'Ocupado' : 'Sin contestar';
+            
+            // Format button for callback (uses global class handler for click-to-call)
+            var callBtn = '<button type="button" class="btn-devolver-llamada" data-phone="' + call.numero + '" style="cursor: pointer; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; background-color: #fcfcfc;">📞 Marcar</button>';
+            
+            html += '<tr style="border-bottom: 1px solid #ddd;">' +
+                    '<td style="padding: 10px; border: 1px solid #ddd;">' + call.hora + '</td>' +
+                    '<td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">' + call.numero + '</td>' +
+                    '<td style="padding: 10px; border: 1px solid #ddd;">' + statusLabel + '</td>' +
                     '<td style="padding: 10px; border: 1px solid #ddd; text-align: center;">' + callBtn + '</td>' +
                     '</tr>';
         }

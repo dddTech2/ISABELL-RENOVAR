@@ -160,6 +160,11 @@ function _webphone_includes_html() {
         return manejarSesionActiva_getExtensionsList($module_name, $smarty, $sDirLocalPlantillas, null, null);
     }
 
+    // Allow direct missed calls query regardless of console state
+    if (isset($_REQUEST['action']) && $_REQUEST['action'] == 'getDirectMissedCalls') {
+        return manejar_getDirectMissedCalls($module_name);
+    }
+
     /* Al iniciar la sesión del agente, se asignan las variables elastix_agent_user y elastix_extension  */
     if ($_SESSION['callcenter']['estado_consola'] == 'logged-in') {
         // Manejo de la sesión activa del agente logoneado
@@ -1657,6 +1662,67 @@ function manejarSesionActiva_getMissedCalls($module_name, $smarty,
         $result = $pDB->fetchTable($sql, TRUE, array($today));
         if ($result === FALSE) {
             throw new Exception("Error al consultar la base de datos: " . $pDB->errMsg);
+        }
+        $respuesta['calls'] = $result;
+    } catch (Throwable $e) {
+        $respuesta['action'] = 'error';
+        $respuesta['message'] = $e->getMessage();
+    }
+
+    $json = new Services_JSON();
+    Header('Content-Type: application/json');
+    return $json->encode($respuesta);
+}
+
+function manejar_getDirectMissedCalls($module_name)
+{
+    $respuesta = array(
+        'action' => 'success',
+        'calls'  => array()
+    );
+
+    $extension = getParameter('extension');
+    if (empty($extension) && isset($_SESSION['callcenter']['extension'])) {
+        $extension = $_SESSION['callcenter']['extension'];
+    }
+
+    // Strip technology prefix if present
+    if (preg_match('/^(SIP|PJSIP)\/(\d+)$/', $extension, $matches)) {
+        $extension = $matches[2];
+    }
+
+    if (empty($extension)) {
+        $respuesta['action'] = 'error';
+        $respuesta['message'] = 'No extension provided';
+        $json = new Services_JSON();
+        Header('Content-Type: application/json');
+        return $json->encode($respuesta);
+    }
+
+    try {
+        $dsn = generarDSNSistema('asteriskuser', 'asteriskcdrdb');
+        $pDB = new paloDB($dsn);
+        if ($pDB->connStatus) {
+            throw new Exception("Error al conectar a la base de datos CDR: " . $pDB->errMsg);
+        }
+
+        // Get today's start timestamp
+        $today = date('Y-m-d') . ' 00:00:00';
+
+        // Query today's direct missed calls to this extension
+        $sql = "SELECT calldate AS hora, 
+                       src AS numero, 
+                       disposition AS estado
+                FROM cdr
+                WHERE dst = ?
+                  AND calldate >= ?
+                  AND disposition IN ('NO ANSWER', 'BUSY')
+                ORDER BY calldate DESC
+                LIMIT 20";
+
+        $result = $pDB->fetchTable($sql, TRUE, array($extension, $today));
+        if ($result === FALSE) {
+            throw new Exception("Error al consultar la base de datos CDR: " . $pDB->errMsg);
         }
         $respuesta['calls'] = $result;
     } catch (Throwable $e) {

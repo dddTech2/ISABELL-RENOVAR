@@ -136,6 +136,26 @@
                                 </table>
                             </div>
                         </fieldset>
+                        <fieldset class="ui-widget-content ui-corner-all" style="border: 1px solid #ddd; padding: 10px; margin: 15px 0 5px 0;">
+                            <legend><b>Llamadas Perdidas de Hoy (Extensión Directa)</b></legend>
+                            <div id="issabel-callcenter-llamadas-perdidas-directas-lista" style="padding: 10px; overflow-y: auto; max-height: 400px;">
+                                <table class="missed-calls-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                                    <thead>
+                                        <tr style="border-bottom: 2px solid #ccc; font-weight: bold; background-color: #f2f2f2; color: #333;">
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Hora</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Número</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd;">Estado</th>
+                                            <th style="padding: 10px; border: 1px solid #ddd; text-align: center; width: 100px;">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="missed-calls-directas-tbody">
+                                        <tr>
+                                            <td colspan="4" style="text-align: center; padding: 20px; color: #777;">No hay llamadas perdidas directas hoy.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </fieldset>
                     </div>
                     {foreach from=$CUSTOM_PANELS item=HTML_PANEL}
                     <div id="tabs-{$HTML_PANEL.panelname}">
