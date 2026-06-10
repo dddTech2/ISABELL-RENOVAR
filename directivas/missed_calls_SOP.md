@@ -48,3 +48,7 @@
 - **Formato de la llamada en espera (Beep):** El tono de aviso debe ser sutil (200ms a 300ms) y de volumen bajo para evitar molestar la llamada actual del agente.
 - **Acceso a Base de Datos:** Las consultas a `call_entry` deben filtrarse estrictamente por el día de hoy (fecha actual) para mantener la consulta ultra rápida y no sobrecargar la base de datos MariaDB.
 - **Click-to-Call en Login:** En la página de login no hay pestaña de llamadas perdidas de cola porque el agente no se ha logueado en las colas. Ahí solo aplican las alertas de llamadas directas del Webphone.
+- **Conexión a Base de Datos en Backend:**
+  - *Nota:* No usar conexiones crudas de `PDO` con credenciales de base de datos hardcodeadas (como `localhost`, `asterisk`, `asterisk`), porque esto causa un error de conexión (500 Internal Server Error) en servidores de producción donde los usuarios, contraseñas o hosts son diferentes.
+  - *Solución:* En su lugar, utilizar siempre la clase wrapper nativa `paloDB` instanciada con la cadena DSN global de la configuración: `new paloDB($arrConf['cadena_dsn'])` y usar el método `$pDB->fetchTable(...)` con marcadores posicionales (`?`) para evitar fallos de portabilidad y de conexión.
+  - *Manejo de Errores:* Envolver siempre la consulta en un bloque `try-catch` capturando tanto `Exception` como `Throwable` de PHP para evitar que cualquier error de base de datos devuelva un código HTTP 500 y en su lugar responda con un JSON limpio indicando la naturaleza del error.

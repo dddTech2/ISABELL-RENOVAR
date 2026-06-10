@@ -1625,18 +1625,17 @@ function manejarSesionActiva_updateShiftTimes($module_name, $smarty,
 function manejarSesionActiva_getMissedCalls($module_name, $smarty,
     $sDirLocalPlantillas, $oPaloConsola, $estado)
 {
+    global $arrConf;
     $respuesta = array(
         'action' => 'success',
         'calls'  => array()
     );
 
     try {
-        $pDB = new PDO(
-            'mysql:host=localhost;dbname=call_center;charset=utf8',
-            'asterisk',
-            'asterisk'
-        );
-        $pDB->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pDB = new paloDB($arrConf['cadena_dsn']);
+        if ($pDB->connStatus) {
+            throw new Exception("Error al conectar a la base de datos: " . $pDB->errMsg);
+        }
 
         // Get today's start timestamp
         $today = date('Y-m-d') . ' 00:00:00';
@@ -1650,16 +1649,17 @@ function manejarSesionActiva_getMissedCalls($module_name, $smarty,
                 FROM call_entry c
                 JOIN queue_call_entry qce ON c.id_queue_call_entry = qce.id
                 LEFT JOIN campaign_entry camp ON c.id_campaign = camp.id
-                WHERE c.datetime_entry_queue >= :today
+                WHERE c.datetime_entry_queue >= ?
                   AND c.status = 'abandonada'
                 ORDER BY c.datetime_entry_queue DESC
                 LIMIT 50";
 
-        $stmt = $pDB->prepare($sql);
-        $stmt->execute(array(':today' => $today));
-        $respuesta['calls'] = $stmt->fetchAll(PDO::ATTR_ASSOC);
-        $pDB = null;
-    } catch (Exception $e) {
+        $result = $pDB->fetchTable($sql, TRUE, array($today));
+        if ($result === FALSE) {
+            throw new Exception("Error al consultar la base de datos: " . $pDB->errMsg);
+        }
+        $respuesta['calls'] = $result;
+    } catch (Throwable $e) {
         $respuesta['action'] = 'error';
         $respuesta['message'] = $e->getMessage();
     }
