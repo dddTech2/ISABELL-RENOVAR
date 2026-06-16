@@ -131,5 +131,7 @@ $arrLangModule = array(
     "Attempt Number" => "Attempt Number",
     "Download Attempts CSV" => "Download Attempts CSV",
     "Please select at least one campaign to download attempts" => "Please select at least one campaign to download attempts",
+    "Download Campaigns CSV" => "Download Campaigns CSV",
+    "Please select at least one campaign to download data" => "Please select at least one campaign to download data",
 );
 ?>

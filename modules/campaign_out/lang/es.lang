@@ -121,5 +121,7 @@ $arrLangModule = array(
     "Attempt Number" => "Número de Intento",
     "Download Attempts CSV" => "Descargar CSV de Intentos",
     "Please select at least one campaign to download attempts" => "Por favor seleccione al menos una campaña para descargar los intentos",
+    "Download Campaigns CSV" => "Descargar CSV de Datos",
+    "Please select at least one campaign to download data" => "Por favor seleccione al menos una campaña para descargar los datos",
 );
 ?>

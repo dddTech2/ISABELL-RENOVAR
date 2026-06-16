@@ -80,6 +80,21 @@ function _moduleContent(&$smarty, $module_name)
             $sAction = 'csv_attempts';
         }
     }
+    if (isset($_POST['csv_data'])) {
+        $has_campaigns = false;
+        if (isset($_POST['id_campaign'])) {
+            if (is_array($_POST['id_campaign'])) {
+                foreach ($_POST['id_campaign'] as $id) {
+                    if (ctype_digit($id)) { $has_campaigns = true; break; }
+                }
+            } elseif (ctype_digit($_POST['id_campaign'])) {
+                $has_campaigns = true;
+            }
+        }
+        if ($has_campaigns) {
+            $sAction = 'csv_data';
+        }
+    }
     switch ($sAction) {
     case 'new_campaign':
         $contenidoModulo = newCampaign($pDB, $smarty, $module_name, $local_templates_dir);
@@ -135,6 +150,12 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
     if (isset($_POST['csv_attempts']) && count($campaign_ids) == 0) {
         $smarty->assign("mb_title", _tr("Validation Error"));
         $smarty->assign("mb_message", _tr("Please select at least one campaign to download attempts"));
+    }
+
+    // Interceptar error si se pulsa csv_data sin seleccionar campañas
+    if (isset($_POST['csv_data']) && count($campaign_ids) == 0) {
+        $smarty->assign("mb_title", _tr("Validation Error"));
+        $smarty->assign("mb_message", _tr("Please select at least one campaign to download data"));
     }
 
     // Revisar si se debe de borrar una campaña elegida
@@ -264,6 +285,7 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
     $oGrid->addSubmitAction('duplicate', _tr('Duplicate'));
     $oGrid->deleteList('Are you sure you wish to delete campaign?', 'delete', _tr('Delete'));
     $oGrid->customAction("csv_attempts", _tr("Download Attempts CSV"), "download", false);
+    $oGrid->customAction("csv_data", _tr("Download Campaigns CSV"), "download", false);
     $oGrid->setData($arrData);
     $oGrid->showFilter($smarty->fetch("$local_templates_dir/filter-list-campaign.tpl"));
     return $oGrid->fetchGrid();
@@ -895,12 +917,20 @@ function csv_replace($s)
 
 function displayCampaignCSV($pDB, $smarty, $module_name, $local_templates_dir)
 {
-    $sDatosCSV = '';
+    $campaign_ids = array();
+    if (isset($_POST['id_campaign'])) {
+        if (is_array($_POST['id_campaign'])) {
+            foreach ($_POST['id_campaign'] as $id) {
+                if (ctype_digit($id)) $campaign_ids[] = (int)$id;
+            }
+        } elseif (ctype_digit($_POST['id_campaign'])) {
+            $campaign_ids[] = (int)$_POST['id_campaign'];
+        }
+    } elseif (isset($_GET['id_campaign']) && preg_match('/^[[:digit:]]+$/', $_GET['id_campaign'])) {
+        $campaign_ids[] = (int)$_GET['id_campaign'];
+    }
 
-    $id_campaign = NULL;
-    if (isset($_GET['id_campaign']) && preg_match('/^[[:digit:]]+$/', $_GET['id_campaign']))
-        $id_campaign = $_GET['id_campaign'];
-    if (is_null($id_campaign)) {
+    if (count($campaign_ids) == 0) {
         Header("Location: ?menu=$module_name");
         return '';
     }
@@ -908,69 +938,161 @@ function displayCampaignCSV($pDB, $smarty, $module_name, $local_templates_dir)
     // Se puede tardar mucho tiempo en la descarga
     ini_set('max_execution_time', 3600);
 
-    // Leer los datos de la campaña, si es necesario
     $oCamp = new paloSantoCampaignCC($pDB);
-    $arrCampaign = $oCamp->getCampaigns(null, null, $id_campaign);
-    if (!is_array($arrCampaign) || count($arrCampaign) == 0) {
-        $smarty->assign("mb_title", 'Unable to read campaign');
-        print 'Cannot read campaign - '.$oCamp->errMsg;
-        return '';
+
+    // Obtener nombres de campañas
+    $campaignNames = array();
+    foreach ($campaign_ids as $id) {
+        $arrCampaign = $oCamp->getCampaigns(null, null, $id);
+        if (is_array($arrCampaign) && count($arrCampaign) > 0) {
+            $campaignNames[$id] = $arrCampaign[0]['name'];
+        } else {
+            $campaignNames[$id] = "Campaign_" . $id;
+        }
     }
 
-    $errMsg = NULL;
-    $datosCampania =& $oCamp->getCompletedCampaignData($id_campaign);
-    if (is_null($datosCampania)) {
-        print $oCamp->errMsg;
-    } else {
-        header("Cache-Control: private");
-        header("Pragma: cache");
-        header('Content-Type: text/csv; charset=UTF-8; header=present');
-        header("Content-disposition: attachment; filename=\"".$arrCampaign[0]['name'].".csv\"");
+    // Recopilar datos y consolidar atributos y formularios
+    $allCampaignsData = array();
+    $allCustomAttributes = array();
+    $allFormFields = array();
 
-        if (count($datosCampania['BASE']['DATA']) <= 0) {
-            $sDatosCSV = "No Data Found\r\n";
-        } else {
-            // Cabeceras del archivo CSV. Se omite la primera etiqueta 'id_call'
-            $lineaCSV = array();
-            $lineaEspaciador = array();
-            $baseLabels = $datosCampania['BASE']['LABEL'];
-            array_shift($baseLabels);
-            $lineaCSV = array_merge($lineaCSV, array_map('csv_replace', $baseLabels));
-            $lineaEspaciador = array_fill(0, count($baseLabels), '""');
-            foreach (array_keys($datosCampania['FORMS']) as $id_form) {
-                $lineaCSV = array_merge($lineaCSV, array_map('csv_replace', $datosCampania['FORMS'][$id_form]['LABEL']));
-                $lineaEspaciador = array_merge(
-                    $lineaEspaciador,
-                    array_fill(0, count($datosCampania['FORMS'][$id_form]['LABEL']), '""'._tr('Form').'"'));
-            }
-            $sDatosCSV .= join(',', $lineaEspaciador)."\r\n";
-            $sDatosCSV .= join(',', $lineaCSV)."\r\n";
+    foreach ($campaign_ids as $id) {
+        $datos = $oCamp->getCompletedCampaignData($id);
+        if (is_null($datos)) continue;
 
-            // Datos del archivo CSV
-            foreach ($datosCampania['BASE']['DATA'] as $tuplaDatos) {
-                $lineaCSV = array();
+        $allCampaignsData[$id] = $datos;
 
-                // Datos base de la campaña. Se recoge el primer elemento para id.
-                $id_call = array_shift($tuplaDatos);
-                $lineaCSV = array_merge($lineaCSV, array_map('csv_replace', $tuplaDatos));
-
-                // Datos de los formularios de la campaña
-                foreach (array_keys($datosCampania['FORMS']) as $id_form) {
-                    $dataList = NULL;
-                    if (isset($datosCampania['FORMS'][$id_form]['DATA'][$id_call])) {
-                        $dataList = $datosCampania['FORMS'][$id_form]['DATA'][$id_call];
-                    } else {
-                        $dataList = array_fill(0, count($datosCampania['FORMS'][$id_form]['LABEL']), NULL);
-                    }
-                    $lineaCSV = array_merge($lineaCSV, array_map('csv_replace', $dataList));
+        // Atributos personalizados (índices >= 10 de BASE->LABEL)
+        if (isset($datos['BASE']['LABEL']) && is_array($datos['BASE']['LABEL'])) {
+            $baseLabels = $datos['BASE']['LABEL'];
+            for ($i = 10; $i < count($baseLabels); $i++) {
+                $attr = $baseLabels[$i];
+                if (!in_array($attr, $allCustomAttributes)) {
+                    $allCustomAttributes[] = $attr;
                 }
+            }
+        }
 
-                $sDatosCSV .= join(',', $lineaCSV)."\r\n";
+        // Formularios y sus campos
+        if (isset($datos['FORMS']) && is_array($datos['FORMS'])) {
+            foreach ($datos['FORMS'] as $id_form => $form) {
+                foreach ($form['LABEL'] as $field_id_or_idx => $field_label) {
+                    $key = $form['NAME'] . " - " . $field_label;
+                    if (!isset($allFormFields[$key])) {
+                        $allFormFields[$key] = array(
+                            'form_name'   => $form['NAME'],
+                            'field_label' => $field_label
+                        );
+                    }
+                }
             }
         }
     }
 
-    return $sDatosCSV;
+    header("Cache-Control: private");
+    header("Pragma: cache");
+    header('Content-Type: text/csv; charset=UTF-8; header=present');
+    
+    $filename = "campaign_data_report.csv";
+    if (count($campaign_ids) == 1) {
+        $filename = $campaignNames[$campaign_ids[0]] . ".csv";
+    }
+    header("Content-disposition: attachment; filename=\"$filename\"");
+
+    $sDatosCSV = '';
+    if (count($allCampaignsData) == 0) {
+        $sDatosCSV = "No Data Found\r\n";
+    } else {
+        // Cabeceras consolidadas
+        $headers = array(
+            _tr('Campaign Name'),
+            _tr('Phone Customer'),
+            _tr('Status Call'),
+            _tr('Agent'),
+            _tr('Date & Time'),
+            _tr('Duration'),
+            'Uniqueid',
+            _tr('Failure Code'),
+            _tr('Failure Cause'),
+            _tr('Retries')
+        );
+
+        $headers = array_merge($headers, $allCustomAttributes);
+
+        $formFieldKeys = array_keys($allFormFields);
+        foreach ($formFieldKeys as $key) {
+            $headers[] = "[Form: " . $allFormFields[$key]['form_name'] . "] " . $allFormFields[$key]['field_label'];
+        }
+
+        $sDatosCSV .= join(',', array_map('csv_replace', $headers))."\r\n";
+
+        // Generar filas alineadas
+        foreach ($allCampaignsData as $id_campaign => $datos) {
+            $campaign_name = $campaignNames[$id_campaign];
+
+            if (!isset($datos['BASE']['DATA']) || !is_array($datos['BASE']['DATA'])) {
+                continue;
+            }
+
+            foreach ($datos['BASE']['DATA'] as $row) {
+                $id_call = $row[0];
+
+                $linea = array(
+                    $campaign_name,
+                    $row[1], // Phone Customer
+                    $row[2], // Status Call
+                    $row[3], // Agent
+                    $row[4], // Date & Time
+                    $row[5], // Duration
+                    $row[6], // Uniqueid
+                    $row[7], // Failure Code
+                    $row[8], // Failure Cause
+                    $row[9]  // Retries
+                );
+
+                // Atributos alineados
+                foreach ($allCustomAttributes as $attr) {
+                    $val = '';
+                    $idx = array_search($attr, $datos['BASE']['LABEL']);
+                    if ($idx !== false && isset($row[$idx])) {
+                        $val = $row[$idx];
+                    }
+                    $linea[] = $val;
+                }
+
+                // Campos de formulario alineados
+                foreach ($formFieldKeys as $key) {
+                    $form_name = $allFormFields[$key]['form_name'];
+                    $field_label = $allFormFields[$key]['field_label'];
+
+                    $val = '';
+                    $found_form_id = null;
+                    if (isset($datos['FORMS'])) {
+                        foreach ($datos['FORMS'] as $fid => $form) {
+                            if ($form['NAME'] === $form_name) {
+                                $found_form_id = $fid;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($found_form_id !== null) {
+                        $form = $datos['FORMS'][$found_form_id];
+                        $fidx = array_search($field_label, $form['LABEL']);
+                        if ($fidx !== false && isset($form['DATA'][$id_call][$fidx])) {
+                            $val = $form['DATA'][$id_call][$fidx];
+                        }
+                    }
+                    $linea[] = $val;
+                }
+
+                $sDatosCSV .= join(',', array_map('csv_replace', $linea))."\r\n";
+            }
+        }
+    }
+
+    echo $sDatosCSV;
+    exit;
 }
 
 function duplicateCampaign($pDB, $smarty, $module_name, $local_templates_dir)
