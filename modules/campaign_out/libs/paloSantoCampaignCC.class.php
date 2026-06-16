@@ -757,6 +757,7 @@ INNER JOIN calls ON cpl.id_call_outgoing = calls.id
 INNER JOIN campaign camp ON calls.id_campaign = camp.id
 LEFT JOIN agent a ON cpl.id_agent = a.id
 WHERE calls.id_campaign IN ($placeholders)
+  AND cpl.new_status IN ('Success', 'Failure', 'NoAnswer', 'Abandoned', 'ShortCall')
 ORDER BY camp.name, cpl.datetime_entry ASC
 SQL_ATTEMPTS;
 

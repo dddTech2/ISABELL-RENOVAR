@@ -1,7 +1,7 @@
 # SOP - Exportar Historial Completo de Intentos de Llamada en CSV
 
 ## Objetivo
-Implementar una opción para exportar un reporte detallado en formato CSV con el historial de todos los intentos de marcación (llamadas completadas, fallidas, reintentos) para múltiples campañas salientes a la vez, incluyendo el nombre de la campaña, datos clave del intento (número de intento, troncal, agente, estado de marcación, duración y fecha/hora) y **todos los atributos personalizados del contacto provenientes del CSV de carga (como Nombre, Cédula, Dirección, etc.)**.
+Implementar una opción para exportar un reporte detallado en formato CSV con el historial de todos los intentos de marcación (llamadas completadas, fallidas, reintentos) para múltiples campañas salientes a la vez, incluyendo el nombre de la campaña, datos clave del intento (número de intento, troncal, agente, estado de marcación, duración y fecha/hora) y **todos los atributos personalizados del contacto provenientes del CSV de carga (como Nombre, Cédula, Dirección, etc.)**. Para simplificar la lectura, el reporte se filtrará para mostrar únicamente los resultados finales de cada intento, omitiendo estados intermedios.
 
 ## Entradas y Salidas
 - **Entrada:** Arreglo de IDs de campañas seleccionadas (`id_campaign[]`).
@@ -11,6 +11,7 @@ Implementar una opción para exportar un reporte detallado en formato CSV con el
 1. **Modelos (`modules/campaign_out/libs/paloSantoCampaignCC.class.php`):**
    - Crear el método `getCampaignAttemptsData($campaign_ids)` que reciba un arreglo de IDs numéricos.
    - Ejecutar una consulta SQL parametrizada haciendo un `INNER JOIN` entre `call_progress_log`, `calls` y `campaign`, y un `LEFT JOIN` con `agent` para obtener los intentos.
+   - **Filtro de simplificación:** Para evitar duplicaciones por estados de transición (como `Dialing`, `Placing`, `Ringing`, `Hangup`), filtrar la consulta con `cpl.new_status IN ('Success', 'Failure', 'NoAnswer', 'Abandoned', 'ShortCall')`. Esto reporta exactamente un registro limpio por cada intento con su desenlace final.
    - Ejecutar una segunda consulta SQL para obtener todos los atributos de los contactos (`call_attribute`) cargados para las campañas seleccionadas.
    - Retornar una estructura con los resultados de ambas consultas (`ATTEMPTS` y `ATTRIBUTES`).
 
@@ -36,4 +37,6 @@ Implementar una opción para exportar un reporte detallado en formato CSV con el
 - **Inyección SQL:** Validar con `ctype_digit` todos los IDs de campaña y utilizar marcadores de posición (`?`) en la consulta SQL dinámica (`IN (?, ?, ...)`).
 - **Cero registros:** Si no hay intentos de marcación registrados para las campañas seleccionadas, el reporte debe retornar un CSV con el mensaje "No Data Found" o cabeceras con filas vacías.
 - **Alineación de Atributos:** Dado que se pueden seleccionar múltiples campañas con diferentes estructuras de atributos cargados, se debe consolidar una lista global de cabeceras únicas y mapear los valores de forma segura, dejando celdas vacías `""` si una campaña no posee un atributo específico.
+- **Filtro de Estados Finales:** Asegurarse de que los estados simplificados coincidan con los de finalización reales del dialer para no perder intentos no respondidos o fallidos.
+
 
