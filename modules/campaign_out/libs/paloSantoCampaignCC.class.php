@@ -751,7 +751,7 @@ SELECT
     cpl.new_status      AS estado,
     a.number            AS agente,
     cpl.trunk           AS trunk,
-    cpl.duration        AS duracion
+    IF(cpl.new_status = 'Success', calls.duration, cpl.duration) AS duracion
 FROM call_progress_log cpl
 INNER JOIN (
     SELECT MAX(cpl2.id) AS max_id

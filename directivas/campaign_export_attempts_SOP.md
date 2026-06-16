@@ -49,6 +49,7 @@ Implementar una opción para exportar un reporte detallado en formato CSV con el
 - **Cero registros:** Si no hay intentos de marcación registrados para las campañas seleccionadas, el reporte debe retornar un CSV con el mensaje "No Data Found" o cabeceras con filas vacías.
 - **Alineación de Atributos:** Dado que se pueden seleccionar múltiples campañas con diferentes estructuras de atributos cargados, se debe consolidar una lista global de cabeceras únicas y mapear los valores de forma segura, dejando celdas vacías `""` si una campaña no posee un atributo específico.
 - **Filtro de Estados Finales:** Asegurarse de que los estados simplificados coincidan con los de finalización reales del dialer para no perder intentos no respondidos o fallidos.
+- **Duración de Habla en Success:** En `call_progress_log`, los eventos de tipo `Success` se guardan en el momento exacto en que la llamada es contestada, por lo que su campo `duration` queda en `NULL` o `0`. Para obtener la duración de habla real de la llamada conectada, se debe utilizar la expresión `IF(cpl.new_status = 'Success', calls.duration, cpl.duration) AS duracion`.
 
 
 
