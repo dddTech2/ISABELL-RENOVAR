@@ -1184,7 +1184,7 @@ function displayCampaignAttemptsCSV($pDB, $smarty, $module_name, $local_template
     ini_set('max_execution_time', 3600);
 
     $oCampaign = new paloSantoCampaignCC($pDB);
-    $datosAttempts = $oCampaign->getCampaignAttemptsData($campaign_ids);
+    $result = $oCampaign->getCampaignAttemptsData($campaign_ids);
 
     header("Cache-Control: private");
     header("Pragma: cache");
@@ -1192,9 +1192,21 @@ function displayCampaignAttemptsCSV($pDB, $smarty, $module_name, $local_template
     header("Content-disposition: attachment; filename=\"campaign_attempts_report.csv\"");
 
     $sDatosCSV = '';
-    if (is_null($datosAttempts) || count($datosAttempts) <= 0) {
+    if (is_null($result) || count($result['ATTEMPTS']) <= 0) {
         $sDatosCSV = "No Data Found\r\n";
     } else {
+        // Map attributes
+        $callAttributes = array();
+        $allLabels = array();
+        if (isset($result['ATTRIBUTES']) && is_array($result['ATTRIBUTES'])) {
+            foreach ($result['ATTRIBUTES'] as $attr) {
+                $callAttributes[$attr['id_call']][$attr['label']] = $attr['value'];
+                if (!in_array($attr['label'], $allLabels)) {
+                    $allLabels[] = $attr['label'];
+                }
+            }
+        }
+
         $headers = array(
             _tr('Campaign Name'),
             _tr('Phone Customer'),
@@ -1205,9 +1217,11 @@ function displayCampaignAttemptsCSV($pDB, $smarty, $module_name, $local_template
             _tr('Trunk'),
             _tr('Duration')
         );
+        $headers = array_merge($headers, $allLabels);
         $sDatosCSV .= join(',', array_map('csv_replace', $headers))."\r\n";
 
-        foreach ($datosAttempts as $row) {
+        foreach ($result['ATTEMPTS'] as $row) {
+            $id_call = $row['id_call'];
             $linea = array(
                 $row['camp_name'],
                 $row['telefono'],
@@ -1218,6 +1232,13 @@ function displayCampaignAttemptsCSV($pDB, $smarty, $module_name, $local_template
                 $row['trunk'],
                 $row['duracion']
             );
+
+            // Add attributes
+            foreach ($allLabels as $label) {
+                $val = isset($callAttributes[$id_call][$label]) ? $callAttributes[$id_call][$label] : '';
+                $linea[] = $val;
+            }
+
             $sDatosCSV .= join(',', array_map('csv_replace', $linea))."\r\n";
         }
     }

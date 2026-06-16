@@ -744,6 +744,7 @@ SQL_DATOS_FORM;
         $sqlAttempts = <<<SQL_ATTEMPTS
 SELECT
     camp.name           AS camp_name,
+    calls.id            AS id_call,
     calls.phone         AS telefono,
     cpl.datetime_entry  AS fecha_hora,
     cpl.retry           AS intento,
@@ -765,7 +766,27 @@ SQL_ATTEMPTS;
             return NULL;
         }
 
-        return $datosAttempts;
+        $sqlAttributes = <<<SQL_ATTRIBUTES
+SELECT
+    ca.id_call          AS id_call,
+    ca.columna          AS label,
+    ca.value            AS value
+FROM call_attribute ca
+INNER JOIN calls c ON ca.id_call = c.id
+WHERE c.id_campaign IN ($placeholders)
+ORDER BY ca.id_call, ca.column_number
+SQL_ATTRIBUTES;
+
+        $datosAttributes = $this->_DB->fetchTable($sqlAttributes, TRUE, $campaign_ids);
+        if (!is_array($datosAttributes)) {
+            $this->errMsg = 'Unable to read campaign attributes data - '.$this->_DB->errMsg;
+            return NULL;
+        }
+
+        return array(
+            'ATTEMPTS'   => $datosAttempts,
+            'ATTRIBUTES' => $datosAttributes
+        );
     }
 }
 
