@@ -95,10 +95,17 @@ SELECT
     cpl.trunk           AS trunk,
     cpl.duration        AS duracion
 FROM call_progress_log cpl
+INNER JOIN (
+    SELECT MAX(cpl2.id) AS max_id
+    FROM call_progress_log cpl2
+    INNER JOIN calls c2 ON cpl2.id_call_outgoing = c2.id
+    WHERE cpl2.new_status IN ('Success', 'Failure', 'NoAnswer', 'Abandoned', 'ShortCall')
+      AND c2.id_campaign IN ($placeholders)
+    GROUP BY cpl2.id_call_outgoing, cpl2.retry
+) sub ON cpl.id = sub.max_id
 INNER JOIN calls ON cpl.id_call_outgoing = calls.id
 INNER JOIN campaign camp ON calls.id_campaign = camp.id
 LEFT JOIN agent a ON cpl.id_agent = a.id
-WHERE calls.id_campaign IN ($placeholders)
 ORDER BY camp.name, cpl.datetime_entry ASC
 SQL_ATTEMPTS;
 

@@ -11,7 +11,18 @@ Implementar una opción para exportar un reporte detallado en formato CSV con el
 1. **Modelos (`modules/campaign_out/libs/paloSantoCampaignCC.class.php`):**
    - Crear el método `getCampaignAttemptsData($campaign_ids)` que reciba un arreglo de IDs numéricos.
    - Ejecutar una consulta SQL parametrizada haciendo un `INNER JOIN` entre `call_progress_log`, `calls` y `campaign`, y un `LEFT JOIN` con `agent` para obtener los intentos.
-   - **Filtro de simplificación:** Para evitar duplicaciones por estados de transición (como `Dialing`, `Placing`, `Ringing`, `Hangup`), filtrar la consulta con `cpl.new_status IN ('Success', 'Failure', 'NoAnswer', 'Abandoned', 'ShortCall')`. Esto reporta exactamente un registro limpio por cada intento con su desenlace final.
+   - **Filtro de simplificación y prevención de duplicados:** Para evitar registros redundantes de un mismo intento, se realiza un `INNER JOIN` con una subconsulta que agrupa los logs por llamada (`id_call_outgoing`) e intento (`retry`) obteniendo el identificador más reciente (`MAX(id)`):
+      ```sql
+      INNER JOIN (
+          SELECT MAX(cpl2.id) AS max_id
+          FROM call_progress_log cpl2
+          INNER JOIN calls c2 ON cpl2.id_call_outgoing = c2.id
+          WHERE cpl2.new_status IN ('Success', 'Failure', 'NoAnswer', 'Abandoned', 'ShortCall')
+            AND c2.id_campaign IN ($placeholders)
+          GROUP BY cpl2.id_call_outgoing, cpl2.retry
+      ) sub ON cpl.id = sub.max_id
+      ```
+     Esto garantiza obtener exactamente una sola fila correspondiente al desenlace de cada intento de llamada.
    - Ejecutar una segunda consulta SQL para obtener todos los atributos de los contactos (`call_attribute`) cargados para las campañas seleccionadas.
    - Retornar una estructura con los resultados de ambas consultas (`ATTEMPTS` y `ATTRIBUTES`).
 
@@ -38,5 +49,6 @@ Implementar una opción para exportar un reporte detallado en formato CSV con el
 - **Cero registros:** Si no hay intentos de marcación registrados para las campañas seleccionadas, el reporte debe retornar un CSV con el mensaje "No Data Found" o cabeceras con filas vacías.
 - **Alineación de Atributos:** Dado que se pueden seleccionar múltiples campañas con diferentes estructuras de atributos cargados, se debe consolidar una lista global de cabeceras únicas y mapear los valores de forma segura, dejando celdas vacías `""` si una campaña no posee un atributo específico.
 - **Filtro de Estados Finales:** Asegurarse de que los estados simplificados coincidan con los de finalización reales del dialer para no perder intentos no respondidos o fallidos.
+
 
 
