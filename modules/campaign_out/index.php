@@ -1243,7 +1243,8 @@ function displayCampaignAttemptsCSV($pDB, $smarty, $module_name, $local_template
         }
     }
 
-    return $sDatosCSV;
+    echo $sDatosCSV;
+    exit;
 }
 
 ?>
