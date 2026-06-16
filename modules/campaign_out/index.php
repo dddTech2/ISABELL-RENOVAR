@@ -65,6 +65,21 @@ function _moduleContent(&$smarty, $module_name)
     $contenidoModulo = '';
     $sAction = 'list_campaign';
     if (isset($_GET['action'])) $sAction = $_GET['action'];
+    if (isset($_POST['csv_attempts'])) {
+        $has_campaigns = false;
+        if (isset($_POST['id_campaign'])) {
+            if (is_array($_POST['id_campaign'])) {
+                foreach ($_POST['id_campaign'] as $id) {
+                    if (ctype_digit($id)) { $has_campaigns = true; break; }
+                }
+            } elseif (ctype_digit($_POST['id_campaign'])) {
+                $has_campaigns = true;
+            }
+        }
+        if ($has_campaigns) {
+            $sAction = 'csv_attempts';
+        }
+    }
     switch ($sAction) {
     case 'new_campaign':
         $contenidoModulo = newCampaign($pDB, $smarty, $module_name, $local_templates_dir);
@@ -74,6 +89,9 @@ function _moduleContent(&$smarty, $module_name)
         break;
     case 'csv_data':
         $contenidoModulo = displayCampaignCSV($pDB, $smarty, $module_name, $local_templates_dir);
+        break;
+    case 'csv_attempts':
+        $contenidoModulo = displayCampaignAttemptsCSV($pDB, $smarty, $module_name, $local_templates_dir);
         break;
     case 'load_contacts':
         $contenidoModulo = loadCampaignContacts($pDB, $smarty, $module_name, $local_templates_dir);
@@ -98,32 +116,57 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
 
     // Recoger ID de campaña para operación
     $id_campaign = NULL;
-    if (isset($_POST['id_campaign']) && ctype_digit($_POST['id_campaign']))
-        $id_campaign = $_POST['id_campaign'];
+    $campaign_ids = array();
+    if (isset($_POST['id_campaign'])) {
+        if (is_array($_POST['id_campaign'])) {
+            foreach ($_POST['id_campaign'] as $id) {
+                if (ctype_digit($id)) $campaign_ids[] = (int)$id;
+            }
+            if (count($campaign_ids) > 0) {
+                $id_campaign = $campaign_ids[0];
+            }
+        } elseif (ctype_digit($_POST['id_campaign'])) {
+            $id_campaign = $_POST['id_campaign'];
+            $campaign_ids[] = (int)$id_campaign;
+        }
+    }
+
+    // Interceptar error si se pulsa csv_attempts sin seleccionar campañas
+    if (isset($_POST['csv_attempts']) && count($campaign_ids) == 0) {
+        $smarty->assign("mb_title", _tr("Validation Error"));
+        $smarty->assign("mb_message", _tr("Please select at least one campaign to download attempts"));
+    }
 
     // Revisar si se debe de borrar una campaña elegida
-    if (isset($_POST['delete']) && !is_null($id_campaign)) {
-        if($oCampaign->delete_campaign($id_campaign)) {
+    if (isset($_POST['delete']) && count($campaign_ids) > 0) {
+        $exito = true;
+        foreach ($campaign_ids as $id) {
+            if (!$oCampaign->delete_campaign($id)) {
+                $exito = false;
+                $msg_error = ($oCampaign->errMsg!="") ? "<br/>".$oCampaign->errMsg:"";
+                $smarty->assign("mb_title", _tr('Delete Error'));
+                $smarty->assign("mb_message", _tr('Error when deleting the Campaign').$msg_error);
+                break;
+            }
+        }
+        if ($exito) {
             $smarty->assign("mb_title",_tr('Message'));
             $smarty->assign("mb_message", _tr('Campaign was deleted successfully'));
-        } else {
-            $msg_error = ($oCampaign->errMsg!="") ? "<br/>".$oCampaign->errMsg:"";
-            $smarty->assign("mb_title", _tr('Delete Error'));
-            $smarty->assign("mb_message", _tr('Error when deleting the Campaign').$msg_error);
         }
     }
 
     // Activar o desactivar campañas elegidas
-    if (isset($_POST['change_status']) && !is_null($id_campaign)){
-        if($_POST['status_campaing_sel']=='activate'){
-            if(!$oCampaign->activar_campaign($id_campaign, 'A')) {
-                $smarty->assign("mb_title", _tr('Activate Error'));
-                $smarty->assign("mb_message", _tr('Error when Activating the Campaign').': '.$oCampaign->errMsg);
-            }
-        }elseif($_POST['status_campaing_sel']=='deactivate'){
-            if(!$oCampaign->activar_campaign($id_campaign, 'I')) {
-                $smarty->assign("mb_title", _tr('Desactivate Error'));
-                $smarty->assign("mb_message", _tr('Error when desactivating the Campaign').': '.$oCampaign->errMsg);
+    if (isset($_POST['change_status']) && count($campaign_ids) > 0){
+        $exito = true;
+        $status_to_set = ($_POST['status_campaing_sel'] == 'activate') ? 'A' : 'I';
+        foreach ($campaign_ids as $id) {
+            if (!$oCampaign->activar_campaign($id, $status_to_set)) {
+                $exito = false;
+                $mb_title = ($status_to_set == 'A') ? _tr('Activate Error') : _tr('Desactivate Error');
+                $mb_msg = ($status_to_set == 'A') ? _tr('Error when Activating the Campaign') : _tr('Error when desactivating the Campaign');
+                $smarty->assign("mb_title", $mb_title);
+                $smarty->assign("mb_message", $mb_msg.': '.$oCampaign->errMsg);
+                break;
             }
         }
     }
@@ -168,7 +211,7 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
     if (is_array($arrCampaign)) {
         foreach($arrCampaign as $campaign) {
             $arrData[] = array(
-                "<input class=\"button\" type=\"radio\" name=\"id_campaign\" value=\"$campaign[id]\" />",
+                "<input class=\"button\" type=\"checkbox\" name=\"id_campaign[]\" value=\"$campaign[id]\" />",
                 $campaign['id'],
                 "<a href='?menu=$module_name&amp;action=edit_campaign&amp;id_campaign=".$campaign['id']."'>".
                     htmlentities($campaign['name'], ENT_COMPAT, 'UTF-8').'</a>',
@@ -194,7 +237,10 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
     $oGrid->setWidth("99%");
     $oGrid->setIcon("images/list.png");
     $oGrid->setURL($url);
-    $oGrid->setColumns(array('', 'ID', _tr('Name Campaign'), _tr('Range Date'),
+    $oGrid->setColumns(array(
+        "<input type=\"checkbox\" id=\"select_all_campaigns\" onclick=\"var checkboxes = document.getElementsByName('id_campaign[]'); for (var i = 0; i < checkboxes.length; i++) { checkboxes[i].checked = this.checked; }\" />",
+        'ID',
+        _tr('Name Campaign'), _tr('Range Date'),
         _tr('Schedule per Day'), _tr('Retries'), _tr('Trunk'), _tr('Queue'),
         _tr('Total Calls'), _tr('Pending Calls'), _tr('Completed Calls'), _tr('Average Time'), _tr('Status'), _tr('Options')));
     $_POST['cbo_estado']=$sEstado;
@@ -217,6 +263,7 @@ function listCampaign($pDB, $smarty, $module_name, $local_templates_dir)
     ), null, 'change_status');
     $oGrid->addSubmitAction('duplicate', _tr('Duplicate'));
     $oGrid->deleteList('Are you sure you wish to delete campaign?', 'delete', _tr('Delete'));
+    $oGrid->customAction("csv_attempts", _tr("Download Attempts CSV"), "download", false);
     $oGrid->setData($arrData);
     $oGrid->showFilter($smarty->fetch("$local_templates_dir/filter-list-campaign.tpl"));
     return $oGrid->fetchGrid();
@@ -1114,6 +1161,68 @@ SQL_FORMS;
         _tr("Duplicate Campaign"),
         $_POST
     );
+}
+
+function displayCampaignAttemptsCSV($pDB, $smarty, $module_name, $local_templates_dir)
+{
+    $campaign_ids = array();
+    if (isset($_POST['id_campaign'])) {
+        if (is_array($_POST['id_campaign'])) {
+            foreach ($_POST['id_campaign'] as $id) {
+                if (ctype_digit($id)) $campaign_ids[] = (int)$id;
+            }
+        } elseif (ctype_digit($_POST['id_campaign'])) {
+            $campaign_ids[] = (int)$_POST['id_campaign'];
+        }
+    }
+
+    if (count($campaign_ids) == 0) {
+        Header("Location: ?menu=$module_name");
+        return '';
+    }
+
+    ini_set('max_execution_time', 3600);
+
+    $oCampaign = new paloSantoCampaignCC($pDB);
+    $datosAttempts = $oCampaign->getCampaignAttemptsData($campaign_ids);
+
+    header("Cache-Control: private");
+    header("Pragma: cache");
+    header('Content-Type: text/csv; charset=UTF-8; header=present');
+    header("Content-disposition: attachment; filename=\"campaign_attempts_report.csv\"");
+
+    $sDatosCSV = '';
+    if (is_null($datosAttempts) || count($datosAttempts) <= 0) {
+        $sDatosCSV = "No Data Found\r\n";
+    } else {
+        $headers = array(
+            _tr('Campaign Name'),
+            _tr('Phone Customer'),
+            _tr('Date & Time'),
+            _tr('Attempt Number'),
+            _tr('Status'),
+            _tr('Agent'),
+            _tr('Trunk'),
+            _tr('Duration')
+        );
+        $sDatosCSV .= join(',', array_map('csv_replace', $headers))."\r\n";
+
+        foreach ($datosAttempts as $row) {
+            $linea = array(
+                $row['camp_name'],
+                $row['telefono'],
+                $row['fecha_hora'],
+                $row['intento'],
+                $row['estado'],
+                is_null($row['agente']) ? '' : $row['agente'],
+                $row['trunk'],
+                $row['duracion']
+            );
+            $sDatosCSV .= join(',', array_map('csv_replace', $linea))."\r\n";
+        }
+    }
+
+    return $sDatosCSV;
 }
 
 ?>

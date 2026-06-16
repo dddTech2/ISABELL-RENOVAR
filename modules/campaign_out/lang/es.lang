@@ -117,5 +117,9 @@ $arrLangModule = array(
     "Please select a campaign to duplicate" => "Por favor seleccione una campaña para duplicar",
     "Campaign duplicated successfully" => "Campaña duplicada exitosamente",
     "Error when duplicating the Campaign" => "Error al duplicar la campaña",
+    "Campaign Name" => "Nombre de Campaña",
+    "Attempt Number" => "Número de Intento",
+    "Download Attempts CSV" => "Descargar CSV de Intentos",
+    "Please select at least one campaign to download attempts" => "Por favor seleccione al menos una campaña para descargar los intentos",
 );
 ?>

@@ -723,6 +723,50 @@ SQL_DATOS_FORM;
 
         return $datosCampania;
     }
+
+    function getCampaignAttemptsData($campaign_ids)
+    {
+        $this->errMsg = NULL;
+        if (!is_array($campaign_ids) || count($campaign_ids) == 0) {
+            $this->errMsg = _tr('No campaign IDs provided');
+            return NULL;
+        }
+
+        // Validate campaign IDs
+        foreach ($campaign_ids as $id) {
+            if (!ctype_digit((string)$id)) {
+                $this->errMsg = _tr('Invalid campaign ID');
+                return NULL;
+            }
+        }
+
+        $placeholders = implode(',', array_fill(0, count($campaign_ids), '?'));
+        $sqlAttempts = <<<SQL_ATTEMPTS
+SELECT
+    camp.name           AS camp_name,
+    calls.phone         AS telefono,
+    cpl.datetime_entry  AS fecha_hora,
+    cpl.retry           AS intento,
+    cpl.new_status      AS estado,
+    a.number            AS agente,
+    cpl.trunk           AS trunk,
+    cpl.duration        AS duracion
+FROM call_progress_log cpl
+INNER JOIN calls ON cpl.id_call_outgoing = calls.id
+INNER JOIN campaign camp ON calls.id_campaign = camp.id
+LEFT JOIN agent a ON cpl.id_agent = a.id
+WHERE calls.id_campaign IN ($placeholders)
+ORDER BY camp.name, cpl.datetime_entry ASC
+SQL_ATTEMPTS;
+
+        $datosAttempts = $this->_DB->fetchTable($sqlAttempts, TRUE, $campaign_ids);
+        if (!is_array($datosAttempts)) {
+            $this->errMsg = 'Unable to read campaign attempts data - '.$this->_DB->errMsg;
+            return NULL;
+        }
+
+        return $datosAttempts;
+    }
 }
 
 
