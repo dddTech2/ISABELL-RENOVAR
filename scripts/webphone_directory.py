@@ -27,11 +27,39 @@ def main():
 function manejarSesionActiva_getExtensionsList($module_name, &$smarty, $sDirLocalPlantillas, $oPaloConsola, $estado, $listpanels = null)
 {
     session_commit();
+    global $arrConf;
     
     $dsn = generarDSNSistema('asteriskuser', 'asterisk');
     $db = new paloDB($dsn);
     $query = "SELECT id, description, tech FROM devices ORDER BY id ASC";
     $dbExtensions = $db->fetchTable($query, TRUE);
+    
+    // 1. Obtener mapa de nombres desde FreePBX (asterisk.users)
+    $userNames = array();
+    $dbUsers = $db->fetchTable("SELECT extension, name FROM users", TRUE);
+    if (is_array($dbUsers)) {
+        foreach ($dbUsers as $uRow) {
+            if (!empty($uRow['extension']) && !empty($uRow['name'])) {
+                $userNames[trim($uRow['extension'])] = trim($uRow['name']);
+            }
+        }
+    }
+    
+    // 2. Obtener mapa de usuarios/personas desde Issabel ACL (acl_user)
+    $aclNames = array();
+    if (isset($arrConf['issabel_dsn']['acl'])) {
+        $dbACL = new paloDB($arrConf['issabel_dsn']['acl']);
+        $dbAclUsers = $dbACL->fetchTable("SELECT extension, description, name FROM acl_user WHERE extension != '' AND extension IS NOT NULL", TRUE);
+        if (is_array($dbAclUsers)) {
+            foreach ($dbAclUsers as $aRow) {
+                $ext = trim($aRow['extension']);
+                $dispName = !empty($aRow['description']) ? trim($aRow['description']) : trim($aRow['name']);
+                if ($ext != '' && $dispName != '') {
+                    $aclNames[$ext] = $dispName;
+                }
+            }
+        }
+    }
     
     $onlineExtensions = array();
     
@@ -70,10 +98,25 @@ function manejarSesionActiva_getExtensionsList($module_name, &$smarty, $sDirLoca
     $list = array();
     if (is_array($dbExtensions)) {
         foreach ($dbExtensions as $row) {
-            $ext = $row['id'];
+            $ext = trim($row['id']);
+            
+            // Prioridad para determinar el nombre a mostrar:
+            // 1. Nombre/Descripción en acl_user (/index.php?menu=userlist)
+            // 2. Nombre de usuario en FreePBX (users.name)
+            // 3. Descripción en devices (si no es simplemente igual al número de extensión)
+            // 4. Extensión como fallback
+            $displayName = $ext;
+            if (!empty($aclNames[$ext])) {
+                $displayName = $aclNames[$ext];
+            } elseif (!empty($userNames[$ext])) {
+                $displayName = $userNames[$ext];
+            } elseif (!empty($row['description']) && trim($row['description']) != $ext) {
+                $displayName = trim($row['description']);
+            }
+
             $list[] = array(
                 'extension' => $ext,
-                'name' => $row['description'],
+                'name' => $displayName,
                 'tech' => $row['tech'],
                 'status' => isset($onlineExtensions[$ext]) ? 'online' : 'offline'
             );

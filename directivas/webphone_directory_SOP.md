@@ -23,10 +23,13 @@
 - Definir la función `manejarSesionActiva_getExtensionsList`.
 - En esta función:
   - Liberar la sesión (`session_commit()`) para evitar bloquear otras peticiones paralelas.
-  - Conectar a la base de datos de Asterisk y obtener la lista de extensiones (`SELECT id, description, tech FROM devices ORDER BY id ASC`).
+  - Conectar a la base de datos de Asterisk y obtener la lista de dispositivos (`SELECT id, description, tech FROM devices ORDER BY id ASC`).
+  - Obtener el mapa de nombres asignados a extensiones en FreePBX (`SELECT extension, name FROM users`).
+  - Obtener el mapa de usuarios y descripciones vinculadas a extensiones en Issabel `userlist` (`SELECT extension, description, name FROM acl_user WHERE extension != '' AND extension IS NOT NULL`).
+  - Asignar el nombre de la persona a cada extensión dando prioridad a `acl_user.description`/`acl_user.name`, luego `users.name`, y como fallback `devices.description` o el número de extensión.
   - Conectarse al Asterisk Manager Interface (AMI) y ejecutar los comandos `sip show peers` y `pjsip show endpoints`.
   - Procesar las salidas de ambos comandos para identificar qué extensiones están registradas/online.
-  - Devolver la lista en formato JSON: `[{"extension": "1001", "name": "Nombre", "tech": "pjsip", "status": "online"}, ...]`.
+  - Devolver la lista en formato JSON: `[{"extension": "1001", "name": "Nombre Persona", "tech": "pjsip", "status": "online"}, ...]`.
 
 ### 2. Interfaz Gráfica (HTML/TPL)
 - En `agent_console.tpl` y `login_agent.tpl`, modificar el contenedor `.webphone-number-row` para incluir un botón a la derecha del input:
