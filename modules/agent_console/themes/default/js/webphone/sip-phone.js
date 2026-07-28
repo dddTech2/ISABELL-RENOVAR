@@ -250,12 +250,100 @@ var WebPhone = (function() {
     }
 
     // ============================================
+    // Desktop Notification & Visual Alert helpers
+    // ============================================
+    var activeDesktopNotification = null;
+    var originalDocumentTitle = document.title;
+    var titleBlinkInterval = null;
+
+    function requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            try {
+                Notification.requestPermission().then(function(permission) {
+                    log('Notification permission result: ' + permission);
+                }).catch(function(err) {
+                    log('Notification permission catch: ' + (err.message || err));
+                });
+            } catch (e) {
+                try {
+                    Notification.requestPermission(function(permission) {
+                        log('Notification permission callback result: ' + permission);
+                    });
+                } catch (e2) {}
+            }
+        }
+    }
+
+    function showDesktopNotification(title, body) {
+        requestNotificationPermission();
+        startTitleBlink(title);
+
+        if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+                closeDesktopNotificationOnly();
+                activeDesktopNotification = new Notification(title, {
+                    body: body || 'Llamada entrante a la extensión',
+                    icon: '/favicon.ico',
+                    requireInteraction: true
+                });
+
+                activeDesktopNotification.onclick = function() {
+                    try { window.focus(); } catch (e) {}
+                    closeDesktopNotificationOnly();
+                };
+            } catch (e) {
+                log('Error showing desktop notification: ' + (e.message || e));
+            }
+        }
+    }
+
+    function closeDesktopNotificationOnly() {
+        if (activeDesktopNotification) {
+            try {
+                activeDesktopNotification.close();
+            } catch (e) {}
+            activeDesktopNotification = null;
+        }
+    }
+
+    function closeDesktopNotification() {
+        stopTitleBlink();
+        closeDesktopNotificationOnly();
+    }
+
+    function startTitleBlink(alertMsg) {
+        if (titleBlinkInterval) return;
+        var toggle = false;
+        if (!originalDocumentTitle || originalDocumentTitle.indexOf('LLAMADA ENTRANTE') !== -1) {
+            originalDocumentTitle = 'Issabel';
+        }
+        titleBlinkInterval = setInterval(function() {
+            document.title = toggle ? '🔔 ¡LLAMADA ENTRANTE!' : (alertMsg || 'Llamada Entrante...');
+            toggle = !toggle;
+        }, 800);
+    }
+
+    function stopTitleBlink() {
+        if (titleBlinkInterval) {
+            clearInterval(titleBlinkInterval);
+            titleBlinkInterval = null;
+        }
+        if (originalDocumentTitle) {
+            document.title = originalDocumentTitle;
+        }
+    }
 
     function updateCallState(newState) {
         state.callState = newState;
         if (newState === 'connected') {
             state.callStartTime = new Date().getTime();
+            closeDesktopNotification();
+        } else if (newState === 'idle' || newState === 'ended' || newState === 'rejected') {
+            closeDesktopNotification();
+        } else if (newState === 'ringing') {
+            showDesktopNotification('🔔 Llamada Entrante WebPhone', 'De: ' + (state.activeNumber || 'Desconocido'));
         }
+
         if (callbacks.onCallStateChange) {
             callbacks.onCallStateChange(newState);
         }
@@ -1663,6 +1751,9 @@ var WebPhone = (function() {
             s.heldSession = heldSession;
             return s;
         },
-        isAutoAnswer: function() { return state.autoAnswer; }
+        isAutoAnswer: function() { return state.autoAnswer; },
+        requestNotificationPermission: requestNotificationPermission,
+        showNotification: showDesktopNotification,
+        closeNotification: closeDesktopNotification
     };
 })();

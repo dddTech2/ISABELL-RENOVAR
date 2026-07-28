@@ -1205,6 +1205,15 @@ function manejarRespuestaStatus(respuesta)
                 respuesta[i].urlopentype = "DELETE";
             }
 			abrir_url_externo(respuesta[i].urlopentype, respuesta[i].url, respuesta[i].urldescription, true);
+
+			// Disparar notificación de escritorio y parpadeo de pestaña para llamada de consola
+			if (typeof WebPhone !== 'undefined' && WebPhone.showNotification) {
+				var callerText = respuesta[i].txt_contacto_telefono || 'Llamada de campaña';
+				if (respuesta[i].txt_contacto_nombres) {
+					callerText += ' - ' + respuesta[i].txt_contacto_nombres;
+				}
+				WebPhone.showNotification('🔔 Llamada Entrante Call Center', callerText);
+			}
 			break;
 		case 'agentunlinked':
 	        // El agente se ha desconectado de la llamada
@@ -1213,6 +1222,10 @@ function manejarRespuestaStatus(respuesta)
 			estadoCliente.calltype = null;
 			estadoCliente.campaign_id = null;
 			estadoCliente.callid = null;
+
+			if (typeof WebPhone !== 'undefined' && WebPhone.closeNotification) {
+				WebPhone.closeNotification();
+			}
 
 			$('#btn_hangup').button('disable');
 			$('#btn_hold').button('disable');
@@ -1556,3 +1569,11 @@ function cargarLlamadasPerdidasDirectas() {
         $tbody.html('<tr><td colspan="4" style="text-align: center; padding: 20px; color: red;">Error de conexión con el servidor.</td></tr>');
     });
 }
+
+// Solicitar permiso de notificaciones en la primera interacción del usuario
+$(document).one('click keydown', function() {
+    if (typeof WebPhone !== 'undefined' && WebPhone.requestNotificationPermission) {
+        WebPhone.requestNotificationPermission();
+    }
+});
+
