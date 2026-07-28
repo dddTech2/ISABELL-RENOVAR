@@ -260,14 +260,14 @@ var WebPhone = (function() {
         if ('Notification' in window && Notification.permission === 'default') {
             try {
                 Notification.requestPermission().then(function(permission) {
-                    log('Notification permission result: ' + permission);
+                    log('[WebPhone Notification] Permission result: ' + permission);
                 }).catch(function(err) {
-                    log('Notification permission catch: ' + (err.message || err));
+                    log('[WebPhone Notification] Permission catch: ' + (err.message || err));
                 });
             } catch (e) {
                 try {
                     Notification.requestPermission(function(permission) {
-                        log('Notification permission callback result: ' + permission);
+                        log('[WebPhone Notification] Permission callback result: ' + permission);
                     });
                 } catch (e2) {}
             }
@@ -275,25 +275,40 @@ var WebPhone = (function() {
     }
 
     function showDesktopNotification(title, body) {
+        log('[WebPhone Notification] Triggered. Permission status: ' + ('Notification' in window ? Notification.permission : 'not supported'));
         requestNotificationPermission();
         startTitleBlink(title);
 
-        if ('Notification' in window && Notification.permission === 'granted') {
-            try {
-                closeDesktopNotificationOnly();
-                activeDesktopNotification = new Notification(title, {
-                    body: body || 'Llamada entrante a la extensión',
-                    icon: '/favicon.ico',
-                    requireInteraction: true
-                });
-
-                activeDesktopNotification.onclick = function() {
-                    try { window.focus(); } catch (e) {}
+        if ('Notification' in window) {
+            if (Notification.permission === 'granted') {
+                try {
                     closeDesktopNotificationOnly();
-                };
-            } catch (e) {
-                log('Error showing desktop notification: ' + (e.message || e));
+                    var options = {
+                        body: body || 'Llamada entrante a la extensión',
+                        requireInteraction: true
+                    };
+                    try {
+                        options.icon = window.location.origin + '/favicon.ico';
+                    } catch (eIcon) {}
+
+                    activeDesktopNotification = new Notification(title, options);
+                    log('[WebPhone Notification] Notification created for: ' + title);
+
+                    activeDesktopNotification.onclick = function() {
+                        try { window.focus(); } catch (e) {}
+                        closeDesktopNotificationOnly();
+                    };
+                    activeDesktopNotification.onerror = function(errEvent) {
+                        log('[WebPhone Notification] Event onerror triggered on Notification object');
+                    };
+                } catch (e) {
+                    log('[WebPhone Notification] Error creating Notification: ' + (e.message || e));
+                }
+            } else {
+                log('[WebPhone Notification] Permission is not granted (' + Notification.permission + '), notification blocked by browser settings');
             }
+        } else {
+            log('[WebPhone Notification] window.Notification is unsupported');
         }
     }
 
