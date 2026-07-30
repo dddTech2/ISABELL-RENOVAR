@@ -114,6 +114,7 @@ class Uploader_CSV
 
         $iNumLinea = 0;
         $clavesColumnas = array();
+        $hasExtensionCol = false;
         while ($tupla = fgetcsv($hArchivo, 8192, ',')) {
             $iNumLinea++;
             if (function_exists('mb_convert_encoding')) {
@@ -128,6 +129,12 @@ class Uploader_CSV
             } elseif (!preg_match('/^([\d#\*])+$/', $tupla[0])) {
                 if ($iNumLinea == 1) {
                     // Podría ser una cabecera de nombres de columnas
+                    foreach ($tupla as $headerName) {
+                        if (strtolower(trim($headerName)) === 'extension') {
+                            $hasExtensionCol = true;
+                            break;
+                        }
+                    }
                     array_shift($tupla);
                     $clavesColumnas = $tupla;
                 } else {
@@ -148,7 +155,7 @@ class Uploader_CSV
                         $tupla[$i],
                     );
                 }
-                $idCall = $inserter->insertOneContact($numero, $atributos);
+                $idCall = $inserter->insertOneContact($numero, $atributos, $hasExtensionCol ? 1 : null);
                 if (is_null($idCall)) {
                     fclose($hArchivo);
                     return array(

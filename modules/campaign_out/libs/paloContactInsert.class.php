@@ -76,7 +76,7 @@ class paloContactInsert
      * @return  ID del contacto en la tabla calls, o NULL en error.
      *          EN: Contact ID in the calls table, or NULL on error.
      */
-    function insertOneContact($number, $attributes)
+    function insertOneContact($number, $attributes, $dncOverride = null)
     {
         $this->errMsg = NULL;
 
@@ -90,6 +90,21 @@ class paloContactInsert
         $tupla = $this->_sth_dnc->fetch(PDO::FETCH_ASSOC);
         $this->_sth_dnc->closeCursor();
         $iDNC = ($tupla['N'] != 0) ? 1 : 0;
+
+        if (!is_null($dncOverride)) {
+            if ($dncOverride) {
+                $iDNC = 1;
+            }
+        } else {
+            if (is_array($attributes)) {
+                foreach ($attributes as $attr) {
+                    if (is_array($attr) && isset($attr[0]) && strtolower(trim($attr[0])) === 'extension') {
+                        $iDNC = 1;
+                        break;
+                    }
+                }
+            }
+        }
 
         // Inserción del número en sí
         // EN: Insertion of the number itself
